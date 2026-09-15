@@ -1,0 +1,49 @@
+# ===== Java / Maven / Gradle =====
+target/
+build/
+*.class
+*.jar
+!*/wrapper/*.jar
+.gradle/
+!gradle-wrapper.jar
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+*.iws
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Environment / Secrets =====
+.env
+*.env.local
+application-local.yml
+application-local.properties
+
+# ===== Docker / ELK data volumes =====
+elk-stack/**/data/
+elasticsearch-data/
+docker-volumes/
+
+# ===== Node (nếu có frontend sau này) =====
+node_modules/
+
+# ===== Test & build output =====
+*.pdf
+*.jpg
+!docs/architecture/*.png
+out/
+
+# ===== Load testing results =====
+load-testing/**/*.jtl
+load-testing/**/results/
