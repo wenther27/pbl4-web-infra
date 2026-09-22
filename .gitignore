@@ -47,3 +47,6 @@ out/
 # ===== Load testing results =====
 load-testing/**/*.jtl
 load-testing/**/results/
+# ===== web-server/BE secrets =====
+web-server/BE/src/main/resources/application.properties
+!web-server/BE/src/main/resources/application.properties.example
