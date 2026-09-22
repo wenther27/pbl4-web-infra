@@ -1,0 +1,97 @@
+name: cinehub-infrastructure
+
+x-web-common: &web-common
+  build:
+    context: ./web-server
+  restart: unless-stopped
+  depends_on:
+    database:
+      condition: service_healthy
+  environment:
+    DB_URL: jdbc:mysql://database:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    DB_USER: root
+    DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+    JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-to-at-least-32-characters}
+    JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+    SHOW_SQL: ${SHOW_SQL:-false}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+    SERVER_PORT: 8080
+  networks:
+    - cinehub-network
+
+services:
+  database:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-cinehub_db}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/migrations/V1__init_schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - cinehub-network
+
+  web-1:
+    <<: *web-common
+    environment:
+      DB_URL: jdbc:mysql://database:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+      JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-to-at-least-32-characters}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      SHOW_SQL: ${SHOW_SQL:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      SERVER_PORT: 8080
+      INSTANCE_ID: web-1
+    ports:
+      - "8081:8080"
+
+  web-2:
+    <<: *web-common
+    environment:
+      DB_URL: jdbc:mysql://database:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+      JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-to-at-least-32-characters}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      SHOW_SQL: ${SHOW_SQL:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      SERVER_PORT: 8080
+      INSTANCE_ID: web-2
+    ports:
+      - "8082:8080"
+
+  web-3:
+    <<: *web-common
+    environment:
+      DB_URL: jdbc:mysql://database:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+      JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-to-at-least-32-characters}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      SHOW_SQL: ${SHOW_SQL:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      SERVER_PORT: 8080
+      INSTANCE_ID: web-3
+    ports:
+      - "8083:8080"
+
+volumes:
+  mysql-data:
+
+networks:
+  cinehub-network:
+    driver: bridge
