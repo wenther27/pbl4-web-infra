@@ -37,6 +37,7 @@ docker-volumes/
 
 # ===== Node (nếu có frontend sau này) =====
 node_modules/
+dist/
 
 # ===== Test & build output =====
 *.pdf

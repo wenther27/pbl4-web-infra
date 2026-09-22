@@ -2,7 +2,7 @@ name: cinehub-infrastructure
 
 x-web-common: &web-common
   build:
-    context: ./web-server
+    context: ./web-server/backend
   restart: unless-stopped
   depends_on:
     database:

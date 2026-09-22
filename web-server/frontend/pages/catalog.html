@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Danh mục phim CineHub">
+    <title>CineHub | Danh mục phim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/pages/catalog.css">
+  </head>
+  <body data-page="catalog" data-root="..">
+    <header id="site-header"></header>
+
+    <main class="page-main">
+      <section class="page-intro container">
+        <p class="breadcrumb">CineHub / Kho phim điện ảnh</p>
+        <div class="page-intro__row">
+          <div><p class="eyebrow">Kho phim CineHub</p><h1>Danh mục tuyển chọn</h1></div>
+          <p>Khám phá điện ảnh qua từng góc nhìn văn hóa, từ kiệt tác nghệ thuật đến siêu phẩm chiếu rạp.</p>
+        </div>
+      </section>
+
+      <section class="catalog container">
+        <aside class="filters" aria-label="Bộ lọc phim">
+          <div class="filters__heading"><h2>Bộ lọc chi tiết</h2><button id="reset-filters" type="button">Đặt lại</button></div>
+          <label class="field"><span>Phân loại</span><select id="type-filter"><option value="">Tất cả</option><option value="movie">Phim lẻ</option><option value="series">Phim bộ</option><option value="anime">Anime</option></select></label>
+          <label class="field"><span>Trạng thái</span><select id="status-filter"><option value="">Tất cả</option><option value="released">Đã phát hành</option><option value="ongoing">Đang chiếu</option><option value="upcoming">Sắp chiếu</option></select></label>
+          <label class="field"><span>Thể loại</span><select id="genre-filter"><option value="">Tất cả thể loại</option></select></label>
+          <label class="field"><span>Sắp xếp</span><select id="sort-filter"><option value="rating,desc">Điểm đánh giá cao</option><option value="releaseDate,desc">Mới phát hành</option><option value="title,asc">Tên A–Z</option></select></label>
+          <button class="button button--primary button--full" id="apply-filters" type="button">Áp dụng bộ lọc</button>
+        </aside>
+
+        <div class="catalog__results">
+          <div class="result-toolbar">
+            <p><span class="status-dot"></span>Tìm thấy <strong id="result-count">0</strong> bộ phim</p>
+            <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false">☰ Bộ lọc</button>
+          </div>
+          <div class="active-filters" id="active-filters"></div>
+          <div class="movie-grid" id="catalog-grid" aria-live="polite"></div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="site-footer"></footer>
+    <script type="module" src="../js/pages/catalog.js"></script>
+  </body>
+</html>
