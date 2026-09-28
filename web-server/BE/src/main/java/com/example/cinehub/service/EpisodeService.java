@@ -1,13 +1,13 @@
 package com.example.cinehub.service;
 
+import com.example.cinehub.dto.request.EpisodeRequest;
 import com.example.cinehub.dto.response.EpisodeDTO;
-import com.example.cinehub.entity.Episode;
 
 import java.util.List;
 
 public interface EpisodeService {
-    List<EpisodeDTO> getEpisodeByMovieId(Long id);
-    EpisodeDTO addEpisode(Long id, Episode episode);
-    EpisodeDTO updateEpisode(Long id, Episode episodeDetails);
-    void deleteEpisode(Long id);
+    List<EpisodeDTO> getEpisodeByMovieId(Long movieId);
+    EpisodeDTO addEpisode(Long movieId, EpisodeRequest request);
+    EpisodeDTO updateEpisode(Long episodeId, EpisodeRequest request);
+    void deleteEpisode(Long episodeId);
 }

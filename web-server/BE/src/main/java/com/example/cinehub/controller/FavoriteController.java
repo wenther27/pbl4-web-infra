@@ -1,11 +1,10 @@
 package com.example.cinehub.controller;
 
 import com.example.cinehub.dto.response.FavoriteDTO;
-import com.example.cinehub.entity.User;
-import com.example.cinehub.exception.ResourceNotFoundException;
-import com.example.cinehub.repository.UserRepository;
+import com.example.cinehub.security.CurrentUser;
 import com.example.cinehub.service.FavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -14,41 +13,33 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/favorites")
-@CrossOrigin(origins = "http://localhost:5173")
 public class FavoriteController {
     @Autowired private FavoriteService favoriteService;
-    @Autowired private UserRepository userRepository;
+    @Autowired private CurrentUser currentUser;
 
     @GetMapping
     public ResponseEntity<List<FavoriteDTO>> getMyFavorites(Authentication authentication) {
-        Long userId = getUserId(authentication);
-        return ResponseEntity.ok(favoriteService.getFavoritesByUser(userId));
+        return ResponseEntity.ok(favoriteService.getFavoritesByUser(currentUser.id(authentication)));
     }
 
     @PostMapping("/{movieId}")
-    public ResponseEntity<FavoriteDTO> addFavorite(@PathVariable Long movieId, Authentication authentication) {
-        Long userId = getUserId(authentication);
-        return ResponseEntity.ok(favoriteService.addFavorite(userId, movieId));
+    public ResponseEntity<FavoriteDTO> addFavorite(@PathVariable Long movieId,
+                                                  Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(favoriteService.addFavorite(currentUser.id(authentication), movieId));
     }
 
     @DeleteMapping("/{movieId}")
-    public ResponseEntity<String> deleteFavorite(@PathVariable Long movieId, Authentication authentication) {
-        Long userId = getUserId(authentication);
-        favoriteService.deleteFavorite(userId, movieId);
-        return ResponseEntity.ok("Đã xóa khỏi danh sách yêu thích");
+    public ResponseEntity<Void> deleteFavorite(@PathVariable Long movieId,
+                                               Authentication authentication) {
+        favoriteService.deleteFavorite(currentUser.id(authentication), movieId);
+        return ResponseEntity.noContent().build();
     }
 
-    // FE dùng để hiển thị icon tim đỏ hay trắng
-    @GetMapping("{movieId}/check")
-    public ResponseEntity<Boolean> isFavorited(@PathVariable Long movieId, Authentication authentication) {
-        Long userId = getUserId(authentication);
-        return ResponseEntity.ok(favoriteService.isFavorited(userId, movieId));
-    }
-
-    private Long getUserId(Authentication authentication) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(()->new ResourceNotFoundException("Không tìm thấy user"));
-        return user.getId();
+    // FE dung de hien thi icon tim do hay trang
+    @GetMapping("/{movieId}/check")
+    public ResponseEntity<Boolean> isFavorited(@PathVariable Long movieId,
+                                               Authentication authentication) {
+        return ResponseEntity.ok(favoriteService.isFavorited(currentUser.id(authentication), movieId));
     }
 }

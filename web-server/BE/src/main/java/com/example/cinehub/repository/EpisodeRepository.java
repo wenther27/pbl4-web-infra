@@ -8,6 +8,10 @@ import java.util.List;
 
 @Repository
 public interface EpisodeRepository extends JpaRepository<Episode, Long> {
-    // Lọc danh sách tập theo ID phim và sắp xếp tăng dần theo số tập
+    // Loc danh sach tap theo ID phim va sap xep tang dan theo so tap
     List<Episode> findByMovieIdOrderByEpisodeNumberAsc(Long movieId);
+
+    // Bang episodes co UNIQUE (movie_id, episode_number) -> check truoc de tra 400
+    // thay vi de vo constraint thanh loi 500
+    boolean existsByMovieIdAndEpisodeNumber(Long movieId, Integer episodeNumber);
 }

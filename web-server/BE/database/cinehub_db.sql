@@ -131,14 +131,20 @@ CREATE TABLE watch_history (
 -- DỮ LIỆU MẪU
 -- ============================================================
 
--- Users (mật khẩu để thô, sau này mã hoá bằng BCrypt ở tầng Java)
+-- Users
+-- Mat khau cua tat ca tai khoan mau: cinehub123
+-- Da la hash BCrypt san. KHONG luu mat khau tho o day: Spring Security dung
+-- BCryptPasswordEncoder nen mat khau tho se khong bao gio khop khi dang nhap.
+-- Muon doi mat khau mau -> tao hash moi bang BCryptPasswordEncoder().encode("...")
+SET @pw = '$2a$10$h0dN.rOgzrjlnrSF6roG3O7zzvIPSn9OwTwHXMJzW4EUU7vwIHoIu';
+
 INSERT INTO users (username, email, password, role) VALUES
-('admin',   'admin@cinehub.com',   '123456', 'ADMIN'),
-('quanzn',  'quan@cinehub.com',    '123456', 'USER'),
-('khanh',   'khanh@cinehub.com',   '123456', 'USER'),
-('linhnt',  'linh@cinehub.com',    '123456', 'USER'),
-('hoang',   'hoang@cinehub.com',   '123456', 'USER'),
-('mynguyen','my@cinehub.com',      '123456', 'USER');
+('admin',   'admin@cinehub.com',   @pw, 'ADMIN'),
+('quanzn',  'quan@cinehub.com',    @pw, 'USER'),
+('khanh',   'khanh@cinehub.com',   @pw, 'USER'),
+('linhnt',  'linh@cinehub.com',    @pw, 'USER'),
+('hoang',   'hoang@cinehub.com',   @pw, 'USER'),
+('mynguyen','my@cinehub.com',      @pw, 'USER');
 
 -- Genres
 INSERT INTO genres (name, slug) VALUES

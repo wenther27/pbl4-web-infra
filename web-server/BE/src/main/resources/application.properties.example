@@ -1,7 +1,73 @@
-spring.datasource.url=jdbc:mysql://localhost:3306/cinehub_db
-spring.datasource.username=YOUR_DB_USERNAME
-spring.datasource.password=YOUR_DB_PASSWORD
-spring.jpa.hibernate.ddl-auto=update
+# ============================================================
+# CineHub-BE - Cau hinh ung dung
+# Moi gia tri deu co the ghi de bang bien moi truong,
+# phuc vu chay nhieu instance trong Docker o tuan 3-4.
+# ============================================================
 
-app.jwt.secret=YOUR_JWT_SECRET_KEY_MIN_32_CHARS
-app.jwt.expiration=86400000
+spring.application.name=CineHub-BE
+
+# ------------------------------------------------------------
+# Database
+# ------------------------------------------------------------
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3307/cinehub_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+spring.datasource.username=${DB_USER:root}
+spring.datasource.password=${DB_PASSWORD:DOI-THANH-PASSWORD-MYSQL-CUA-BAN}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Connection pool - gioi han de 3 instance khong lam can ket noi MySQL
+spring.datasource.hikari.maximum-pool-size=${DB_POOL_SIZE:10}
+spring.datasource.hikari.minimum-idle=2
+spring.datasource.hikari.connection-timeout=10000
+
+# ------------------------------------------------------------
+# JPA / Hibernate
+# ------------------------------------------------------------
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=${SHOW_SQL:true}
+spring.jpa.open-in-view=false
+spring.jpa.properties.hibernate.connection.characterEncoding=UTF-8
+spring.jpa.properties.hibernate.connection.useUnicode=true
+# Nap genres cua nhieu phim trong 1 cau query IN (...) thay vi 1 query moi phim (N+1)
+spring.jpa.properties.hibernate.default_batch_fetch_size=30
+
+# ------------------------------------------------------------
+# Encoding - bat buoc de tieng Viet khong bi loi
+# ------------------------------------------------------------
+server.servlet.encoding.charset=UTF-8
+server.servlet.encoding.enabled=true
+server.servlet.encoding.force=true
+
+# ------------------------------------------------------------
+# JWT
+# ------------------------------------------------------------
+app.jwt.secret=${JWT_SECRET:DOI-CHUOI-NAY-THANH-CUA-BAN-toi-thieu-64-ky-tu-de-du-dai-cho-thuat-toan-HS512}
+app.jwt.expiration=${JWT_EXPIRATION:86400000}
+
+# ------------------------------------------------------------
+# CORS - domain cua FE duoc phep goi API (ngan cach boi dau phay)
+# Cau hinh o SecurityConfig, khong dung @CrossOrigin tren controller nua
+# ------------------------------------------------------------
+app.cors.allowed-origins=${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+
+# ------------------------------------------------------------
+# Server
+# ------------------------------------------------------------
+server.port=${SERVER_PORT:8080}
+
+# ------------------------------------------------------------
+# Instance ID - de biet request roi vao web-1, web-2 hay web-3
+# ------------------------------------------------------------
+app.instance-id=${INSTANCE_ID:local}
+
+# ------------------------------------------------------------
+# Actuator - Load Balancer goi /actuator/health de health check
+# ------------------------------------------------------------
+management.endpoints.web.exposure.include=health,info
+management.endpoint.health.show-details=never
+
+# ------------------------------------------------------------
+# Logging
+# ------------------------------------------------------------
+logging.level.root=INFO
+logging.level.com.example.cinehub=${LOG_LEVEL:INFO}
+logging.level.com.zaxxer.hikari.HikariConfig=DEBUG

@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class Favorite {
-    @EmbeddedId FavoriteId id;
+    @EmbeddedId
+    private FavoriteId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId") //Khớp với tên fiel trong FavoriteId

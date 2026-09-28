@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -32,17 +31,28 @@ public class User {
     @Enumerated(EnumType.STRING)
     private RoleUser role;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updateAt;
 
-    @ManyToMany
-    @JoinTable(
-            name = "favorites",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "movie_id")
-    )
-    private Set<Movie> favoriteMovies;
+    // Bang users co DEFAULT CURRENT_TIMESTAMP, nhung Hibernate van INSERT
+    // gia tri NULL tuong minh vao 2 cot nay -> phai tu set o tang Java.
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createAt = now;
+        updateAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updateAt = LocalDateTime.now();
+    }
+
+    // Luu y: KHONG khai bao thêm @ManyToMany tro vao bang "favorites" o day.
+    // Bang favorites da duoc entity Favorite quan ly (co them cot added_at);
+    // map 2 lan cung mot bang se lam Hibernate ghi trung/xung dot.
+    // Muon lay danh sach yeu thich -> dung FavoriteService.
 }

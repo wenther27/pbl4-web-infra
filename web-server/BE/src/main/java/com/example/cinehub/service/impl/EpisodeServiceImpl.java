@@ -1,8 +1,10 @@
 package com.example.cinehub.service.impl;
 
+import com.example.cinehub.dto.request.EpisodeRequest;
 import com.example.cinehub.dto.response.EpisodeDTO;
 import com.example.cinehub.entity.Episode;
 import com.example.cinehub.entity.Movie;
+import com.example.cinehub.exception.BadRequestException;
 import com.example.cinehub.exception.ResourceNotFoundException;
 import com.example.cinehub.repository.EpisodeRepository;
 import com.example.cinehub.repository.MovieRepository;
@@ -13,56 +15,72 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 public class EpisodeServiceImpl implements EpisodeService {
-    @Autowired
-    private EpisodeRepository episodeRepository;
-    @Autowired
-    private MovieRepository movieRepository;
-    @Autowired
-    private ModelMapper modelMapper;
+    @Autowired private EpisodeRepository episodeRepository;
+    @Autowired private MovieRepository movieRepository;
+    @Autowired private ModelMapper modelMapper;
 
     @Transactional(readOnly = true)
     @Override
-    public List<EpisodeDTO> getEpisodeByMovieId(Long id) {
-        if(!movieRepository.existsById(id))
-            throw new ResourceNotFoundException("Không tìm thấy film với ID = " + id);
-        List<Episode> episodes = episodeRepository.findByMovieIdOrderByEpisodeNumberAsc(id);
-        return episodes.stream().map(this::convertToDTO).collect(Collectors.toList());
+    public List<EpisodeDTO> getEpisodeByMovieId(Long movieId) {
+        if (!movieRepository.existsById(movieId))
+            throw new ResourceNotFoundException("Không tìm thấy phim với ID = " + movieId);
+
+        return episodeRepository.findByMovieIdOrderByEpisodeNumberAsc(movieId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     @Override
-    public EpisodeDTO addEpisode(Long id, Episode episode) {
-        Movie movie = movieRepository.findById(id)
-                .orElseThrow(()->new ResourceNotFoundException("Không tìm thấy fim với ID = " + id));
-        episode.setMovie(movie); // Khoa ngoại kết nối tập phim với bo phim
-        return convertToDTO(episodeRepository.save(episode));
-    }
+    public EpisodeDTO addEpisode(Long movieId, EpisodeRequest request) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phim với ID = " + movieId));
 
-    @Transactional
-    @Override
-    public EpisodeDTO updateEpisode(Long id, Episode episodeDetails) {
-        Episode episode = episodeRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy tập fim với ID = " +id));
+        if (episodeRepository.existsByMovieIdAndEpisodeNumber(movieId, request.getEpisodeNumber()))
+            throw new BadRequestException("Phim này đã có tập số " + request.getEpisodeNumber());
 
-        episode.setTitle(episodeDetails.getTitle());
-        episode.setEpisodeNumber(episodeDetails.getEpisodeNumber());
-        episode.setVideoUrl(episodeDetails.getVideoUrl());
-        episode.setThumbnailUrl(episodeDetails.getThumbnailUrl());
-        episode.setDuration(episodeDetails.getDuration());
+        Episode episode = new Episode();
+        applyRequest(episode, request);
+        episode.setMovie(movie); // khoa ngoai noi tap phim voi bo phim
 
         return convertToDTO(episodeRepository.save(episode));
     }
 
     @Transactional
     @Override
-    public void deleteEpisode(Long id) {
-        Episode episode = episodeRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy tập film với ID = " + id));
+    public EpisodeDTO updateEpisode(Long episodeId, EpisodeRequest request) {
+        Episode episode = episodeRepository.findById(episodeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tập phim với ID = " + episodeId));
+
+        // Chi check trung khi nguoi dung doi sang so tap khac
+        Long movieId = episode.getMovie().getId();
+        if (!Objects.equals(episode.getEpisodeNumber(), request.getEpisodeNumber())
+                && episodeRepository.existsByMovieIdAndEpisodeNumber(movieId, request.getEpisodeNumber()))
+            throw new BadRequestException("Phim này đã có tập số " + request.getEpisodeNumber());
+
+        applyRequest(episode, request);
+        return convertToDTO(episodeRepository.save(episode));
+    }
+
+    @Transactional
+    @Override
+    public void deleteEpisode(Long episodeId) {
+        Episode episode = episodeRepository.findById(episodeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tập phim với ID = " + episodeId));
         episodeRepository.delete(episode);
+    }
+
+    private void applyRequest(Episode episode, EpisodeRequest request) {
+        episode.setTitle(request.getTitle());
+        episode.setEpisodeNumber(request.getEpisodeNumber());
+        episode.setVideoUrl(request.getVideoUrl());
+        episode.setThumbnailUrl(request.getThumbnailUrl());
+        episode.setDuration(request.getDuration());
     }
 
     private EpisodeDTO convertToDTO(Episode episode) {
