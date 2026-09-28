@@ -17,9 +17,25 @@ Kho mã nguồn kết hợp backend CineHub với hạ tầng chạy nhiều ins
 1. Sao chép `.env.example` thành `.env` và thay mật khẩu/JWT secret.
 2. Chạy `docker compose up --build`.
 3. Ba instance API được mở tại `http://localhost:8081`, `:8082`, `:8083`.
-4. MySQL được mở cho máy host tại `localhost:3307`.
+4. MySQL primary (ghi) mở tại `localhost:3307`, replica (chỉ đọc) tại `localhost:3308`.
 
 Tài khoản mẫu: `admin` / `123456` (role `ADMIN`).
+
+### Database primary / replica
+
+- Replication theo GTID, **tự cấu hình lần đầu** `docker compose up`: primary tạo user `repl`
+  (`database/primary/init/`), replica copy dữ liệu từ primary rồi bật replication
+  (`database/replica/init/`). Không cần gõ lệnh tay.
+- Replica chỉ báo `healthy` khi cả hai luồng replication đang chạy; các instance `web-*` chờ cả hai DB healthy.
+- Replica bật `super_read_only`: mọi lệnh ghi vào replica đều bị từ chối, kể cả root.
+- Backend: transaction `@Transactional(readOnly = true)` đọc từ replica, còn lại ghi vào primary
+  (`DataSourceConfig`, `RoutingDataSource`).
+- Chỉ chạy DB (khi dev backend bằng IDE): `docker compose up -d mysql-primary mysql-replica`.
+- Kiểm tra replication:
+  `docker compose exec mysql-replica bash /usr/local/bin/replica-healthcheck.sh && echo OK`
+- Script init chỉ chạy khi volume còn trống. Muốn khởi tạo lại từ đầu: `docker compose down -v`
+  (**xóa toàn bộ dữ liệu**).
+- Đổi cổng host bằng `MYSQL_PRIMARY_PORT` / `MYSQL_REPLICA_PORT` trong `.env`.
 
 Kiểm tra sức khỏe một instance:
 
