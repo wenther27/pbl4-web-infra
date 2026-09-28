@@ -13,14 +13,14 @@ function genreChecks(selectedIds = []) {
 
 function movieForm(movie = {}) {
   const selectedIds = (movie.genres || []).map((genre) => Number(genre.id));
-  return `<div class="admin-form-grid">
+  return `<div class="admin-form-grid admin-movie-form">
     <label class="admin-form-field admin-form-field--full"><span>Tên phim *</span><input name="title" required maxlength="255" value="${escapeHtml(movie.title || '')}"></label>
-    <label class="admin-form-field admin-form-field--full"><span>Mô tả</span><textarea name="description">${escapeHtml(movie.description || '')}</textarea></label>
+    <label class="admin-form-field admin-form-field--full"><span>Mô tả</span><textarea name="description" rows="3">${escapeHtml(movie.description || '')}</textarea></label>
     <label class="admin-form-field"><span>Loại phim *</span><select name="movieType" required><option value="movie" ${movie.movieType === 'movie' ? 'selected' : ''}>Phim lẻ</option><option value="series" ${movie.movieType === 'series' ? 'selected' : ''}>Phim bộ</option><option value="anime" ${movie.movieType === 'anime' ? 'selected' : ''}>Anime</option></select></label>
     <label class="admin-form-field"><span>Trạng thái *</span><select name="status" required><option value="released" ${movie.status === 'released' ? 'selected' : ''}>Đã phát hành</option><option value="ongoing" ${movie.status === 'ongoing' ? 'selected' : ''}>Đang chiếu</option><option value="upcoming" ${movie.status === 'upcoming' ? 'selected' : ''}>Sắp chiếu</option></select></label>
     <label class="admin-form-field"><span>Ngày phát hành</span><input name="releaseDate" type="date" value="${escapeHtml(movie.releaseDate || '')}"></label>
     <label class="admin-form-field"><span>Thời lượng (phút) *</span><input name="duration" type="number" required min="1" value="${movie.duration || ''}"></label>
-    <label class="admin-form-field"><span>Điểm đánh giá *</span><input name="rating" type="number" required min="0" max="10" step="0.1" value="${movie.rating ?? 0}"></label>
+    <label class="admin-form-field admin-form-field--full admin-form-field--rating"><span>Điểm đánh giá *</span><input name="rating" type="number" required min="0" max="10" step="0.1" value="${movie.rating ?? 0}"></label>
     ${imageUploadField({ label: 'Poster phim', urlName: 'posterUrl', fileName: 'posterFile', currentUrl: movie.posterUrl || '' })}
     ${imageUploadField({ label: 'Ảnh nền phim', urlName: 'backdropUrl', fileName: 'backdropFile', currentUrl: movie.backdropUrl || '' })}
     <div class="admin-form-field admin-form-field--full"><span>Thể loại</span><div class="admin-checks">${genreChecks(selectedIds)}</div></div>

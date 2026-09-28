@@ -32,6 +32,16 @@ export const adminApi = {
     return adminRequest('/uploads/images', { method: 'POST', body: formData });
   },
 
+  uploadVideo(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return adminRequest('/uploads/videos', {
+      method: 'POST',
+      body: formData,
+      timeout: 10 * 60 * 1000
+    });
+  },
+
   getMovies: () => adminRequest('/movies/all'),
   createMovie: (movie) => adminRequest('/movies', jsonBody('POST', movie)),
   updateMovie: (id, movie) => adminRequest(`/movies/${id}`, jsonBody('PUT', movie)),

@@ -99,6 +99,23 @@ class AuthorizationRulesTests {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
+    void userCannotUploadVideo() throws Exception {
+        mockMvc.perform(multipart("/api/uploads/videos"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void adminCanUploadValidVideo() throws Exception {
+        byte[] mp4 = new byte[] {0, 0, 0, 12, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm'};
+        MockMultipartFile video = new MockMultipartFile("file", "episode.mp4", "video/mp4", mp4);
+
+        mockMvc.perform(multipart("/api/uploads/videos").file(video))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(roles = "ADMIN")
     void adminCanListAllUsers() throws Exception {
         mockMvc.perform(get("/api/users"))

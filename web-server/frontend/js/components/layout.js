@@ -9,7 +9,9 @@ function headerTemplate(root, activePage, session) {
   const active = (page) => activePage === page ? 'is-active' : '';
   const authLabel = session ? escapeHtml(session.username) : 'Đăng nhập';
   const authHref = '#';
-  const adminLink = session?.role === 'ADMIN' ? `<a class="${active('admin')}" href="${root}/pages/admin/index.html">Quản trị</a>` : '';
+  const avatarInitial = session ? escapeHtml(String(session.username).trim().charAt(0).toUpperCase() || 'U') : '';
+  const roleLabel = session?.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên';
+  const mobileAdminLink = session?.role === 'ADMIN' ? `<a class="nav-admin-mobile" href="${root}/pages/admin/index.html">Trang quản trị</a>` : '';
   return `<div class="site-header"><div class="container site-header__inner">
     <a class="brand" href="${root}/index.html" aria-label="CineHub - Trang chủ"><span class="brand__mark">▣</span><span>Cine<em>Hub</em></span></a>
     <nav class="nav" id="main-nav" aria-label="Điều hướng chính">
@@ -18,13 +20,13 @@ function headerTemplate(root, activePage, session) {
       <a href="${root}/pages/catalog.html?type=movie">Phim chiếu rạp</a>
       <a href="${root}/pages/catalog.html?type=series">Phim bộ</a>
       <a href="${root}/pages/catalog.html?type=anime">Anime</a>
-      ${adminLink}
-      ${session ? `<a class="nav-auth-mobile" href="#" data-auth-logout>${authLabel} · Đăng xuất</a>` : `<a class="nav-auth-mobile" href="${authHref}" data-auth-open="login">Đăng nhập</a>`}
+      ${mobileAdminLink}
+      ${session ? `<a class="nav-auth-mobile" href="#" data-auth-logout>${authLabel} · Đăng xuất</a>` : `<a class="nav-auth-mobile" href="${authHref}" data-auth-open="login">Đăng nhập</a><a class="nav-auth-mobile" href="${authHref}" data-auth-open="register">Đăng ký</a>`}
     </nav>
-    <form class="header-search" action="${root}/pages/catalog.html"><label class="sr-only" for="site-search">Tìm phim</label><input id="site-search" name="q" type="search" placeholder="Tìm kiếm phim…"><button type="submit" aria-label="Tìm kiếm">⌕</button></form>
+    <form class="header-search" action="${root}/pages/catalog.html"><label class="sr-only" for="site-search">Tìm phim</label><input id="site-search" name="q" type="search" placeholder="Tìm kiếm phim…"><button type="submit" aria-label="Tìm kiếm"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg></button></form>
     ${session
-      ? `<div class="member-menu"><button class="member-link member-link--button" id="member-button" type="button" aria-expanded="false">● ${authLabel}</button><div class="member-dropdown" id="member-dropdown"><span>${escapeHtml(session.role || 'USER')}</span>${session.role === 'ADMIN' ? `<a href="${root}/pages/admin/index.html">Trang quản trị</a>` : ''}<button id="logout-button" type="button">Đăng xuất</button></div></div>`
-      : `<a class="member-link" href="${authHref}" data-auth-open="login">Đăng nhập</a>`}
+      ? `<div class="member-menu"><button class="member-avatar" id="member-button" type="button" aria-label="Mở menu tài khoản của ${authLabel}" aria-haspopup="true" aria-controls="member-dropdown" aria-expanded="false"><span class="member-avatar__circle" aria-hidden="true">${avatarInitial}</span><span class="member-avatar__name">${authLabel}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"></path></svg></button><div class="member-dropdown" id="member-dropdown"><div class="member-dropdown__profile"><div class="member-dropdown__avatar" aria-hidden="true">${avatarInitial}</div><div><strong>${authLabel}</strong><small>${roleLabel}</small></div></div>${session.role === 'ADMIN' ? `<a class="member-dropdown__link" href="${root}/pages/admin/index.html"><span aria-hidden="true">▦</span>Trang quản trị</a>` : ''}<button class="member-dropdown__logout" id="logout-button" type="button"><span aria-hidden="true">↪</span>Đăng xuất</button></div></div>`
+      : `<div class="header-auth-actions"><a class="header-auth-button header-auth-button--login" href="${authHref}" data-auth-open="login">Đăng nhập</a><a class="header-auth-button header-auth-button--register" href="${authHref}" data-auth-open="register">Đăng ký</a></div>`}
     <button class="menu-button" id="menu-button" type="button" aria-controls="main-nav" aria-expanded="false">☰</button>
   </div></div>`;
 }
@@ -57,9 +59,22 @@ export function mountLayout() {
 
   const memberButton = document.querySelector('#member-button');
   const memberDropdown = document.querySelector('#member-dropdown');
-  memberButton?.addEventListener('click', () => {
+  const closeMemberMenu = () => {
+    memberDropdown?.classList.remove('is-open');
+    memberButton?.setAttribute('aria-expanded', 'false');
+  };
+  memberButton?.addEventListener('click', (event) => {
+    event.stopPropagation();
     const isOpen = memberDropdown.classList.toggle('is-open');
     memberButton.setAttribute('aria-expanded', String(isOpen));
+  });
+  memberDropdown?.addEventListener('click', (event) => event.stopPropagation());
+  document.addEventListener('click', closeMemberMenu);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeMemberMenu();
+      memberButton?.focus();
+    }
   });
 
   document.querySelector('#logout-button')?.addEventListener('click', () => {

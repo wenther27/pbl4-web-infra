@@ -2,12 +2,13 @@ import { APP_CONFIG } from '../config.js';
 
 export async function request(path, options = {}) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), APP_CONFIG.requestTimeout);
+  const { timeout = APP_CONFIG.requestTimeout, ...fetchOptions } = options;
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
     const response = await fetch(`${APP_CONFIG.apiBaseUrl}${path}`, {
-      ...options,
-      headers: { Accept: 'application/json', ...options.headers },
+      ...fetchOptions,
+      headers: { Accept: 'application/json', ...fetchOptions.headers },
       signal: controller.signal
     });
     if (!response.ok) {
@@ -44,5 +45,8 @@ export const movieApi = {
   },
   getGenres() {
     return request('/genres');
+  },
+  getEpisodes(movieId) {
+    return request(`/movies/${encodeURIComponent(movieId)}/episodes`);
   }
 };

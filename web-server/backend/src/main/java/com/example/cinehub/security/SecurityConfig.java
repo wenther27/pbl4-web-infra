@@ -50,6 +50,7 @@ public class SecurityConfig {
                         // ADMIN: quản trị toàn bộ dữ liệu hệ thống.
                         .requestMatchers(HttpMethod.GET, "/api/movies/all" ).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/uploads/images").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/uploads/videos").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/movies", "/api/genres").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/movies/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/movies/*").hasRole("ADMIN")

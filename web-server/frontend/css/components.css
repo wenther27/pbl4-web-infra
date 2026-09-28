@@ -21,6 +21,15 @@
 .button--primary:hover {
   background: var(--color-primary-hover);
 }
+.button--secondary {
+  border-color: var(--color-border);
+  color: var(--color-text);
+  background: #fff;
+}
+.button--secondary:hover {
+  border-color: #d4cdcb;
+  background: var(--color-muted);
+}
 .button--ghost {
   border-color: var(--color-border);
   background: rgba(255, 255, 255, 0.74);

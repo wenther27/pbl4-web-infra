@@ -1,6 +1,7 @@
 import { adminApi } from '../api/admin.js';
 import { confirmAction, escapeHtml, openAdminDialog, showToast, tableMessage } from './shared.js';
 import { bindImagePreviews, imageUploadField, resolveImageUrl } from './image-upload.js';
+import { bindVideoPreview, resolveVideoUrl, videoUploadField } from './video-upload.js';
 
 let movies = [];
 let episodes = [];
@@ -11,14 +12,15 @@ function episodeForm(episode = {}) {
     <label class="admin-form-field admin-form-field--full"><span>Tiêu đề tập</span><input name="title" maxlength="255" value="${escapeHtml(episode.title || '')}" placeholder="Ví dụ: Khởi đầu"></label>
     <label class="admin-form-field"><span>Số tập *</span><input name="episodeNumber" type="number" required min="1" value="${episode.episodeNumber || ''}"></label>
     <label class="admin-form-field"><span>Thời lượng (phút)</span><input name="duration" type="number" min="1" value="${episode.duration || ''}"></label>
-    <label class="admin-form-field admin-form-field--full"><span>URL video *</span><input name="videoUrl" type="url" required value="${escapeHtml(episode.videoUrl || '')}"></label>
+    ${videoUploadField({ currentUrl: episode.videoUrl || '' })}
     ${imageUploadField({ label: 'Ảnh thu nhỏ', urlName: 'thumbnailUrl', fileName: 'thumbnailFile', currentUrl: episode.thumbnailUrl || '', full: true })}
   </div>`;
 }
 
 async function toPayload(data) {
+  const videoUrl = await resolveVideoUrl(data);
   const thumbnailUrl = await resolveImageUrl(data, { fileName: 'thumbnailFile', urlName: 'thumbnailUrl', category: 'episodes' });
-  return { title: data.get('title').trim(), episodeNumber: Number(data.get('episodeNumber')), duration: data.get('duration') ? Number(data.get('duration')) : null, videoUrl: data.get('videoUrl').trim(), thumbnailUrl };
+  return { title: data.get('title').trim(), episodeNumber: Number(data.get('episodeNumber')), duration: data.get('duration') ? Number(data.get('duration')) : null, videoUrl, thumbnailUrl };
 }
 
 function renderEpisodes() {
@@ -49,7 +51,9 @@ function openEpisodeEditor(episode) {
       await loadEpisodes(movieId);
     }
   });
-  bindImagePreviews(document.querySelector('#admin-dialog-content'));
+  const dialogContent = document.querySelector('#admin-dialog-content');
+  bindVideoPreview(dialogContent);
+  bindImagePreviews(dialogContent);
 }
 
 function setMovies(nextMovies) {
