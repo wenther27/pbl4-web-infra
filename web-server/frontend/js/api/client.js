@@ -21,7 +21,14 @@ export async function request(path, options = {}) {
       error.status = response.status;
       throw error;
     }
-    return await response.json();
+    if (response.status === 204) return null;
+    const responseText = await response.text();
+    if (!responseText) return null;
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      return responseText;
+    }
   } finally {
     clearTimeout(timeoutId);
   }

@@ -19,6 +19,8 @@ x-web-common: &web-common
     SERVER_PORT: 8080
   networks:
     - cinehub-network
+  volumes:
+    - cinehub-uploads:/app/uploads
 
 services:
   database:
@@ -91,6 +93,7 @@ services:
 
 volumes:
   mysql-data:
+  cinehub-uploads:
 
 networks:
   cinehub-network:

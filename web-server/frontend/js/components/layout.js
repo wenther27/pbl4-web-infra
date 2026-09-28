@@ -9,6 +9,7 @@ function headerTemplate(root, activePage, session) {
   const active = (page) => activePage === page ? 'is-active' : '';
   const authLabel = session ? escapeHtml(session.username) : 'Đăng nhập';
   const authHref = '#';
+  const adminLink = session?.role === 'ADMIN' ? `<a class="${active('admin')}" href="${root}/pages/admin/index.html">Quản trị</a>` : '';
   return `<div class="site-header"><div class="container site-header__inner">
     <a class="brand" href="${root}/index.html" aria-label="CineHub - Trang chủ"><span class="brand__mark">▣</span><span>Cine<em>Hub</em></span></a>
     <nav class="nav" id="main-nav" aria-label="Điều hướng chính">
@@ -17,11 +18,12 @@ function headerTemplate(root, activePage, session) {
       <a href="${root}/pages/catalog.html?type=movie">Phim chiếu rạp</a>
       <a href="${root}/pages/catalog.html?type=series">Phim bộ</a>
       <a href="${root}/pages/catalog.html?type=anime">Anime</a>
+      ${adminLink}
       ${session ? `<a class="nav-auth-mobile" href="#" data-auth-logout>${authLabel} · Đăng xuất</a>` : `<a class="nav-auth-mobile" href="${authHref}" data-auth-open="login">Đăng nhập</a>`}
     </nav>
     <form class="header-search" action="${root}/pages/catalog.html"><label class="sr-only" for="site-search">Tìm phim</label><input id="site-search" name="q" type="search" placeholder="Tìm kiếm phim…"><button type="submit" aria-label="Tìm kiếm">⌕</button></form>
     ${session
-      ? `<div class="member-menu"><button class="member-link member-link--button" id="member-button" type="button" aria-expanded="false">● ${authLabel}</button><div class="member-dropdown" id="member-dropdown"><span>${escapeHtml(session.role || 'USER')}</span><button id="logout-button" type="button">Đăng xuất</button></div></div>`
+      ? `<div class="member-menu"><button class="member-link member-link--button" id="member-button" type="button" aria-expanded="false">● ${authLabel}</button><div class="member-dropdown" id="member-dropdown"><span>${escapeHtml(session.role || 'USER')}</span>${session.role === 'ADMIN' ? `<a href="${root}/pages/admin/index.html">Trang quản trị</a>` : ''}<button id="logout-button" type="button">Đăng xuất</button></div></div>`
       : `<a class="member-link" href="${authHref}" data-auth-open="login">Đăng nhập</a>`}
     <button class="menu-button" id="menu-button" type="button" aria-controls="main-nav" aria-expanded="false">☰</button>
   </div></div>`;
