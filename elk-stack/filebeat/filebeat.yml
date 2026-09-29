@@ -1,0 +1,64 @@
+# ============================================================
+# Filebeat: doc log cua web-1/2/3 roi gui vao Elasticsearch.
+#
+# Backend (profile "docker") in moi request thanh 1 dong JSON ra stdout, vd:
+#   {"@timestamp":"...","message":"GET /api/movies -> 200 (12ms)","instance":"web-2",
+#    "httpMethod":"GET","path":"/api/movies","status":"200","durationMs":"12","clientIp":"..."}
+# Docker luu stdout do vao /var/lib/docker/containers/<id>/<id>-json.log.
+# ============================================================
+
+# Tu phat hien container dang chay qua docker.sock, chi lay web-1/2/3 cua project
+# cinehub-infrastructure (ten "name:" trong docker-compose.yml o thu muc goc).
+# Them web-4 vao docker-compose.yml la Filebeat tu doc them, khong phai sua file nay.
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      templates:
+        # Ten container do docker compose dat: <project>-<service>-<so thu tu>
+        - condition:
+            regexp:
+              docker.container.name: "^cinehub-infrastructure-web-[0-9]+-[0-9]+$"
+          config:
+            - type: filestream
+              id: "web-${data.docker.container.id}"
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+              parsers:
+                # Bo lop boc cua Docker ({"log":"...","stream":"stdout","time":...})
+                - container: ~
+
+processors:
+  # Tach chuoi JSON cua backend thanh cac field rieng (instance, path, status, ...)
+  - decode_json_fields:
+      fields: ["message"]
+      target: ""
+      overwrite_keys: true
+      add_error_key: true
+  # Bo cac dong khong phai log cua ung dung (vd dong "Picked up JAVA_TOOL_OPTIONS" cua JVM)
+  - drop_event:
+      when:
+        not:
+          has_fields: ["logger_name"]
+  # Bot field thua cho de nhin trong Kibana
+  - drop_fields:
+      ignore_missing: true
+      fields: ["agent", "ecs", "input", "log", "stream", "appName", "instanceId", "error",
+               "docker", "container.id", "container.image", "host"]
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  # Moi ngay 1 index: weblogs-2026.09.29, ... -> Data View trong Kibana: weblogs-*
+  index: "weblogs-%{+yyyy.MM.dd}"
+
+# Index template tu viet (weblogs-template.json): khai bao kieu du lieu cho tung field
+# de status/durationMs la SO, clientIp la IP -> ve bieu do / loc theo khoang duoc
+# (cam bay so 5 trong roadmap). Khong khai bao thi Elasticsearch doan thanh chuoi.
+setup.ilm.enabled: false
+setup.template.name: "weblogs"
+setup.template.pattern: "weblogs-*"
+setup.template.overwrite: true
+setup.template.json.enabled: true
+setup.template.json.path: "/usr/share/filebeat/weblogs-template.json"
+setup.template.json.name: "weblogs"
+
+logging.level: info

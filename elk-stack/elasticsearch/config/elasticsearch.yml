@@ -1,0 +1,15 @@
+# Elasticsearch cho moi truong dev/demo: 1 node, khong bat bao mat.
+cluster.name: cinehub-logs
+node.name: es-1
+network.host: 0.0.0.0
+
+# Chi 1 node -> khong can bau master / tim node khac
+discovery.type: single-node
+
+# Tat username/password + HTTPS cho de demo. KHONG dung cau hinh nay tren production.
+xpack.security.enabled: false
+
+# Khong dung mmap de doc index -> khong can set vm.max_map_count=262144
+# tren may host (cam bay so 1 trong roadmap). Doi lai toc do doc cham hon mot chut,
+# chap nhan duoc voi luong log cua do an; may nao clone repo ve cung chay duoc ngay.
+node.store.allow_mmap: false
