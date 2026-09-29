@@ -103,6 +103,8 @@ public class SecurityConfig {
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        // Cho frontend doc duoc request roi vao instance nao (web-1/2/3)
+        configuration.setExposedHeaders(List.of("X-Instance-Id"));
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
