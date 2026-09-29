@@ -49,3 +49,6 @@ out/
 # ===== Load testing results =====
 load-testing/**/*.jtl
 load-testing/**/results/
+
+# Ban backend cu, da chuyen sang web-server/backend
+web-server/BE/

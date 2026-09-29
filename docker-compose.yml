@@ -41,6 +41,9 @@ x-web-common: &web-common
     UPLOAD_MAX_SIZE: ${UPLOAD_MAX_SIZE:-5242880}
     UPLOAD_VIDEO_MAX_SIZE: ${UPLOAD_VIDEO_MAX_SIZE:-524288000}
     SERVER_PORT: 8080
+    # Log JSON (instance/path/status/durationMs...) cho ELK, xem logback-spring.xml
+    SPRING_PROFILES_ACTIVE: docker
+    JAVA_TOOL_OPTIONS: -Xmx256m -XX:+UseSerialGC
   networks:
     - cinehub-network
   volumes:

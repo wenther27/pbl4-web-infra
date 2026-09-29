@@ -1,4 +1,5 @@
 import { APP_CONFIG } from '../config.js';
+import { showServedBy, showServerDown } from '../components/server-badge.js';
 
 export async function request(path, options = {}) {
   const controller = new AbortController();
@@ -6,11 +7,18 @@ export async function request(path, options = {}) {
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(`${APP_CONFIG.apiBaseUrl}${path}`, {
-      ...fetchOptions,
-      headers: { Accept: 'application/json', ...fetchOptions.headers },
-      signal: controller.signal
-    });
+    let response;
+    try {
+      response = await fetch(`${APP_CONFIG.apiBaseUrl}${path}`, {
+        ...fetchOptions,
+        headers: { Accept: 'application/json', ...fetchOptions.headers },
+        signal: controller.signal
+      });
+    } catch (networkError) {
+      showServerDown(APP_CONFIG.apiBaseUrl);
+      throw networkError;
+    }
+    showServedBy(response.headers.get('X-Instance-Id'), APP_CONFIG.apiBaseUrl);
     if (!response.ok) {
       let message = `API trả về mã ${response.status}`;
       try {

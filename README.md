@@ -8,7 +8,7 @@ Kho mã nguồn kết hợp backend CineHub với hạ tầng chạy nhiều ins
 - `web-server/frontend`: giao diện độc lập viết bằng HTML, CSS và JavaScript thuần.
 - `database`: schema MySQL và dữ liệu mẫu.
 - `load-balancer`: bộ khung load balancer Java (chưa triển khai).
-- `elk-stack`: bộ khung ELK/Filebeat (chưa triển khai).
+- `elk-stack`: Filebeat → Elasticsearch → Kibana, có dashboard giám sát traffic (chưa dùng Logstash).
 - `anomaly-detection`: bộ khung phát hiện bất thường (chưa triển khai).
 - `load-testing`: vị trí dành cho kịch bản Apache Bench/JMeter.
 
@@ -20,6 +20,37 @@ Kho mã nguồn kết hợp backend CineHub với hạ tầng chạy nhiều ins
 4. MySQL primary (ghi) mở tại `localhost:3307`, replica (chỉ đọc) tại `localhost:3308`.
 
 Tài khoản mẫu: `admin` / `123456` (role `ADMIN`).
+
+Mỗi response có header `X-Instance-Id` (web-1/2/3) để biết request rơi vào instance nào.
+Trong Docker, log backend là JSON một dòng (`instance`, `path`, `status`, `durationMs`, `clientIp`)
+để Filebeat/Logstash đẩy sang Elasticsearch.
+
+### Demo tự kiểm tra toàn hệ thống (Windows)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\demo.ps1          # dừng sau mỗi bước
+powershell -ExecutionPolicy Bypass -File .\demo.ps1 -NoPause # chạy liền
+```
+
+Script tự bật web + MySQL + ELK + frontend, rồi kiểm tra: 3 instance, token dùng chéo instance,
+replication, replica chỉ đọc, phân quyền, log JSON vào Elasticsearch/Kibana, phát hiện instance chết.
+
+### ELK: xem log trên Kibana
+
+```powershell
+docker compose up -d                                              # web-1/2/3 + MySQL (chạy trước)
+docker compose -f elk-stack/docker-compose.elk.yml up -d          # Elasticsearch + Kibana + Filebeat
+powershell -ExecutionPolicy Bypass -File .\elk-stack\setup-kibana.ps1   # nạp data view + dashboard (1 lần)
+```
+
+- Kibana: http://localhost:5601/app/dashboards#/view/cinehub-traffic (Elasticsearch: http://localhost:9200).
+- Luồng log: web-1/2/3 in JSON ra stdout → Docker lưu file log → **Filebeat** (`elk-stack/filebeat/filebeat.yml`)
+  tự tìm container `cinehub-infrastructure-web-*`, tách JSON thành field → **Elasticsearch** index `weblogs-YYYY.MM.DD`.
+- Kiểu dữ liệu khai báo trong `elk-stack/filebeat/weblogs-template.json`: `status` integer, `durationMs` long,
+  `clientIp` ip, `instance`/`path` keyword.
+- Không cần `vm.max_map_count`: Elasticsearch đặt `node.store.allow_mmap: false`.
+- RAM: Elasticsearch giới hạn heap 1GB; cả ELK dùng thêm khoảng 2–2,5GB.
+- Tắt ELK: `docker compose -f elk-stack/docker-compose.elk.yml down` (thêm `-v` để xoá sạch log đã lưu).
 
 ### Database primary / replica
 
