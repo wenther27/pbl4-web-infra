@@ -1,5 +1,6 @@
 package com.pbl4.lb.proxy;
 
+import com.pbl4.lb.strategy.LoadBalancingStrategy;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -11,14 +12,17 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 
 public class ProxyHandler implements HttpHandler {
 
-    private final String backend;
+    private final List<String> backends;
+    private final LoadBalancingStrategy strategy;
     private final HttpClient client;
 
-    public ProxyHandler(String backend) {
-        this.backend = backend;
+    public ProxyHandler(List<String> backends, LoadBalancingStrategy strategy) {
+        this.backends = backends;
+        this.strategy = strategy;
         this.client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
                 .build();
@@ -27,10 +31,11 @@ public class ProxyHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         try {
-            // 1. Ghep URL backend: "http://localhost:8081" + "/api/movies?size=5"
+            //Hoi strategy lan nay gui cho ai
+            String backend = strategy.next(backends);
             URI target = URI.create(backend + exchange.getRequestURI());
-
-            // 2. Doc body cua request (GET thi rong)
+            System.out.printf("%s %s -> %s%n",
+                    exchange.getRequestMethod(), exchange.getRequestURI(), backend);
             byte[] body = exchange.getRequestBody().readAllBytes();
 
             // 3. Dung request gui sang backend, giu nguyen method va body
