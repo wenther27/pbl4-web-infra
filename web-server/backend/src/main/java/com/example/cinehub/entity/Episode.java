@@ -1,5 +1,6 @@
 package com.example.cinehub.entity;
 
+import com.example.cinehub.config.MediaUrlConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,11 +22,13 @@ public class Episode {
     private Integer episodeNumber;
 
     @Column(name = "video_url", nullable = false, length = 500)
+    @Convert(converter = MediaUrlConverter.class)
     private String videoUrl;
 
     private Integer duration;
 
     @Column(name = "thumbnail_url", length = 500)
+    @Convert(converter = MediaUrlConverter.class)
     private String thumbnailUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -4,6 +4,7 @@ import com.example.cinehub.constant.User.RoleUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import com.example.cinehub.config.MediaUrlConverter;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -27,6 +28,7 @@ public class User {
     private String password;
 
     @Column(name = "avatar_url", length = 500)
+    @Convert(converter = MediaUrlConverter.class)
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
