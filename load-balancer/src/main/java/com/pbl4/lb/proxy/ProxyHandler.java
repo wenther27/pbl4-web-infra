@@ -28,9 +28,10 @@ public class ProxyHandler implements HttpHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ProxyHandler.class);
 
-    // true: noi IP client vao sau X-Forwarded-For co san
-    // false: bo X-Forwarded-For client gui len, chi ghi IP that (an toan hon khi LB ngoai cung)
-    private static final boolean TRUST_CLIENT_FORWARDED_FOR = true;
+    // LB_TRUST_XFF=true : tin X-Forwarded-For client gui (dung de gia lap nhieu IP khi test bat thuong)
+    // LB_TRUST_XFF=false: bo qua, chi ghi IP ket noi that (an toan khi LB la lop ngoai cung)
+    private static final boolean TRUST_CLIENT_FORWARDED_FOR =
+            Boolean.parseBoolean(System.getenv().getOrDefault("LB_TRUST_XFF", "true"));
 
     // Phuong thuc gui lai nhieu lan van cho cung ket qua -> retry an toan
     private static final Set<String> IDEMPOTENT = Set.of("GET", "HEAD", "OPTIONS", "PUT", "DELETE");
@@ -97,13 +98,15 @@ public class ProxyHandler implements HttpHandler {
                     boolean neverReached = e instanceof ConnectException
                             || e instanceof HttpConnectTimeoutException;
 
+                    // Ten field "errorType" (khong dung "error"): Filebeat drop_fields xoa field "error",
+                    // va "error" la ten dat truoc trong chuan ECS cua Elastic (kieu object).
                     log.warn("RETRY " + method + " " + path + " -> " + backend
                                     + " loi " + lastError + " (lan " + attempt + ")",
                             kv("event", "retry"),
                             kv("httpMethod", method),
                             kv("path", path),
                             kv("backend", backend),
-                            kv("error", lastError),
+                            kv("errorType", lastError),
                             kv("attempt", attempt),
                             kv("clientIp", clientIp));
 

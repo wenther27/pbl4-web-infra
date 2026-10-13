@@ -130,10 +130,37 @@ services:
     ports:
       - "8083:8080"
 
+  # ============================================================
+  # Load Balancer tu viet (Java): diem vao duy nhat cua nguoi dung.
+  # Goi backend bang TEN SERVICE trong mang cinehub-network,
+  # cong 8080 la cong BEN TRONG container (khong phai 8081-8083).
+  # ============================================================
+  load-balancer:
+    build:
+      context: ./load-balancer
+    image: pbl4-load-balancer:local
+    restart: unless-stopped
+    depends_on:
+      - web-1
+      - web-2
+      - web-3
+    environment:
+      LB_PORT: "8080"
+      LB_BACKENDS: "http://web-1:8080,http://web-2:8080,http://web-3:8080"
+      # true: tin X-Forwarded-For client gui (gia lap nhieu IP khi test bat thuong)
+      # false: chi ghi IP ket noi that (dung khi demo bao mat)
+      LB_TRUST_XFF: "true"
+      JAVA_TOOL_OPTIONS: -Xmx128m -XX:+UseSerialGC
+    ports:
+      - "8080:8080"
+    networks:
+      - cinehub-network
+
 volumes:
   mysql-primary-data:
   mysql-replica-data:
   cinehub-uploads:
+
 networks:
   cinehub-network:
     driver: bridge
