@@ -1,5 +1,6 @@
 package com.pbl4.lb.proxy;
 
+import com.pbl4.lb.health.HealthChecker;
 import com.pbl4.lb.strategy.LoadBalancingStrategy;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,12 +17,12 @@ import java.util.List;
 
 public class ProxyHandler implements HttpHandler {
 
-    private final List<String> backends;
+    private final HealthChecker health;
     private final LoadBalancingStrategy strategy;
     private final HttpClient client;
 
-    public ProxyHandler(List<String> backends, LoadBalancingStrategy strategy) {
-        this.backends = backends;
+    public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy) {
+        this.health = health;
         this.strategy = strategy;
         this.client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(3))
@@ -31,9 +32,16 @@ public class ProxyHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         try {
+            //Chi chon trong cac be dang song
+            List<String> healthy = health.healthyBackends();
+            if (healthy.isEmpty()) {
+                sendText(exchange, 503, "Khong con backend nao kha dung");
+                return;
+            }
             //Hoi strategy lan nay gui cho ai
-            String backend = strategy.next(backends);
+            String backend = strategy.next(healthy);
             URI target = URI.create(backend + exchange.getRequestURI());
+
             System.out.printf("%s %s -> %s%n",
                     exchange.getRequestMethod(), exchange.getRequestURI(), backend);
             byte[] body = exchange.getRequestBody().readAllBytes();
@@ -71,17 +79,20 @@ public class ProxyHandler implements HttpHandler {
 
         } catch (Exception e) {
             // Backend chet / timeout -> 502 Bad Gateway
-            byte[] msg = ("Loi ket noi backend: " + e.getMessage())
-                    .getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(502, msg.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(msg);
-            }
+            sendText(exchange, 502, "Loi ket noi backend: " + e.getMessage());
         } finally {
             exchange.close();
         }
     }
 
+    private void sendText(HttpExchange exchange, int status, String text) throws IOException {
+        byte[] msg = text.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
+        exchange.sendResponseHeaders(status, msg.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(msg);
+        }
+    }
     // Header chi co nghia tren mot chang ket noi, khong duoc chuyen tiep
     private boolean isHopByHop(String name) {
         String n = name.toLowerCase();
