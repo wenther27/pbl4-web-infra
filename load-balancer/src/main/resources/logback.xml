@@ -1,0 +1,26 @@
+<configuration>
+
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+  <!-- JSON: cho Filebeat/Kibana (mac dinh) -->
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <customFields>{"app":"load-balancer","instance":"lb"}</customFields>
+    <fieldNames>
+    <version>[ignore]</version>
+    <levelValue>[ignore]</levelValue>
+    </fieldNames>
+    </encoder>
+    </appender>
+
+  <!-- TEXT: cho nguoi doc khi chay trong IntelliJ -->
+    <appender name="TEXT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+    <pattern>%d{HH:mm:ss.SSS} %-5level [%logger{0}] %msg%n</pattern>
+    </encoder>
+    </appender>
+
+    <root level="INFO">
+    <appender-ref ref="${LB_LOG_FORMAT:-JSON}"/>
+    </root>
+  </configuration>

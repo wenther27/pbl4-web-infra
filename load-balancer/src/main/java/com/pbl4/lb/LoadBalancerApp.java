@@ -6,17 +6,22 @@ import com.pbl4.lb.proxy.ProxyHandler;
 import com.pbl4.lb.strategy.LoadBalancingStrategy;
 import com.pbl4.lb.strategy.RoundRobinStrategy;
 import com.sun.net.httpserver.HttpServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 public class LoadBalancerApp {
+    private static final Logger log = LoggerFactory.getLogger(LoadBalancerApp.class);
 
     public static void main(String[] args) throws Exception {
         ServerConfigLoader.Config config = ServerConfigLoader.load();
         LoadBalancingStrategy strategy = new RoundRobinStrategy();
 
-        //kiem tra moi 5s, that bai 3 lan -> DOWN, thanh cong 2 lan -> UP
+        // Kiem tra moi 5s, that bai 3 lan -> DOWN, thanh cong 2 lan -> UP
         HealthChecker health = new HealthChecker(config.backends(), 5, 3, 2);
         health.start();
 
@@ -28,9 +33,12 @@ public class LoadBalancerApp {
         server.setExecutor(Executors.newFixedThreadPool(50));
 
         server.start();
-        System.out.println("Load Balancer: http://localhost:" + config.port());
-        System.out.println("Thuat toan: " + strategy.name());
-        System.out.println("Backends: " + config.backends());
-        System.out.println("Health check: moi 5s, DOWN sau 3 lan loi, UP sau 2 lan thanh cong");
+        log.info("Load Balancer chay tai cong " + config.port()
+                        + ", thuat toan " + strategy.name()
+                        + ", backends " + config.backends(),
+                kv("event", "lb_start"),
+                kv("port", config.port()),
+                kv("strategy", strategy.name()),
+                kv("backends", config.backends()));
     }
 }

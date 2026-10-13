@@ -4,6 +4,8 @@ import com.pbl4.lb.health.HealthChecker;
 import com.pbl4.lb.strategy.LoadBalancingStrategy;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,16 +22,20 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 public class ProxyHandler implements HttpHandler {
 
-//    true: noi IP client vao sau X-Forwarded-For co san
-//    false: bo X-Forwarded-for client gui len, chi ghi IP that(an toan hon khi LB ngoai cung)
+    private static final Logger log = LoggerFactory.getLogger(ProxyHandler.class);
+
+    // true: noi IP client vao sau X-Forwarded-For co san
+    // false: bo X-Forwarded-For client gui len, chi ghi IP that (an toan hon khi LB ngoai cung)
     private static final boolean TRUST_CLIENT_FORWARDED_FOR = true;
 
-    //phuong thuc gui lai nhieu lan van cho cung ket qua -> retry an toan
+    // Phuong thuc gui lai nhieu lan van cho cung ket qua -> retry an toan
     private static final Set<String> IDEMPOTENT = Set.of("GET", "HEAD", "OPTIONS", "PUT", "DELETE");
 
-    //HEader k duoc chuyen tiep: hop-by-hop, header httpclient cam tu dat
+    // Header khong chuyen tiep: hop-by-hop + header HttpClient cam tu dat + header LB tu dat lai
     private static final Set<String> SKIP_REQUEST_HEADERS = Set.of(
             "connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade",
             "proxy-authorization", "proxy-authenticate",
@@ -40,8 +46,6 @@ public class ProxyHandler implements HttpHandler {
             "connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade",
             "proxy-authorization", "proxy-authenticate",
             "content-length", ":status");
-
-
 
     private final HealthChecker health;
     private final LoadBalancingStrategy strategy;
@@ -58,75 +62,118 @@ public class ProxyHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        long start = System.nanoTime();
+        String method = exchange.getRequestMethod();
+        String path = exchange.getRequestURI().getPath();
+        String clientIp = originalClientIp(exchange);
+
+        // Gia tri mac dinh, se duoc cap nhat dan -> finally ghi 1 dong log du thong tin
+        int status = 500;
+        String backend = "-";
+        int attempt = 0;
+
         try {
-            //Chi chon trong cac be dang song
             List<String> healthy = health.healthyBackends();
             if (healthy.isEmpty()) {
-                sendText(exchange, 503, "Khong con backend nao kha dung");
+                status = 503;
+                sendText(exchange, status, "Khong con backend nao kha dung");
                 return;
             }
-            String method = exchange.getRequestMethod();
-            //Doc body mot lan vao bo nho -> gui lai duoc o lan thu sau
-            byte[] body = exchange.getRequestBody().readAllBytes();
 
+            byte[] body = exchange.getRequestBody().readAllBytes();
             Set<String> tried = new HashSet<>();
             HttpResponse<byte[]> response = null;
             String lastError = "";
-            int attempt = 0;
 
-            while(attempt < healthy.size()) {
+            while (attempt < healthy.size()) {
                 attempt++;
-                String backend = pickBackend(healthy, tried);
+                backend = pickBackend(healthy, tried);
                 tried.add(backend);
                 try {
                     response = forward(exchange, backend, method, body);
-                    System.out.printf("%s %s -> %s (lan %d)%n",
-                            method, exchange.getRequestURI(), backend, attempt);
                     break;
                 } catch (IOException e) {
                     lastError = e.getClass().getSimpleName();
-                    //ket noi khong thanh - > be chua nhan request -> thu lai luon an toan
                     boolean neverReached = e instanceof ConnectException
                             || e instanceof HttpConnectTimeoutException;
-                    System.out.printf("[RETRY] %s %s -> %s loi %s (lan %d)%n",
-                            method, exchange.getRequestURI(), backend, lastError, attempt);
 
-                    if (!neverReached && !IDEMPOTENT.contains(method))
-                        break; // POST da toi be -> khong gui lai tranh gay tac nghen
+                    log.warn("RETRY " + method + " " + path + " -> " + backend
+                                    + " loi " + lastError + " (lan " + attempt + ")",
+                            kv("event", "retry"),
+                            kv("httpMethod", method),
+                            kv("path", path),
+                            kv("backend", backend),
+                            kv("error", lastError),
+                            kv("attempt", attempt),
+                            kv("clientIp", clientIp));
+
+                    if (!neverReached && !IDEMPOTENT.contains(method)) {
+                        break; // request khong idempotent da toi backend -> khong gui lai
+                    }
                 }
             }
 
             if (response == null) {
-                sendText(exchange, 502, "Tat ca backend deu loi (" + lastError + ")");
+                status = 502;
+                sendText(exchange, status, "Tat ca backend deu loi (" + lastError + ")");
                 return;
             }
+
+            status = response.statusCode();
             exchange.getResponseHeaders().set("X-LB-Attempts", String.valueOf(attempt));
             writeResponse(exchange, response);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            sendText(exchange, 502, "LB bi ngat khi dang cho Backend " + e.getMessage());
+            status = 502;
+            sendText(exchange, status, "LB bi ngat khi dang cho backend");
         } finally {
+            long durationMs = (System.nanoTime() - start) / 1_000_000;
+            log.info(method + " " + path + " -> " + backend + " " + status
+                            + " (" + durationMs + "ms, lan " + attempt + ")",
+                    kv("event", "request"),
+                    kv("httpMethod", method),
+                    kv("path", path),
+                    kv("status", status),
+                    kv("durationMs", durationMs),
+                    kv("backend", backend),
+                    kv("attempts", attempt),
+                    kv("clientIp", clientIp));
             exchange.close();
         }
     }
 
-    //Hoi strategy neu no chon trung be da thu thi lay be chua thu dau tien
+    // IP goc cua client: phan tu dau cua X-Forwarded-For (neu tin), neu khong la IP ket noi truc tiep
+    private String originalClientIp(HttpExchange exchange) {
+        String remote = exchange.getRemoteAddress().getAddress().getHostAddress();
+        if (!TRUST_CLIENT_FORWARDED_FOR) {
+            return remote;
+        }
+        String xff = exchange.getRequestHeaders().getFirst("X-Forwarded-For");
+        if (xff == null || xff.isBlank()) {
+            return remote;
+        }
+        return xff.split(",")[0].trim();
+    }
+
+    // Hoi strategy; neu no chon trung backend da thu thi lay backend chua thu dau tien
     private String pickBackend(List<String> healthy, Set<String> tried) {
         String candidate = strategy.next(healthy);
-        if (!tried.contains(candidate))
+        if (!tried.contains(candidate)) {
             return candidate;
+        }
         for (String b : healthy) {
-            if (!tried.contains(b))
+            if (!tried.contains(b)) {
                 return b;
+            }
         }
         return candidate;
     }
 
-    //gui 1 request sang 1 be, nem EX neu be loi
+    // Gui 1 request sang 1 backend, nem exception neu backend loi
     private HttpResponse<byte[]> forward(HttpExchange exchange, String backend,
                                          String method, byte[] body)
-             throws IOException, InterruptedException  {
+            throws IOException, InterruptedException {
         URI target = URI.create(backend + exchange.getRequestURI());
         HttpRequest.BodyPublisher publisher = body.length == 0
                 ? HttpRequest.BodyPublishers.noBody()
@@ -136,23 +183,24 @@ public class ProxyHandler implements HttpHandler {
                 .timeout(Duration.ofSeconds(10))
                 .method(method, publisher);
 
-        //1. Chuyen tiep moi head cua client, tru danh sach bo qua
+        // 1. Chuyen tiep moi header cua client, tru danh sach bo qua
         exchange.getRequestHeaders().forEach((name, values) -> {
-            if (!SKIP_REQUEST_HEADERS.contains(name.toLowerCase())) {
-                for (String v : values)
+            if (!SKIP_REQUEST_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
+                for (String v : values) {
                     builder.header(name, v);
+                }
             }
         });
 
-        //2. X-Forwarded-For: ip cua ben vua ket noi toi LB
-        String clientIp = exchange.getRemoteAddress().getAddress().getHostAddress();
+        // 2. X-Forwarded-For: IP cua ben vua ket noi toi LB
+        String remoteIp = exchange.getRemoteAddress().getAddress().getHostAddress();
         String prior = exchange.getRequestHeaders().getFirst("X-Forwarded-For");
         String xff = (TRUST_CLIENT_FORWARDED_FOR && prior != null && !prior.isBlank())
-                ? prior + ", " + clientIp
-                : clientIp;
+                ? prior + ", " + remoteIp
+                : remoteIp;
         builder.header("X-Forwarded-For", xff);
 
-        //3. dia chi, cong va giao thuc client da goi (localhost:8080, http)
+        // 3. Dia chi, cong va giao thuc client da goi (localhost:8080, http)
         String host = exchange.getRequestHeaders().getFirst("Host");
         if (host != null) {
             builder.header("X-Forwarded-Host", host);
@@ -165,12 +213,13 @@ public class ProxyHandler implements HttpHandler {
         return client.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
     }
 
-    //Tra kq be ve client, loi o day la loi phia client, khong retry
+    // Tra ket qua backend ve client; loi o day la loi phia client, khong retry
     private void writeResponse(HttpExchange exchange, HttpResponse<byte[]> response)
             throws IOException {
         response.headers().map().forEach((name, values) -> {
-            if (!SKIP_RESPONSE_HEADERS.contains(name.toLowerCase()))
+            if (!SKIP_RESPONSE_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
                 exchange.getResponseHeaders().put(name, values);
+            }
         });
 
         byte[] resBody = response.body();

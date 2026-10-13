@@ -1,27 +1,29 @@
 package com.pbl4.lb.health;
 
-//Dinh ky goi /actuator/health cua tung BE
-//BE that bai lien tiep failThreshold lan -> DOWN, bi loai khoi vong quay
-//BE dang DOWN thanh cong lien tiep passThreshold lan -> UP, duoc dua tro lai
+// Dinh ky goi /actuator/health cua tung backend
+// Backend that bai lien tiep failThreshold lan -> DOWN, bi loai khoi vong quay
+// Backend dang DOWN thanh cong lien tiep passThreshold lan -> UP, duoc dua tro lai
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 public class HealthChecker {
+    private static final Logger log = LoggerFactory.getLogger(HealthChecker.class);
     private static final String HEALTH_PATH = "/actuator/health";
-    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final List<String> backends;
     private final long intervalSeconds;
@@ -31,14 +33,15 @@ public class HealthChecker {
     private final HttpClient client;
     private final ScheduledExecutorService scheduler;
 
-    //3 map nay chi do luong health-checker doc va ghi -> khong can dong bo
+    // 3 map nay chi do luong health-checker doc va ghi -> khong can dong bo
     private final Map<String, Boolean> up = new HashMap<>();
     private final Map<String, Integer> failStreak = new HashMap<>();
     private final Map<String, Integer> passStreak = new HashMap<>();
 
-    //50 luong xu ly request chi doc bien nay
-    private volatile List<String> healthy; //volatile đảm bảo: luồng health check vừa gán danh sách mới,
-                                            // mọi luồng khác đọc ngay sau đó chắc chắn thấy bản mới
+    // 50 luong xu ly request chi doc bien nay.
+    // volatile: luong health check vua gan danh sach moi,
+    // moi luong khac doc ngay sau do chac chan thay ban moi
+    private volatile List<String> healthy;
 
     public HealthChecker(List<String> backends, long intervalSeconds,
                          int failThreshold, int passThreshold) {
@@ -54,8 +57,8 @@ public class HealthChecker {
         }
         this.healthy = List.copyOf(backends);
 
-        this.client = HttpClient.newBuilder().
-                connectTimeout(Duration.ofSeconds(2))
+        this.client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(2))
                 .build();
 
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -66,7 +69,7 @@ public class HealthChecker {
     }
 
     public void start() {
-        //Chay ngay lan dau (delay 0), sau do cu xong mot vong thi nghi intervalSeconds
+        // Chay ngay lan dau (delay 0), sau do cu xong mot vong thi nghi intervalSeconds
         scheduler.scheduleWithFixedDelay(this::checkAll, 0, intervalSeconds, TimeUnit.SECONDS);
     }
 
@@ -79,10 +82,11 @@ public class HealthChecker {
             for (String b : backends) {
                 update(b, ping(b));
             }
-            //dung danh sach moi roi gan mot lan -> nguoi doc luon thay ban day du
+            // Dung danh sach moi roi gan mot lan -> nguoi doc luon thay ban day du
             healthy = backends.stream().filter(up::get).toList();
         } catch (Exception e) {
-            System.err.println("[HEALTH] Loi khong mong doi: " + e);
+            // Truyen e vao cuoi -> logback in ca stack trace (truong "stack_trace" trong JSON)
+            log.error("Loi khong mong doi trong vong health check", e);
         }
     }
 
@@ -101,24 +105,31 @@ public class HealthChecker {
     }
 
     private void update(String backend, boolean ok) {
-        if(ok) {
+        if (ok) {
             failStreak.put(backend, 0);
             int passes = passStreak.merge(backend, 1, Integer::sum);
-            if(!up.get(backend) && passes >= passThreshold) {
+            if (!up.get(backend) && passes >= passThreshold) {
                 up.put(backend, true);
-                log(backend + " UP (" +passes + " lan thanh cong lien tiep)");
+                logState("backend_up", backend,
+                        backend + " UP (" + passes + " lan thanh cong lien tiep)", passes);
             }
-        } else  {
+        } else {
             passStreak.put(backend, 0);
             int fails = failStreak.merge(backend, 1, Integer::sum);
             if (up.get(backend) && fails >= failThreshold) {
                 up.put(backend, false);
-                log(backend + " DOWN (" + fails +" lan that bai lien tiep)");
+                logState("backend_down", backend,
+                        backend + " DOWN (" + fails + " lan that bai lien tiep)", fails);
             }
         }
     }
 
-    private void log(String msg) {
-        System.out.println(LocalTime.now().format(TIME) + " [HEALTH]" + msg);
+    // DOWN la su co -> WARN; UP la phuc hoi -> INFO
+    private void logState(String event, String backend, String msg, int streak) {
+        if ("backend_down".equals(event)) {
+            log.warn(msg, kv("event", event), kv("backend", backend), kv("streak", streak));
+        } else {
+            log.info(msg, kv("event", event), kv("backend", backend), kv("streak", streak));
+        }
     }
 }
