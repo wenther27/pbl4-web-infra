@@ -7,7 +7,7 @@ Kho mã nguồn kết hợp backend CineHub với hạ tầng chạy nhiều ins
 - `web-server/backend`: Spring Boot 3 / Java 21, REST API, JWT, Spring Data JPA.
 - `web-server/frontend`: giao diện độc lập viết bằng HTML, CSS và JavaScript thuần.
 - `database`: schema MySQL và dữ liệu mẫu.
-- `load-balancer`: bộ khung load balancer Java (chưa triển khai).
+- `load-balancer`: load balancer Java round-robin, health check, failover và streaming upload/video.
 - `elk-stack`: Filebeat → Elasticsearch → Kibana, có dashboard giám sát traffic (chưa dùng Logstash).
 - `anomaly-detection`: bộ khung phát hiện bất thường (chưa triển khai).
 - `load-testing`: vị trí dành cho kịch bản Apache Bench/JMeter.
@@ -16,7 +16,8 @@ Kho mã nguồn kết hợp backend CineHub với hạ tầng chạy nhiều ins
 
 1. Sao chép `.env.example` thành `.env` và thay mật khẩu/JWT secret.
 2. Chạy `docker compose up --build`.
-3. Ba instance API được mở tại `http://localhost:8081`, `:8082`, `:8083`.
+3. Điểm vào qua load balancer là `http://localhost:8080`; ba instance API trực tiếp được mở
+   tại `http://localhost:8081`, `:8082`, `:8083` để kiểm tra.
 4. MySQL primary (ghi) mở tại `localhost:3307`, replica (chỉ đọc) tại `localhost:3308`.
 
 Tài khoản mẫu: `admin` / `123456` (role `ADMIN`).
@@ -92,11 +93,14 @@ Swagger được bật mặc định để phát triển. Khi triển khai produ
 
 Các endpoint không được khai báo trong ma trận phân quyền sẽ bị từ chối mặc định.
 
-## Ảnh tải lên
+## Tệp tải lên
 
 Admin có thể chọn ảnh JPG, PNG, WebP hoặc GIF (tối đa 5 MB) khi thêm/sửa phim và tập phim. Backend lưu file trong `web-server/backend/uploads` khi chạy local; database chỉ lưu URL. Thư mục này không được commit lên Git. Khi chạy Docker, volume `cinehub-uploads` giữ ảnh dùng chung cho các instance backend.
 
-Lưu ý: load balancer, ELK và anomaly detection vẫn là các module khung và chưa được đưa vào Compose.
+Video MP4, WebM hoặc OGG được giới hạn mặc định 500 MB. Load balancer truyền upload và response
+video theo stream thay vì giữ toàn bộ file trong RAM; request `Range`/response `206 Partial Content`
+được giữ nguyên để trình duyệt tua và tải từng phần. Timeout mặc định cấu hình bằng
+`LB_REQUEST_TIMEOUT_SECONDS` (API thường) và `LB_UPLOAD_TIMEOUT_SECONDS` (upload video).
 
 ## Chạy frontend
 

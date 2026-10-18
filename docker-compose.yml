@@ -150,6 +150,9 @@ services:
       # true: tin X-Forwarded-For client gui (gia lap nhieu IP khi test bat thuong)
       # false: chi ghi IP ket noi that (dung khi demo bao mat)
       LB_TRUST_XFF: "true"
+      # API thuong timeout nhanh; upload video duoc stream va co toi 10 phut de hoan tat.
+      LB_REQUEST_TIMEOUT_SECONDS: "30"
+      LB_UPLOAD_TIMEOUT_SECONDS: "600"
       JAVA_TOOL_OPTIONS: -Xmx128m -XX:+UseSerialGC
     ports:
       - "8080:8080"

@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.URI;
@@ -27,6 +28,11 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 public class ProxyHandler implements HttpHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ProxyHandler.class);
+    private static final int STREAM_BUFFER_SIZE = 64 * 1024;
+    private static final Duration DEFAULT_REQUEST_TIMEOUT = timeoutFromEnvironment(
+            "LB_REQUEST_TIMEOUT_SECONDS", 30);
+    private static final Duration VIDEO_UPLOAD_TIMEOUT = timeoutFromEnvironment(
+            "LB_UPLOAD_TIMEOUT_SECONDS", 600);
 
     // LB_TRUST_XFF=true : tin X-Forwarded-For client gui (dung de gia lap nhieu IP khi test bat thuong)
     // LB_TRUST_XFF=false: bo qua, chi ghi IP ket noi that (an toan khi LB la lop ngoai cung)
@@ -72,6 +78,7 @@ public class ProxyHandler implements HttpHandler {
         int status = 500;
         String backend = "-";
         int attempt = 0;
+        boolean streamingRequest = isStreamingRequest(method, path);
 
         try {
             List<String> healthy = health.healthyBackends();
@@ -81,17 +88,20 @@ public class ProxyHandler implements HttpHandler {
                 return;
             }
 
-            byte[] body = exchange.getRequestBody().readAllBytes();
+            // Video co the toi 500 MB: khong doc toan bo vao RAM. Cac request JSON/anh nho
+            // van duoc buffer de co the retry an toan khi backend chua nhan duoc request.
+            byte[] bufferedBody = streamingRequest ? null : exchange.getRequestBody().readAllBytes();
             Set<String> tried = new HashSet<>();
-            HttpResponse<byte[]> response = null;
+            HttpResponse<InputStream> response = null;
             String lastError = "";
+            int maximumAttempts = streamingRequest ? 1 : healthy.size();
 
-            while (attempt < healthy.size()) {
+            while (attempt < maximumAttempts) {
                 attempt++;
                 backend = pickBackend(healthy, tried);
                 tried.add(backend);
                 try {
-                    response = forward(exchange, backend, method, body);
+                    response = forward(exchange, backend, method, bufferedBody, streamingRequest);
                     break;
                 } catch (IOException e) {
                     lastError = e.getClass().getSimpleName();
@@ -110,7 +120,7 @@ public class ProxyHandler implements HttpHandler {
                             kv("attempt", attempt),
                             kv("clientIp", clientIp));
 
-                    if (!neverReached && !IDEMPOTENT.contains(method)) {
+                    if (streamingRequest || (!neverReached && !IDEMPOTENT.contains(method))) {
                         break; // request khong idempotent da toi backend -> khong gui lai
                     }
                 }
@@ -141,6 +151,7 @@ public class ProxyHandler implements HttpHandler {
                     kv("durationMs", durationMs),
                     kv("backend", backend),
                     kv("attempts", attempt),
+                    kv("streamingRequest", streamingRequest),
                     kv("clientIp", clientIp));
             exchange.close();
         }
@@ -173,17 +184,30 @@ public class ProxyHandler implements HttpHandler {
         return candidate;
     }
 
-    // Gui 1 request sang 1 backend, nem exception neu backend loi
-    private HttpResponse<byte[]> forward(HttpExchange exchange, String backend,
-                                         String method, byte[] body)
+    // Upload video dung InputStream de du lieu di tung khoi toi backend. Request nho
+    // dung byte[] de van co the retry neu backend loi truoc khi xu ly request.
+    private HttpResponse<InputStream> forward(HttpExchange exchange, String backend,
+                                              String method, byte[] bufferedBody,
+                                              boolean streamingRequest)
             throws IOException, InterruptedException {
         URI target = URI.create(backend + exchange.getRequestURI());
-        HttpRequest.BodyPublisher publisher = body.length == 0
-                ? HttpRequest.BodyPublishers.noBody()
-                : HttpRequest.BodyPublishers.ofByteArray(body);
+        HttpRequest.BodyPublisher publisher;
+        if (streamingRequest) {
+            InputStream requestBody = exchange.getRequestBody();
+            HttpRequest.BodyPublisher streamingPublisher =
+                    HttpRequest.BodyPublishers.ofInputStream(() -> requestBody);
+            long contentLength = requestContentLength(exchange);
+            publisher = contentLength > 0
+                    ? HttpRequest.BodyPublishers.fromPublisher(streamingPublisher, contentLength)
+                    : streamingPublisher;
+        } else {
+            publisher = bufferedBody.length == 0
+                    ? HttpRequest.BodyPublishers.noBody()
+                    : HttpRequest.BodyPublishers.ofByteArray(bufferedBody);
+        }
 
         HttpRequest.Builder builder = HttpRequest.newBuilder(target)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(streamingRequest ? VIDEO_UPLOAD_TIMEOUT : DEFAULT_REQUEST_TIMEOUT)
                 .method(method, publisher);
 
         // 1. Chuyen tiep moi header cua client, tru danh sach bo qua
@@ -213,11 +237,13 @@ public class ProxyHandler implements HttpHandler {
         }
         builder.header("X-Forwarded-Proto", "http");
 
-        return client.send(builder.build(), HttpResponse.BodyHandlers.ofByteArray());
+        // Chi cho den khi co response headers, phan body duoc doc dan trong writeResponse.
+        return client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream());
     }
 
-    // Tra ket qua backend ve client; loi o day la loi phia client, khong retry
-    private void writeResponse(HttpExchange exchange, HttpResponse<byte[]> response)
+    // Tra response theo tung khoi 64 KB. Dieu nay rat quan trong voi video/Range:
+    // LB khong con giu ca file trong heap/direct memory truoc khi gui cho trinh duyet.
+    private void writeResponse(HttpExchange exchange, HttpResponse<InputStream> response)
             throws IOException {
         response.headers().map().forEach((name, values) -> {
             if (!SKIP_RESPONSE_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
@@ -225,12 +251,65 @@ public class ProxyHandler implements HttpHandler {
             }
         });
 
-        byte[] resBody = response.body();
-        exchange.sendResponseHeaders(response.statusCode(), resBody.length == 0 ? -1 : resBody.length);
-        if (resBody.length > 0) {
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(resBody);
+        int responseStatus = response.statusCode();
+        boolean bodyAllowed = responseBodyAllowed(exchange.getRequestMethod(), responseStatus);
+
+        try (InputStream input = response.body()) {
+            if (!bodyAllowed) {
+                exchange.sendResponseHeaders(responseStatus, -1);
+                return;
             }
+
+            long contentLength = response.headers()
+                    .firstValueAsLong("Content-Length")
+                    .orElse(0L); // 0 = chunked khi backend khong biet truoc kich thuoc
+            exchange.sendResponseHeaders(responseStatus, contentLength);
+
+            byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+            try (OutputStream output = exchange.getResponseBody()) {
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, read);
+                }
+            }
+        }
+    }
+
+    private static boolean isStreamingRequest(String method, String path) {
+        return "POST".equalsIgnoreCase(method)
+                && (path.equals("/api/uploads/videos") || path.startsWith("/api/uploads/videos/"));
+    }
+
+    private static boolean responseBodyAllowed(String method, int status) {
+        return !"HEAD".equalsIgnoreCase(method)
+                && status >= 200
+                && status != 204
+                && status != 205
+                && status != 304;
+    }
+
+    private static long requestContentLength(HttpExchange exchange) {
+        String raw = exchange.getRequestHeaders().getFirst("Content-Length");
+        if (raw == null || raw.isBlank()) {
+            return -1L;
+        }
+        try {
+            return Long.parseLong(raw);
+        } catch (NumberFormatException ignored) {
+            return -1L;
+        }
+    }
+
+    private static Duration timeoutFromEnvironment(String name, long fallbackSeconds) {
+        String raw = System.getenv(name);
+        if (raw == null || raw.isBlank()) {
+            return Duration.ofSeconds(fallbackSeconds);
+        }
+        try {
+            long seconds = Long.parseLong(raw);
+            return Duration.ofSeconds(seconds > 0 ? seconds : fallbackSeconds);
+        } catch (NumberFormatException ignored) {
+            return Duration.ofSeconds(fallbackSeconds);
         }
     }
 
