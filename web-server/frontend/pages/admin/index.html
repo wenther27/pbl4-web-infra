@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>CineHub | Quản trị</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../css/main.css" />
+    <link rel="stylesheet" href="../../css/pages/admin.css" />
+  </head>
+  <body class="admin-body" data-page="admin" data-root="../..">
+    <div class="admin-shell" id="admin-shell" hidden>
+      <aside class="admin-sidebar" id="admin-sidebar">
+        <a class="admin-brand" href="../../index.html"
+          ><span class="brand__mark">▣</span><span>Cine<em>Hub</em></span
+          ><small>Admin</small></a
+        >
+        <nav class="admin-nav" aria-label="Điều hướng quản trị">
+          <a href="#dashboard" data-admin-route="dashboard"
+            ><span>⌂</span>Tổng quan</a
+          >
+          <a href="#movies" data-admin-route="movies"><span>▤</span>Phim</a>
+          <a href="#genres" data-admin-route="genres"><span>◇</span>Thể loại</a>
+          <a href="#episodes" data-admin-route="episodes"
+            ><span>▶</span>Tập phim</a
+          >
+          <a href="#users" data-admin-route="users"><span>♙</span>Người dùng</a>
+          <a href="#reviews" data-admin-route="reviews"
+            ><span>☆</span>Đánh giá</a
+          >
+        </nav>
+        <div class="admin-sidebar__footer">
+          <a href="../../index.html">← Về trang xem phim</a>
+          <button id="admin-logout" type="button">Đăng xuất</button>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <header class="admin-topbar">
+          <button
+            class="admin-menu-button"
+            id="admin-menu-button"
+            type="button"
+            aria-label="Mở menu"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
+          <div>
+            <p id="admin-breadcrumb">Quản trị / Tổng quan</p>
+            <h1 id="admin-page-title">Tổng quan</h1>
+          </div>
+          <div class="admin-profile">
+            <span class="admin-profile__avatar" id="admin-avatar">A</span>
+            <div>
+              <strong id="admin-username">Admin</strong
+              ><small>Quản trị viên</small>
+            </div>
+          </div>
+        </header>
+
+        <div class="admin-content">
+          <section class="admin-view" data-admin-view="dashboard">
+            <div class="admin-welcome">
+              <div>
+                <p class="eyebrow">CineHub Control Center</p>
+                <h2>
+                  Chào mừng trở lại, <span id="dashboard-name">Admin</span>
+                </h2>
+                <p id="dashboard-date"></p>
+              </div>
+              <a
+                class="admin-button admin-button--secondary"
+                href="../../index.html"
+                >Xem website ↗</a
+              >
+            </div>
+            <div class="admin-stats" id="admin-stats" aria-live="polite"></div>
+            <div class="admin-panel">
+              <div class="admin-panel__heading">
+                <div>
+                  <h2>Phim cập nhật gần đây</h2>
+                  <p>Theo dõi nhanh nội dung trong hệ thống.</p>
+                </div>
+                <button
+                  class="admin-link-button"
+                  type="button"
+                  data-go-route="movies"
+                >
+                  Xem tất cả →
+                </button>
+              </div>
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Phim</th>
+                      <th>Phân loại</th>
+                      <th>Trạng thái</th>
+                      <th>Điểm</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboard-movies"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-view" data-admin-view="movies" hidden>
+            <div class="admin-section-heading">
+              <div>
+                <h2>Quản lý phim</h2>
+                <p>Thêm, chỉnh sửa và xóa nội dung phim.</p>
+              </div>
+              <button
+                class="admin-button admin-button--primary"
+                id="add-movie"
+                type="button"
+              >
+                ＋ Thêm phim
+              </button>
+            </div>
+            <div class="admin-toolbar">
+              <label class="admin-search"
+                ><span>⌕</span
+                ><input
+                  id="movie-search"
+                  type="search"
+                  placeholder="Tìm theo tên phim…" /></label
+              ><span class="admin-result-count" id="movie-count"></span>
+            </div>
+            <div class="admin-panel admin-panel--flush">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Phim</th>
+                      <th>Phân loại</th>
+                      <th>Ngày phát hành</th>
+                      <th>Trạng thái</th>
+                      <th>Điểm</th>
+                      <th class="admin-table__actions">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="movie-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-view" data-admin-view="genres" hidden>
+            <div class="admin-section-heading">
+              <div>
+                <h2>Quản lý thể loại</h2>
+                <p>Thể loại được dùng để phân nhóm phim.</p>
+              </div>
+              <button
+                class="admin-button admin-button--primary"
+                id="add-genre"
+                type="button"
+              >
+                ＋ Thêm thể loại
+              </button>
+            </div>
+            <div class="admin-notice">
+              Backend hiện chỉ hỗ trợ xem và thêm thể loại; chưa có API sửa hoặc
+              xóa.
+            </div>
+            <div class="admin-genre-grid" id="genre-grid"></div>
+          </section>
+
+          <section class="admin-view" data-admin-view="episodes" hidden>
+            <div class="admin-section-heading">
+              <div>
+                <h2>Quản lý tập phim</h2>
+                <p>Chọn một phim để xem và cập nhật danh sách tập.</p>
+              </div>
+              <button
+                class="admin-button admin-button--primary"
+                id="add-episode"
+                type="button"
+                disabled
+              >
+                ＋ Thêm tập
+              </button>
+            </div>
+            <label class="admin-select-field"
+              ><span>Phim đang quản lý</span
+              ><select id="episode-movie-select">
+                <option value="">-- Chọn phim --</option>
+              </select></label
+            >
+            <div class="admin-panel admin-panel--flush">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Tập</th>
+                      <th>Tiêu đề</th>
+                      <th>Thời lượng</th>
+                      <th>Video</th>
+                      <th class="admin-table__actions">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="episode-table-body">
+                    <tr>
+                      <td colspan="5" class="admin-empty">
+                        Hãy chọn một phim để xem danh sách tập.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-view" data-admin-view="users" hidden>
+            <div class="admin-section-heading">
+              <div>
+                <h2>Quản lý người dùng</h2>
+                <p>Xem tài khoản và quyền hiện tại.</p>
+              </div>
+            </div>
+            <div class="admin-notice">
+              Backend chưa có API đổi quyền. Trang này chỉ hiển thị và cho phép
+              xóa tài khoản; không thể xóa tài khoản đang đăng nhập.
+            </div>
+            <div class="admin-toolbar">
+              <label class="admin-search"
+                ><span>⌕</span
+                ><input
+                  id="user-search"
+                  type="search"
+                  placeholder="Tìm tên hoặc email…" /></label
+              ><span class="admin-result-count" id="user-count"></span>
+            </div>
+            <div class="admin-panel admin-panel--flush">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Tài khoản</th>
+                      <th>Email</th>
+                      <th>Quyền</th>
+                      <th>Ngày tạo</th>
+                      <th class="admin-table__actions">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="user-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-view" data-admin-view="reviews" hidden>
+            <div class="admin-section-heading">
+              <div>
+                <h2>Quản lý đánh giá</h2>
+                <p>Chọn phim để kiểm duyệt bình luận của thành viên.</p>
+              </div>
+            </div>
+            <label class="admin-select-field"
+              ><span>Phim cần kiểm duyệt</span
+              ><select id="review-movie-select">
+                <option value="">-- Chọn phim --</option>
+              </select></label
+            >
+            <div class="admin-panel admin-panel--flush">
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Người dùng</th>
+                      <th>Điểm</th>
+                      <th>Nội dung</th>
+                      <th>Ngày gửi</th>
+                      <th class="admin-table__actions">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="review-table-body">
+                    <tr>
+                      <td colspan="5" class="admin-empty">
+                        Hãy chọn một phim để xem đánh giá.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <main class="admin-access" id="admin-access" hidden></main>
+    <div
+      class="admin-toast-region"
+      id="admin-toast-region"
+      aria-live="polite"
+    ></div>
+    <dialog class="admin-dialog" id="admin-dialog">
+      <form
+        method="dialog"
+        class="admin-dialog__surface"
+        id="admin-dialog-form"
+      >
+        <div class="admin-dialog__heading">
+          <div>
+            <p class="eyebrow">CineHub Admin</p>
+            <h2 id="admin-dialog-title"></h2>
+          </div>
+          <button
+            class="admin-dialog__close"
+            value="cancel"
+            type="submit"
+            formnovalidate
+            aria-label="Đóng"
+          >
+            ×
+          </button>
+        </div>
+        <div id="admin-dialog-content"></div>
+        <div class="admin-dialog__actions">
+          <button
+            class="admin-button admin-button--secondary"
+            value="cancel"
+            type="submit"
+            formnovalidate
+          >
+            Hủy</button
+          ><button
+            class="admin-button admin-button--primary"
+            id="admin-dialog-submit"
+            value="default"
+            type="submit"
+          >
+            Lưu
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="../../js/pages/admin.js"></script>
+  </body>
+</html>
