@@ -1,0 +1,40 @@
+# Do dai cua so du lieu: moi lan kiem tra nhin lai bao nhieu giay
+window_seconds: 60
+# Bao lau kiem tra mot lan
+interval_seconds: 10
+
+# IP tin cay: khong bao R1, R2 cho cac IP nay (vd: may chay JMeter do tai)
+whitelist_ips: []
+
+rules:
+  # R1: mot IP gui qua nhieu request trong cua so (DoS, bot cao du lieu)
+  HIGH_RATE_IP:
+    enabled: true
+    severity: HIGH
+    threshold: 100            # so request / cua so
+
+  # R2: mot IP nhan 403/404 tren qua nhieu duong dan KHAC NHAU (do quet)
+  # 403 vi SecurityConfig co .anyRequest().denyAll()
+  SCAN_PATHS:
+    enabled: true
+    severity: MEDIUM
+    threshold: 15             # so duong dan khac nhau / cua so
+
+  # R4: ti le loi 5xx cao (DB chet, loi code, tat ca backend DOWN)
+  ERROR_RATE_5XX:
+    enabled: true
+    severity: HIGH
+    threshold_percent: 5      # % request loi 5xx
+    min_requests: 20          # it hon so nay thi khong xet (tranh 1/2 = 50%)
+
+  # R5: he thong cham
+  HIGH_LATENCY:
+    enabled: true
+    severity: MEDIUM
+    threshold_ms: 1000      # p95 thoi gian phan hoi (ms)
+    min_requests: 20
+
+  # R6: LB bao mot backend DOWN
+  BACKEND_DOWN:
+    enabled: true
+    severity: HIGH
