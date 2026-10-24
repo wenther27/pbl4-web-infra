@@ -1,5 +1,6 @@
 package com.pbl4.anomaly;
 
+import com.pbl4.anomaly.alert.AlertNotifier;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.pbl4.anomaly.alert.Alert;
 import com.pbl4.anomaly.client.ElasticsearchClient;
@@ -65,29 +66,25 @@ public class AnomalyDetectorApp {
 
         ElasticsearchClient es = new ElasticsearchClient(esUrl);
         RuleEngine engine = new RuleEngine(config.rules());
+        AlertNotifier notifier = new AlertNotifier(es, config.cooldownSeconds(), window);
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         log.info("Anomaly detector: ES=" + esUrl + ", cua so " + window + "s, kiem tra moi "
-                        + config.intervalSeconds() + "s, luat: " + engine.ruleIds(),
+                        + config.intervalSeconds() + "s, cooldown " + config.cooldownSeconds()
+                        + "s, luat: " + engine.ruleIds(),
                 kv("event", "detector_start"),
                 kv("rules", engine.ruleIds()));
 
         scheduler.scheduleWithFixedDelay(() -> {
             try {
+                notifier.prepare();   // lan dau: tao index template alerts-*
+
                 JsonNode res = es.search("weblogs-*", QUERY_TEMPLATE.formatted(window));
                 Snapshot snapshot = Snapshot.from(res, window);
                 log.info(snapshot.summary(), kv("event", "snapshot"), kv("total", snapshot.total()));
 
                 List<Alert> alerts = engine.evaluate(snapshot);
-                for (Alert a : alerts) {
-                    log.warn("[" + a.severity() + "] " + a.rule() + ": " + a.message(),
-                            kv("event", "alert"),
-                            kv("rule", a.rule()),
-                            kv("severity", a.severity()),
-                            kv("target", a.target()),
-                            kv("value", a.value()),
-                            kv("threshold", a.threshold()));
-                }
+                notifier.notify(alerts);   // loc trung + in log + ghi alerts-*
             } catch (Exception e) {
                 // In ca ten loai loi: "ConnectException: null" de hieu hon "null"
                 log.error("Loi trong vong phat hien: " + e.getClass().getSimpleName() + ": " + e.getMessage());

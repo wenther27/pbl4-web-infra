@@ -2,6 +2,8 @@
 window_seconds: 60
 # Bao lau kiem tra mot lan
 interval_seconds: 10
+# Cung luat + cung doi tuong (IP, backend...) da bao thi im lang trong bao lau
+cooldown_seconds: 300
 
 # IP tin cay: khong bao R1, R2 cho cac IP nay (vd: may chay JMeter do tai)
 whitelist_ips: []

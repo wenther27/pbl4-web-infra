@@ -27,14 +27,16 @@ import java.util.Set;
 public class RulesConfigLoader {
     private static final Logger log = LoggerFactory.getLogger(RulesConfigLoader.class);
 
-    public record DetectorConfig(int windowSeconds, int intervalSeconds, List<Rule> rules) {}
+    public record DetectorConfig(int windowSeconds, int intervalSeconds, int cooldownSeconds,
+                                 List<Rule> rules) {}
 
     public static DetectorConfig load() {
         Map<String, Object> root = readYaml();
 
         int window = intOf(env("WINDOW_SECONDS"), root.get("window_seconds"), 60);
         int interval = intOf(env("INTERVAL_SECONDS"), root.get("interval_seconds"), 10);
-
+        int cooldown = intOf(env("COOLDOWN_SECONDS"), root.get("cooldown_seconds"), 300);
+        
         Set<String> whitelist = new HashSet<>();
         if (root.get("whitelist_ips") instanceof List<?> list) {
             for (Object o : list) {
@@ -60,7 +62,7 @@ public class RulesConfigLoader {
                 }
             }
         }
-        return new DetectorConfig(window, interval, rules);
+        return new DetectorConfig(window, interval, cooldown, rules);
     }
 
     // "Nha may" tao luat theo ma. Them luat moi: them 1 dong case.
