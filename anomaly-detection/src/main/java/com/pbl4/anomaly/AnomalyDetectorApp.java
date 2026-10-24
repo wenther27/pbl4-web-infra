@@ -65,11 +65,39 @@ public class AnomalyDetectorApp {
               }
             }
             """;
+    // R7: so request MOI PHUT trong N phut truoc (khong tinh phut hien tai).
+    //  - "/m": lam tron xuong dau phut -> moi cot la tron 1 phut, khong bi cat do
+    //  - min_doc_count 0 + extended_bounds: phut khong co request van co cot = 0
+    //    (phut im lang cung la "binh thuong", bo di se lam trung binh cao gia)
+    //  - ket thuc o now-1m/m: khong chong len cua so 60s dang xet
+    private static final String BASELINE_TEMPLATE = """
+            {
+              "size": 0,
+              "query": { "bool": { "filter": [
+                { "term":  { "instance": "lb" } },
+                { "term":  { "event": "request" } },
+                { "range": { "@timestamp": { "gte": "now-%1$dm/m", "lt": "now-1m/m" } } }
+              ]}},
+              "aggs": {
+                "per_minute": {
+                  "date_histogram": {
+                    "field": "@timestamp",
+                    "fixed_interval": "1m",
+                    "min_doc_count": 0,
+                    "extended_bounds": { "min": "now-%1$dm/m", "max": "now-2m/m" }
+                  }
+                }
+              }
+            }
+            """;
 
     public static void main(String[] args) {
         String esUrl = env("ES_URL", "http://localhost:9200");
         DetectorConfig config = RulesConfigLoader.load();
         int window = config.windowSeconds();
+
+        // N phut lich su + 1 phut hien tai bi bo -> lay tu now-(N+1)m
+        String baselineQuery = BASELINE_TEMPLATE.formatted(config.baselineMinutes() + 1);
 
         ElasticsearchClient es = new ElasticsearchClient(esUrl);
         RuleEngine engine = new RuleEngine(config.rules());
@@ -87,7 +115,8 @@ public class AnomalyDetectorApp {
                 notifier.prepare();   // lan dau: tao index template alerts-*
 
                 JsonNode res = es.search("weblogs-*", QUERY_TEMPLATE.formatted(window));
-                Snapshot snapshot = Snapshot.from(res, window);
+                JsonNode baselineRes = es.search("weblogs-*", baselineQuery);
+                Snapshot snapshot = Snapshot.from(res, baselineRes, window);
                 log.info(snapshot.summary(), kv("event", "snapshot"), kv("total", snapshot.total()));
 
                 List<Alert> alerts = engine.evaluate(snapshot);

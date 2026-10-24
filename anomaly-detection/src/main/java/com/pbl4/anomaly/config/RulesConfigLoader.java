@@ -2,6 +2,7 @@ package com.pbl4.anomaly.config;
 
 import com.pbl4.anomaly.rule.BackendDownRule;
 import com.pbl4.anomaly.rule.BruteForceLoginRule;
+import com.pbl4.anomaly.rule.ZScoreRule;
 import com.pbl4.anomaly.rule.ErrorRate5xxRule;
 import com.pbl4.anomaly.rule.HighLatencyRule;
 import com.pbl4.anomaly.rule.HighRateIpRule;
@@ -29,7 +30,7 @@ public class RulesConfigLoader {
     private static final Logger log = LoggerFactory.getLogger(RulesConfigLoader.class);
 
     public record DetectorConfig(int windowSeconds, int intervalSeconds, int cooldownSeconds,
-                                 List<Rule> rules) {}
+                                 int baselineMinutes, List<Rule> rules) {}
 
     public static DetectorConfig load() {
         Map<String, Object> root = readYaml();
@@ -37,6 +38,7 @@ public class RulesConfigLoader {
         int window = intOf(env("WINDOW_SECONDS"), root.get("window_seconds"), 60);
         int interval = intOf(env("INTERVAL_SECONDS"), root.get("interval_seconds"), 10);
         int cooldown = intOf(env("COOLDOWN_SECONDS"), root.get("cooldown_seconds"), 300);
+        int baseline = intOf(env("BASELINE_MINUTES"), root.get("baseline_minutes"), 30);
         
         Set<String> whitelist = new HashSet<>();
         if (root.get("whitelist_ips") instanceof List<?> list) {
@@ -63,7 +65,7 @@ public class RulesConfigLoader {
                 }
             }
         }
-        return new DetectorConfig(window, interval, cooldown, rules);
+        return new DetectorConfig(window, interval, cooldown, baseline, rules);
     }
 
     // "Nha may" tao luat theo ma. Them luat moi: them 1 dong case.
@@ -75,6 +77,7 @@ public class RulesConfigLoader {
             case "ERROR_RATE_5XX" -> new ErrorRate5xxRule(params);
             case "HIGH_LATENCY"   -> new HighLatencyRule(params);
             case "BACKEND_DOWN"   -> new BackendDownRule(params);
+            case "TRAFFIC_SPIKE"  -> new ZScoreRule(params);
             default -> {
                 log.warn("Bo qua luat khong biet: " + id);
                 yield null;

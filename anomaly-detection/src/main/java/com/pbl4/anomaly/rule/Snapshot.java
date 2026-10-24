@@ -2,8 +2,10 @@ package com.pbl4.anomaly.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 // "Anh chup" luu luong trong mot cua so: ket qua cua 1 lan hoi Elasticsearch,
@@ -17,11 +19,17 @@ public record Snapshot(
         Map<String, Long> requestsByIp,         // IP -> so request            (R1)
         Map<String, Long> scanPathsByIp,        // IP -> so path 403/404 khac nhau (R2)
         Map<String, Long> downEventsByBackend,  // backend -> so lan bao DOWN   (R6)
-        Map<String, Long> loginFailByIp
+        Map<String, Long> loginFailByIp,        // IP -> so lan dang nhap sai    (R3)
+        List<Long> baselinePerMinute            // so request moi phut trong N phut truoc (R7)
 ) {
 
-    // Doc ket qua tra ve tu QUERY trong AnomalyDetectorApp
+    // Giu cach goi cu (khong co baseline) -> R7 tu bo qua vi thieu lich su
     public static Snapshot from(JsonNode res, int windowSeconds) {
+        return from(res, null, windowSeconds);
+    }
+
+    // res: ket qua QUERY_TEMPLATE, baselineRes: ket qua BASELINE_TEMPLATE (co the null)
+    public static Snapshot from(JsonNode res, JsonNode baselineRes, int windowSeconds) {
         JsonNode aggs = res.path("aggregations");
         JsonNode req = aggs.path("req");
 
@@ -47,7 +55,36 @@ public record Snapshot(
                 Collections.unmodifiableMap(byIp),
                 Collections.unmodifiableMap(scan),
                 Collections.unmodifiableMap(down),
-                Collections.unmodifiableMap(loginFail));
+                Collections.unmodifiableMap(loginFail),
+                List.copyOf(readBaseline(baselineRes)));
+    }
+
+    // date_histogram -> danh sach so request cua tung phut (ke ca phut = 0)
+    private static List<Long> readBaseline(JsonNode baselineRes) {
+        List<Long> list = new ArrayList<>();
+        if (baselineRes == null) {
+            return list;
+        }
+        for (JsonNode b : baselineRes.path("aggregations").path("per_minute").path("buckets")) {
+            list.add(b.path("doc_count").asLong());
+        }
+        return list;
+    }
+
+    public double baselineMean() {
+        if (baselinePerMinute.isEmpty()) return 0;
+        double sum = 0;
+        for (long v : baselinePerMinute) sum += v;
+        return sum / baselinePerMinute.size();
+    }
+
+    // Do lech chuan (chia cho n): do muc "dao dong binh thuong" quanh trung binh
+    public double baselineStd() {
+        if (baselinePerMinute.isEmpty()) return 0;
+        double mean = baselineMean();
+        double sq = 0;
+        for (long v : baselinePerMinute) sq += (v - mean) * (v - mean);
+        return Math.sqrt(sq / baselinePerMinute.size());
     }
 
     // terms aggregation -> Map<key, doc_count>, giu nguyen thu tu (nhieu nhat truoc)
@@ -69,6 +106,9 @@ public record Snapshot(
             top.append(e.getKey()).append('=').append(e.getValue()).append(' ');
         }
         return windowSeconds + "s qua: " + total + " request, 4xx=" + err4xx + ", 5xx=" + err5xx
-                + ", p95=" + p95 + ", top IP: " + (top.isEmpty() ? "-" : top.toString().trim());
+                + ", p95=" + p95 + ", top IP: " + (top.isEmpty() ? "-" : top.toString().trim())
+                + (baselinePerMinute.isEmpty() ? ""
+                : String.format(", nen %d phut: %.1f +- %.1f req/phut",
+                baselinePerMinute.size(), baselineMean(), baselineStd()));
     }
 }

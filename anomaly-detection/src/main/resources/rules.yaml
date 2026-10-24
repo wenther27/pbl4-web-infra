@@ -4,6 +4,8 @@ window_seconds: 60
 interval_seconds: 10
 # Cung luat + cung doi tuong (IP, backend...) da bao thi im lang trong bao lau
 cooldown_seconds: 300
+# R7: lay bao nhieu phut truoc lam "binh thuong" (baseline)
+baseline_minutes: 30
 
 # IP tin cay: khong bao R1, R2 cho cac IP nay (vd: may chay JMeter do tai)
 whitelist_ips: []
@@ -46,3 +48,11 @@ rules:
   BACKEND_DOWN:
     enabled: true
     severity: HIGH
+  # R7: tong luu luong tang dot bien so voi N phut truoc (z-score)
+  TRAFFIC_SPIKE:
+    enabled: true
+    severity: MEDIUM
+    z_threshold: 3            # cao hon trung binh bao nhieu lan do lech chuan
+    min_requests: 30          # hien tai < 30 req/phut thi khong xet
+    min_std: 5                # san do lech chuan (he thong im lang -> std = 0)
+    min_history: 10           # can it nhat 10 phut lich su
