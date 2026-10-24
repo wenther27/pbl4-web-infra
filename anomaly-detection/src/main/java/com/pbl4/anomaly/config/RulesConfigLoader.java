@@ -1,6 +1,7 @@
 package com.pbl4.anomaly.config;
 
 import com.pbl4.anomaly.rule.BackendDownRule;
+import com.pbl4.anomaly.rule.BruteForceLoginRule;
 import com.pbl4.anomaly.rule.ErrorRate5xxRule;
 import com.pbl4.anomaly.rule.HighLatencyRule;
 import com.pbl4.anomaly.rule.HighRateIpRule;
@@ -70,6 +71,7 @@ public class RulesConfigLoader {
         return switch (id) {
             case "HIGH_RATE_IP"   -> new HighRateIpRule(params, whitelist);
             case "SCAN_PATHS"     -> new ScanPathsRule(params, whitelist);
+            case "BRUTE_FORCE_LOGIN" -> new BruteForceLoginRule(params, whitelist);
             case "ERROR_RATE_5XX" -> new ErrorRate5xxRule(params);
             case "HIGH_LATENCY"   -> new HighLatencyRule(params);
             case "BACKEND_DOWN"   -> new BackendDownRule(params);

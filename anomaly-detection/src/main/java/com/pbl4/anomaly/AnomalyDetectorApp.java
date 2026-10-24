@@ -48,7 +48,14 @@ public class AnomalyDetectorApp {
                           "aggs": { "paths": { "cardinality": { "field": "path" } } }
                         }
                       }
-                    }
+                    },
+                    "login_fail": {
+                                          "filter": { "bool": { "filter": [
+                                            { "term": { "path": "/api/auth/login" } },
+                                            { "term": { "status": 401 } }
+                                          ]}},
+                                          "aggs": { "by_ip": { "terms": { "field": "clientIp", "size": 20 } } }
+                                        }
                   }
                 },
                 "down": {

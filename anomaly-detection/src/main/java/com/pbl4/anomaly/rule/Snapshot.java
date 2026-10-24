@@ -16,7 +16,8 @@ public record Snapshot(
         Double p95Ms,                           // null neu khong co request nao
         Map<String, Long> requestsByIp,         // IP -> so request            (R1)
         Map<String, Long> scanPathsByIp,        // IP -> so path 403/404 khac nhau (R2)
-        Map<String, Long> downEventsByBackend   // backend -> so lan bao DOWN   (R6)
+        Map<String, Long> downEventsByBackend,  // backend -> so lan bao DOWN   (R6)
+        Map<String, Long> loginFailByIp
 ) {
 
     // Doc ket qua tra ve tu QUERY trong AnomalyDetectorApp
@@ -40,11 +41,13 @@ public record Snapshot(
         }
 
         Map<String, Long> down = countBuckets(aggs.path("down").path("by_backend"));
+        Map<String, Long> loginFail = countBuckets(req.path("login_fail").path("by_ip"));
 
         return new Snapshot(windowSeconds, total, err4xx, err5xx, p95,
                 Collections.unmodifiableMap(byIp),
                 Collections.unmodifiableMap(scan),
-                Collections.unmodifiableMap(down));
+                Collections.unmodifiableMap(down),
+                Collections.unmodifiableMap(loginFail));
     }
 
     // terms aggregation -> Map<key, doc_count>, giu nguyen thu tu (nhieu nhat truoc)

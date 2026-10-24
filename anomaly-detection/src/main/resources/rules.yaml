@@ -22,6 +22,12 @@ rules:
     severity: MEDIUM
     threshold: 15             # so duong dan khac nhau / cua so
 
+  # R3: mot IP dang nhap that bai (401) qua nhieu lan
+  BRUTE_FORCE_LOGIN:
+    enabled: true
+    severity: HIGH
+    threshold: 10            # so lan 401 tren /api/auth/login / cua so
+
   # R4: ti le loi 5xx cao (DB chet, loi code, tat ca backend DOWN)
   ERROR_RATE_5XX:
     enabled: true
