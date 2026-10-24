@@ -22,7 +22,7 @@ filebeat.autodiscover:
         #   cinehub-infrastructure-load-balancer-1
         - condition:
             regexp:
-              docker.container.name: "^cinehub-infrastructure-(web-[0-9]+|load-balancer)-[0-9]+$"
+              docker.container.name: "^cinehub-infrastructure-(web-[0-9]+|load-balancer|anomaly-detector)-[0-9]+$"
           config:
             - type: filestream
               id: "app-${data.docker.container.id}"

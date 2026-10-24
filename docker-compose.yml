@@ -156,6 +156,28 @@ services:
     networks:
       - cinehub-network
 
+  # ============================================================
+  # Bo phat hien bat thuong: doc log LB tu Elasticsearch, ghi canh bao alerts-*.
+  # Elasticsearch nam o project khac (elk-stack/docker-compose.elk.yml)
+  # -> goi qua cong 9200 da mo ra may that, bang ten host.docker.internal.
+  # ============================================================
+  anomaly-detector:
+    build:
+      context: ./anomaly-detection
+    image: pbl4-anomaly-detector:local
+    restart: unless-stopped
+    environment:
+      ES_URL: "http://host.docker.internal:9200"
+      RULES_FILE: /app/rules.yaml
+      JAVA_TOOL_OPTIONS: -Xmx96m -XX:+UseSerialGC
+    volumes:
+      # Doi nguong: sua file nay roi "docker compose restart anomaly-detector", khong can build lai
+      - ./anomaly-detection/src/main/resources/rules.yaml:/app/rules.yaml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - cinehub-network
+
 volumes:
   mysql-primary-data:
   mysql-replica-data:
