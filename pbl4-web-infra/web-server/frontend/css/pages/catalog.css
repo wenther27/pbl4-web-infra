@@ -1,0 +1,20 @@
+.page-intro { padding-bottom: 32px; }
+.page-intro__row { display: flex; align-items: end; justify-content: space-between; gap: 40px; }
+.page-intro h1 { margin-bottom: 0; font-size: clamp(2rem,4vw,3rem); }
+.page-intro__row > p { max-width: 560px; margin-bottom: 5px; color: var(--color-text-soft); }
+.catalog { display: grid; grid-template-columns: 250px 1fr; gap: 34px; padding-bottom: 80px; }
+.filters { align-self: start; display: grid; gap: 22px; padding: 22px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: #fff; box-shadow: var(--shadow-sm); }
+.filters__heading { display: flex; align-items: center; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--color-border); }
+.filters__heading h2 { margin: 0; font-size: 1rem; }
+.filters__heading button { border: 0; color: var(--color-text-soft); background: none; font-size: .72rem; }
+.result-toolbar { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 12px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: #fff; }
+.result-toolbar p { margin: 0; }
+.status-dot { display: inline-block; width: 8px; height: 8px; margin-right: 9px; border-radius: 50%; background: var(--color-primary); }
+.filter-toggle { display: none; border: 0; color: var(--color-primary); background: none; font-weight: 700; }
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.filter-tag { padding: 6px 10px; border-radius: 999px; color: var(--color-text-soft); background: var(--color-muted); font-size: .72rem; }
+.pagination { display: flex; justify-content: center; gap: 8px; margin-top: 42px; }
+.pagination button { min-width: 38px; height: 38px; border: 1px solid var(--color-border); border-radius: 10px; background: #fff; }
+.pagination button.is-active { border-color: var(--color-primary); color: #fff; background: var(--color-primary); }
+.pagination button:disabled { opacity: .45; cursor: default; }
+@media (max-width: 900px) { .catalog { grid-template-columns: 1fr; } .filters { display: none; } .filters.is-open { display: grid; } .filter-toggle { display: block; } .page-intro__row { align-items: start; flex-direction: column; gap: 10px; } }

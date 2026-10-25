@@ -1,0 +1,139 @@
+name: cinehub-infrastructure
+
+# ============================================================
+# MySQL primary (ghi) + replica (doc), replication theo GTID.
+# Lan dau "docker compose up", replica tu copy du lieu tu primary
+# va tu bat replication (xem database/replica/init/).
+# ============================================================
+
+x-mysql-common: &mysql-common
+  image: mysql:8.4
+  restart: unless-stopped
+  environment:
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+    MYSQL_DATABASE: ${MYSQL_DATABASE:-cinehub_db}
+    MYSQL_REPL_USER: ${MYSQL_REPL_USER:-repl}
+    MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD:-change-me-repl-password}
+    MYSQL_PRIMARY_HOST: mysql-primary
+  networks:
+    - cinehub-network
+
+x-web-common: &web-common
+  build:
+    context: ./web-server/backend
+  image: cinehub-backend:local
+  restart: unless-stopped
+  depends_on:
+    mysql-primary:
+      condition: service_healthy
+    mysql-replica:
+      condition: service_healthy
+  environment: &web-env
+    DB_PRIMARY_URL: jdbc:mysql://mysql-primary:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    DB_REPLICA_URL: jdbc:mysql://mysql-replica:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    DB_USER: root
+    DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+    JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-to-at-least-32-characters}
+    JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+    SHOW_SQL: ${SHOW_SQL:-false}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+    UPLOAD_MAX_SIZE: ${UPLOAD_MAX_SIZE:-5242880}
+    UPLOAD_VIDEO_MAX_SIZE: ${UPLOAD_VIDEO_MAX_SIZE:-524288000}
+    SERVER_PORT: 8080
+    # Log JSON (instance/path/status/durationMs...) cho ELK, xem logback-spring.xml
+    SPRING_PROFILES_ACTIVE: docker
+    JAVA_TOOL_OPTIONS: -Xmx256m -XX:+UseSerialGC
+  networks:
+    - cinehub-network
+  volumes:
+    - cinehub-uploads:/app/uploads
+
+services:
+  mysql-primary:
+    <<: *mysql-common
+    command:
+      - --server-id=1
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --log-replica-updates=ON
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${MYSQL_PRIMARY_PORT:-3307}:3306"
+    volumes:
+      - mysql-primary-data:/var/lib/mysql
+      - ./database/migrations/V1__init_schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./database/primary/init/02-create-repl-user.sh:/docker-entrypoint-initdb.d/02-create-repl-user.sh:ro
+    healthcheck:
+      # Ping qua TCP (127.0.0.1): server tam cua entrypoint chay --skip-networking,
+      # nen chi healthy khi da init xong va server that da mo cong.
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  mysql-replica:
+    <<: *mysql-common
+    command:
+      - --server-id=2
+      - --relay-log=relay-bin
+      - --read-only=ON
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    ports:
+      - "${MYSQL_REPLICA_PORT:-3308}:3306"
+    volumes:
+      - mysql-replica-data:/var/lib/mysql
+      - ./database/replica/init/01-setup-replication.sh:/docker-entrypoint-initdb.d/01-setup-replication.sh:ro
+      - ./database/replica/healthcheck.sh:/usr/local/bin/replica-healthcheck.sh:ro
+    healthcheck:
+      test: ["CMD", "bash", "/usr/local/bin/replica-healthcheck.sh"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  web-1:
+    <<: *web-common
+    environment:
+      <<: *web-env
+      INSTANCE_ID: web-1
+    ports:
+      - "8081:8080"
+
+  web-2:
+    <<: *web-common
+    environment:
+      <<: *web-env
+      INSTANCE_ID: web-2
+    ports:
+      - "8082:8080"
+
+  web-3:
+    <<: *web-common
+    environment:
+      <<: *web-env
+      INSTANCE_ID: web-3
+    ports:
+      - "8083:8080"
+
+volumes:
+  mysql-primary-data:
+  mysql-replica-data:
+  cinehub-uploads:
+networks:
+  cinehub-network:
+    driver: bridge

@@ -1,0 +1,23 @@
+name: cinehub-database
+
+services:
+  database:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-for-local-development}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-cinehub_db}
+    ports:
+      - "3307:3306"
+    volumes:
+      - cinehub-db-data:/var/lib/mysql
+      - ./migrations/V1__init_schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  cinehub-db-data:
