@@ -1,0 +1,8 @@
+# Dia chi backend. Chay LB ngoai Docker thi dung localhost,
+# dong trong Docker thi doi thanh web-1:8080, web-2:8080, web-3:8080
+port: 8080
+
+backends:
+  - http://localhost:8081
+  - http://localhost:8082
+  - http://localhost:8083

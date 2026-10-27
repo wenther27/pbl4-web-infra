@@ -1,0 +1,2 @@
+# Script chay trong container Linux: luon giu LF, ke ca khi checkout tren Windows
+*.sh text eol=lf

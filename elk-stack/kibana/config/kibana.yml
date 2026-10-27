@@ -1,0 +1,12 @@
+# Kibana: giao dien web de tim kiem log va ve bieu do tu Elasticsearch.
+server.name: cinehub-kibana
+server.host: "0.0.0.0"
+
+# Trong cung compose network, goi Elasticsearch bang TEN SERVICE, khong phai localhost
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+# Tat banner "Usage collection" (khong gui du lieu su dung ve Elastic) va canh bao
+# "Your data is not secure" (da biet la tat bao mat cho moi truong dev) -> man hinh demo gon.
+telemetry.optIn: false
+telemetry.allowChangingOptInStatus: false
+xpack.security.showInsecureClusterWarning: false

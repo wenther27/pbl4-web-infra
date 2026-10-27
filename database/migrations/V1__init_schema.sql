@@ -4,6 +4,10 @@
 -- /docker-entrypoint-initdb.d/ của container MySQL.
 -- ============================================================
 
+-- Bat buoc: entrypoint cua MySQL chay file nay voi charset client mac dinh (latin1),
+-- thieu dong nay tieng Viet se bi luu sai ma (loi font).
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS cinehub_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;

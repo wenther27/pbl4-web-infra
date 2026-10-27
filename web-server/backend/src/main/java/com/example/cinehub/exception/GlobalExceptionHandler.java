@@ -10,6 +10,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 
 import java.time.LocalDateTime;
@@ -69,6 +71,24 @@ public class GlobalExceptionHandler  {
         exceptionResponse.setDetails("Tài khoản hoặc mật khẩu không chính xác, vui lòng kiểm tra lại");
         exceptionResponse.setTimestamp(LocalDateTime.now());
         return new ResponseEntity<>(exceptionResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        ExceptionResponse exceptionResponse = new ExceptionResponse();
+        exceptionResponse.setError("File tải lên quá lớn");
+        exceptionResponse.setDetails("File vượt quá giới hạn dung lượng của máy chủ");
+        exceptionResponse.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<Object> handleMissingUploadPart(MissingServletRequestPartException ex) {
+        ExceptionResponse exceptionResponse = new ExceptionResponse();
+        exceptionResponse.setError("Thiếu file tải lên");
+        exceptionResponse.setDetails("Vui lòng chọn một file để tải lên");
+        exceptionResponse.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
 

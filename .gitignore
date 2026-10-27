@@ -38,6 +38,7 @@ docker-volumes/
 # ===== Node (nếu có frontend sau này) =====
 node_modules/
 dist/
+web-server/backend/uploads/
 
 # ===== Test & build output =====
 *.pdf
@@ -48,3 +49,6 @@ out/
 # ===== Load testing results =====
 load-testing/**/*.jtl
 load-testing/**/results/
+
+# Ban backend cu, da chuyen sang web-server/backend
+web-server/BE/

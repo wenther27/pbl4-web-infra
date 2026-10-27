@@ -1,5 +1,6 @@
 package com.example.cinehub.entity;
 
+import com.example.cinehub.config.MediaUrlConverter;
 import com.example.cinehub.constant.Movie.MovieStatus;
 import com.example.cinehub.constant.Movie.MovieType;
 import jakarta.persistence.*;
@@ -8,7 +9,6 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Set;
 
 @Entity
@@ -24,9 +24,11 @@ public class Movie {
     private String description;
 
     @Column(name = "poster_url")
+    @Convert(converter = MediaUrlConverter.class)
     private String posterUrl;
 
     @Column(name = "backdrop_url")
+    @Convert(converter = MediaUrlConverter.class)
     private String backdropUrl;
 
     @Column(name = "release_date")
@@ -44,7 +46,7 @@ public class Movie {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "movie_type")
-    private MovieType movieType; // Bạn cần tạo thêm Enum MovieType (movie, series, anime)
+    private MovieType movieType;
 
     @Enumerated(EnumType.STRING)
     private MovieStatus status;
@@ -59,6 +61,4 @@ public class Movie {
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     private Set<Genre> genres;
-
-
 }

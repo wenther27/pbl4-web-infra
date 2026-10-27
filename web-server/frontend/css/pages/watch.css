@@ -1,0 +1,148 @@
+.watch-page {
+  min-height: 78vh;
+  padding: calc(var(--header-height) + 30px) 0 72px;
+  background: #111010;
+  color: #f8f5f4;
+}
+
+.watch-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 24px;
+  align-items: start;
+}
+
+.watch-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #a9a3a2;
+  font-size: .8rem;
+}
+
+.watch-breadcrumb a:hover { color: #fff; }
+
+.video-shell {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #302c2b;
+  border-radius: var(--radius-md);
+  background: #000;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .35);
+}
+
+.video-shell video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: #000;
+}
+
+.player-message {
+  position: absolute;
+  left: 50%;
+  bottom: 62px;
+  width: min(88%, 620px);
+  margin: 0;
+  padding: 10px 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: var(--radius-sm);
+  color: #f4eeee;
+  background: rgba(23, 20, 20, .82);
+  text-align: center;
+  font-size: .82rem;
+  backdrop-filter: blur(8px);
+}
+
+.watch-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  align-items: end;
+  padding: 24px 0;
+  border-bottom: 1px solid #302c2b;
+}
+
+.watch-toolbar h1 { margin-bottom: 8px; font-size: clamp(1.35rem, 3vw, 2rem); }
+.watch-toolbar .eyebrow { margin-bottom: 5px; color: #ef747e; }
+.watch-meta { margin: 0; color: #a9a3a2; }
+.watch-controls { display: flex; flex: 0 0 auto; gap: 10px; }
+.watch-controls .button:disabled { cursor: not-allowed; opacity: .4; }
+
+.watch-description { padding-top: 26px; color: #bdb6b4; }
+.watch-description h2 { color: #fff; font-size: 1.2rem; }
+
+.episode-panel {
+  overflow: hidden;
+  margin-top: 35px;
+  border: 1px solid #302c2b;
+  border-radius: var(--radius-md);
+  background: #1b1919;
+}
+
+.episode-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 1px solid #302c2b;
+}
+
+.episode-panel__header h2 { margin: 0; font-size: 1.15rem; }
+.episode-panel__header .eyebrow { margin-bottom: 4px; color: #ef747e; }
+.episode-panel__header > span { color: #9c9593; font-size: .78rem; }
+.episode-list { max-height: 620px; overflow-y: auto; padding: 8px; }
+
+.episode-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 38px 1fr 22px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
+  color: #ddd7d5;
+  background: transparent;
+  text-align: left;
+}
+
+.episode-item:hover { background: #292525; }
+.episode-item.is-active { color: #fff; background: #3a2023; }
+.episode-item__number { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #302c2b; font-weight: 700; }
+.episode-item.is-active .episode-item__number { background: var(--color-primary); }
+.episode-item b, .episode-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.episode-item b { font-size: .85rem; }
+.episode-item small { margin-top: 2px; color: #918a88; font-size: .72rem; }
+.episode-item__play { color: #ef747e; font-size: .75rem; }
+
+.watch-state {
+  padding-top: 90px;
+  text-align: center;
+}
+
+.watch-state__icon { display: grid; width: 54px; height: 54px; margin: 0 auto 18px; place-items: center; border: 1px solid #643238; border-radius: 50%; color: #ff9ba3; font-size: 1.4rem; }
+.watch-state h1 { margin-bottom: 10px; }
+.watch-state p { max-width: 620px; margin: 0 auto 24px; color: #aaa3a1; }
+
+@media (max-width: 980px) {
+  .watch-layout { grid-template-columns: 1fr; }
+  .episode-panel { margin-top: 0; }
+  .episode-list { max-height: 380px; }
+}
+
+@media (max-width: 640px) {
+  .watch-page { padding-top: calc(var(--header-height) + 18px); }
+  .watch-layout { width: 100%; gap: 18px; }
+  .watch-breadcrumb, .watch-toolbar, .watch-description { width: calc(100% - 28px); margin-inline: auto; }
+  .video-shell { border-inline: 0; border-radius: 0; }
+  .watch-toolbar { align-items: stretch; flex-direction: column; }
+  .watch-controls { display: grid; grid-template-columns: 1fr 1fr; }
+  .watch-controls .button { padding-inline: 12px; }
+  .episode-panel { margin-inline: 14px; }
+}
