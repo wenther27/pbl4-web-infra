@@ -1,6 +1,7 @@
 package com.pbl4.lb.proxy;
 
 import com.pbl4.lb.health.HealthChecker;
+import com.pbl4.lb.security.BlockList;
 import com.pbl4.lb.strategy.LoadBalancingStrategy;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -50,11 +51,13 @@ public class ProxyHandler implements HttpHandler {
 
     private final HealthChecker health;
     private final LoadBalancingStrategy strategy;
+    private final BlockList blockList;
     private final HttpClient client;
 
-    public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy) {
+    public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy, BlockList blockList) {
         this.health = health;
         this.strategy = strategy;
+        this.blockList = blockList;
         this.client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(3))
@@ -72,8 +75,17 @@ public class ProxyHandler implements HttpHandler {
         int status = 500;
         String backend = "-";
         int attempt = 0;
+        boolean blocked = false;
 
         try {
+            // IP bi admin chan: tu choi ngay, khong cho vao backend nao
+            if (blockList.isBlocked(clientIp)) {
+                blocked = true;
+                status = 403;
+                sendText(exchange, status, "IP cua ban dang bi tam chan boi quan tri vien");
+                return;
+            }
+
             List<String> healthy = health.healthyBackends();
             if (healthy.isEmpty()) {
                 status = 503;
@@ -141,7 +153,8 @@ public class ProxyHandler implements HttpHandler {
                     kv("durationMs", durationMs),
                     kv("backend", backend),
                     kv("attempts", attempt),
-                    kv("clientIp", clientIp));
+                    kv("clientIp", clientIp),
+                    kv("blocked", blocked));
             exchange.close();
         }
     }
