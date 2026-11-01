@@ -150,9 +150,15 @@ services:
       # true: tin X-Forwarded-For client gui (gia lap nhieu IP khi test bat thuong)
       # false: chi ghi IP ket noi that (dung khi demo bao mat)
       LB_TRUST_XFF: "true"
+      # API quan tri chan IP (cong rieng, chi mo cho may nay)
+      LB_ADMIN_PORT: "8090"
+      LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
+      # IP khong bao gio bi chan: gateway cua mang Docker (= trinh duyet cua admin sau NAT)
+      LB_NEVER_BLOCK: "172.18.0.1,127.0.0.1"
       JAVA_TOOL_OPTIONS: -Xmx128m -XX:+UseSerialGC
     ports:
       - "8080:8080"
+      - "127.0.0.1:8090:8090"
     networks:
       - cinehub-network
 
