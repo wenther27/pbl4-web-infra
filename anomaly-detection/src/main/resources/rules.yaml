@@ -1,10 +1,6 @@
-# Do dai cua so du lieu: moi lan kiem tra nhin lai bao nhieu giay
 window_seconds: 60
-# Bao lau kiem tra mot lan
 interval_seconds: 10
-# Cung luat + cung doi tuong (IP, backend...) da bao thi im lang trong bao lau
 cooldown_seconds: 300
-# R7: lay bao nhieu phut truoc lam "binh thuong" (baseline)
 baseline_minutes: 30
 
 # IP tin cay: khong bao R1, R2 cho cac IP nay (vd: may chay JMeter do tai)
@@ -15,20 +11,19 @@ rules:
   HIGH_RATE_IP:
     enabled: true
     severity: HIGH
-    threshold: 100            # so request / cua so
+    threshold: 30            # so request / cua so
 
   # R2: mot IP nhan 403/404 tren qua nhieu duong dan KHAC NHAU (do quet)
-  # 403 vi SecurityConfig co .anyRequest().denyAll()
   SCAN_PATHS:
     enabled: true
     severity: MEDIUM
-    threshold: 15             # so duong dan khac nhau / cua so
+    threshold: 15
 
   # R3: mot IP dang nhap that bai (401) qua nhieu lan
   BRUTE_FORCE_LOGIN:
     enabled: true
     severity: HIGH
-    threshold: 10            # so lan 401 tren /api/auth/login / cua so
+    threshold: 10
 
   # R4: ti le loi 5xx cao (DB chet, loi code, tat ca backend DOWN)
   ERROR_RATE_5XX:
@@ -52,7 +47,7 @@ rules:
   TRAFFIC_SPIKE:
     enabled: true
     severity: MEDIUM
-    z_threshold: 3            # cao hon trung binh bao nhieu lan do lech chuan
-    min_requests: 30          # hien tai < 30 req/phut thi khong xet
-    min_std: 5                # san do lech chuan (he thong im lang -> std = 0)
-    min_history: 10           # can it nhat 10 phut lich su
+    z_threshold: 3
+    min_requests: 30
+    min_std: 5
+    min_history: 10

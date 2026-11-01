@@ -1,0 +1,274 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1793028442718,660,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,645,0,26
+1793028442909,584,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,583,0,2
+1793028444500,95,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,95,0,0
+1793028444909,46,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,46,0,0
+1793028446492,43,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,43,0,0
+1793028446918,66,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,66,0,0
+1793028448499,51,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,51,0,0
+1793028448909,63,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,62,0,0
+1793028450494,41,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,41,0,0
+1793028450910,39,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,0
+1793028452492,44,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,44,0,0
+1793028452912,55,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,55,0,0
+1793028454495,75,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,75,0,0
+1793028454910,81,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,81,0,0
+1793028456491,44,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,44,0,0
+1793028456908,48,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,48,0,0
+1793028458493,56,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,56,0,0
+1793028458909,68,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,68,0,0
+1793028460505,51,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,51,0,0
+1793028460909,40,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,40,0,0
+1793028462493,41,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,41,0,0
+1793028462910,33,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,0
+1793028464503,37,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,37,0,0
+1793028464916,64,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,64,0,0
+1793028466495,44,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,44,0,0
+1793028466910,39,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,0
+1793028468493,37,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,37,0,0
+1793028468909,30,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793028470491,32,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793028470924,30,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793028472491,29,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,29,0,0
+1793028472921,37,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,37,0,0
+1793028474494,33,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,0
+1793028474908,35,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,35,0,0
+1793028476491,32,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793028476909,81,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,81,0,0
+1793028478491,79,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,79,0,0
+1793028478909,48,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,48,0,0
+1793028480496,44,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,44,0,0
+1793028480910,47,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,46,0,0
+1793028482491,36,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,36,0,0
+1793028482923,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793028484506,30,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793028484909,36,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,36,0,0
+1793028486492,39,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,0
+1793028486909,61,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,61,0,0
+1793028488492,32,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793028488910,35,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,35,0,0
+1793028490491,33,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,0
+1793028490913,35,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,35,0,0
+1793028492492,52,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,52,0,0
+1793028492910,41,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,41,0,0
+1793028494493,36,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,36,0,0
+1793028494925,31,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,31,0,0
+1793028496494,35,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,35,0,0
+1793028496912,28,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,28,0,0
+1793028498493,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793028498911,43,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,43,0,0
+1793028500492,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793028500925,32,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793028502493,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,31,0,0
+1793028502919,46,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,46,0,4
+1793028504497,34,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,1
+1793028504922,29,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,29,0,0
+1793028506505,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793028506909,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793028508492,30,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793028508923,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793028510494,30,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793028510909,33,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,0
+1793028512491,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793028512910,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793028514492,28,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,28,0,0
+1793028514909,46,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,46,0,0
+1793028516505,33,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,0
+1793028516910,23,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,23,0,0
+1793028518491,39,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,0
+1793028518910,24,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793028520492,42,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,42,0,0
+1793028520909,30,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793028522491,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,31,0,0
+1793028522917,35,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,35,0,0
+1793028524502,34,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793028524916,32,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793028526493,36,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,36,0,0
+1793028526909,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793028528506,50,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,50,0,0
+1793028528922,32,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793028530490,32,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793028530909,30,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,1,1,http://localhost:8080/api/movies,30,0,0
+1793028531908,29,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,1,1,http://localhost:8080/api/movies,29,0,0
+1793030341370,50,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,1,1,http://localhost:8080/api/movies,47,0,15
+1793030341783,33,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,1
+1793030342312,36,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,36,0,0
+1793030343782,30,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793030344311,30,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793030345781,26,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030346311,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030347782,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030348311,38,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,38,0,0
+1793030349782,25,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,25,0,0
+1793030350311,26,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030351781,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030352310,24,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793030353782,23,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,23,0,0
+1793030354311,24,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793030355780,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793030356311,24,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793030357780,25,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,25,0,0
+1793030358310,23,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,23,0,0
+1793030359782,28,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,28,0,0
+1793030360310,24,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793030361780,26,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030362310,25,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,25,0,0
+1793030363782,22,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,22,0,0
+1793030364309,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,31,0,0
+1793030365780,21,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,21,0,0
+1793030366310,20,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030367781,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793030368310,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030369780,20,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030370310,23,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,23,0,0
+1793030371781,23,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,23,0,0
+1793030372309,39,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,0
+1793030373780,22,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,22,0,0
+1793030374310,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030375781,30,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793030376312,29,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,29,0,0
+1793030377781,26,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030378309,19,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,19,0,0
+1793030379781,20,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030380310,22,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,22,0,0
+1793030381781,26,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030382311,20,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030383781,20,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030384310,28,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,28,0,0
+1793030385781,21,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,21,0,0
+1793030386310,35,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,35,0,0
+1793030387782,26,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030388311,20,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030389782,29,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,29,0,0
+1793030390310,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,31,0,0
+1793030391782,29,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,29,0,0
+1793030392311,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030393782,24,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793030394312,22,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,22,0,0
+1793030395782,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030396312,18,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,18,0,0
+1793030397780,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030398310,25,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,25,0,0
+1793030399781,22,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,22,0,0
+1793030400311,25,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,25,0,0
+1793030401783,20,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,1
+1793030402314,29,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,29,0,2
+1793030403782,19,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,19,0,0
+1793030404311,24,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793030405781,19,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,19,0,0
+1793030406311,21,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,21,0,0
+1793030407781,22,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,22,0,0
+1793030408309,23,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,23,0,0
+1793030409781,25,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,25,0,0
+1793030410310,42,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,42,0,0
+1793030411781,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030412312,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030413783,27,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030414310,22,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,21,0,0
+1793030415781,26,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,26,0,0
+1793030416312,21,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,21,0,0
+1793030417782,24,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,24,0,0
+1793030418311,19,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,19,0,0
+1793030419782,29,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,29,0,0
+1793030420311,21,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,21,0,0
+1793030421781,19,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,19,0,0
+1793030422309,28,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,28,0,0
+1793030423780,20,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030424310,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793030425781,28,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,28,0,0
+1793030426309,39,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,0
+1793030427781,32,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,32,0,0
+1793030428310,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,31,0,0
+1793030429782,20,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,20,0,0
+1793030430311,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,1,1,http://localhost:8080/api/movies,27,0,0
+1793031234819,24,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,1,1,http://localhost:8080/api/movies,22,0,16
+1793031235243,4,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,1
+1793031235765,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031237243,5,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031237765,3,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031239242,3,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031239765,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031241242,5,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031241768,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031243248,4,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031243773,6,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,6,0,0
+1793031245255,6,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,6,0,0
+1793031245775,5,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031247257,8,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,8,0,0
+1793031247781,15,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,15,0,0
+1793031249255,5,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031249764,5,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031251244,6,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031251767,7,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,7,0,0
+1793031253245,5,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031253769,6,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,6,0,0
+1793031255248,6,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,6,0,0
+1793031255767,3,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031257243,3,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031257765,3,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031259242,13,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,13,0,0
+1793031259764,9,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,9,0,0
+1793031261241,4,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031261763,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031263241,5,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031263765,5,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031265242,4,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031265765,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031267241,4,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031267766,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031269242,18,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,18,0,0
+1793031269765,3,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031271242,2,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,2,0,0
+1793031271763,6,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,6,0,0
+1793031273241,3,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031273764,2,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,2,0,0
+1793031275240,3,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,2,0,0
+1793031275764,2,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,2,0,0
+1793031277241,6,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031277763,3,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031279240,3,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031279764,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031281241,3,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031281775,3,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,3,0,0
+1793031283245,6,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031283774,7,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,7,0,0
+1793031285257,5,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,5,0,0
+1793031285767,6,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,6,0,0
+1793031287245,4,HTTP Request,503,Service Unavailable,Thread Group 1-2,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031287765,4,HTTP Request,503,Service Unavailable,Thread Group 1-1,text,false,,164,126,2,2,http://localhost:8080/api/movies,4,0,0
+1793031289243,247,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,247,0,0
+1793031289765,268,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,268,0,0
+1793031291242,227,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,227,0,0
+1793031291763,44,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,44,0,0
+1793031293240,55,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,55,0,0
+1793031293763,40,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,40,0,0
+1793031295242,41,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,41,0,0
+1793031295765,45,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,45,0,5
+1793031297241,39,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,3
+1793031297765,38,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,38,0,0
+1793031299242,46,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,46,0,0
+1793031299765,33,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,0
+1793031301242,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793031301764,46,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,46,0,0
+1793031303242,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793031303765,37,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,37,0,0
+1793031305241,35,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,35,0,0
+1793031305764,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,31,0,0
+1793031307240,35,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793031307764,34,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793031309240,36,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,36,0,0
+1793031309763,30,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793031311241,40,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,40,0,0
+1793031311777,40,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,40,0,0
+1793031313241,48,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,48,0,0
+1793031313774,33,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,33,0,0
+1793031315241,39,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,39,0,0
+1793031315771,46,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,46,0,0
+1793031317243,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793031317765,30,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793031319241,31,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,30,0,0
+1793031319776,27,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,27,0,0
+1793031321242,34,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,34,0,0
+1793031321774,41,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,2,2,http://localhost:8080/api/movies,41,0,0
+1793031323242,44,HTTP Request,200,OK,Thread Group 1-2,text,true,,5169,126,2,2,http://localhost:8080/api/movies,44,0,0
+1793031323776,31,HTTP Request,200,OK,Thread Group 1-1,text,true,,5169,126,1,1,http://localhost:8080/api/movies,31,0,0
