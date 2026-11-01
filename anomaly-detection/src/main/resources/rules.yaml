@@ -11,7 +11,7 @@ rules:
   HIGH_RATE_IP:
     enabled: true
     severity: HIGH
-    threshold: 30            # so request / cua so
+    threshold: 100            # so request / cua so
 
   # R2: mot IP nhan 403/404 tren qua nhieu duong dan KHAC NHAU (do quet)
   SCAN_PATHS:
