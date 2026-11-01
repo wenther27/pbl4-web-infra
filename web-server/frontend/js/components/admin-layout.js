@@ -6,7 +6,8 @@ const pageTitles = {
   genres: 'Quản lý thể loại',
   episodes: 'Quản lý tập phim',
   users: 'Quản lý người dùng',
-  reviews: 'Quản lý đánh giá'
+  reviews: 'Quản lý đánh giá',
+  security: 'Bảo mật'
 };
 
 export function mountAdminLayout(session, onRouteChange) {

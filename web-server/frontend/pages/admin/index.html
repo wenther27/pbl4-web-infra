@@ -34,6 +34,9 @@
           <a href="#reviews" data-admin-route="reviews"
             ><span>☆</span>Đánh giá</a
           >
+          <a href="#security" data-admin-route="security"
+            ><span>⛨</span>Bảo mật</a
+          >
         </nav>
         <div class="admin-sidebar__footer">
           <a href="../../index.html">← Về trang xem phim</a>
@@ -290,6 +293,101 @@
                       </td>
                     </tr>
                   </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-view" data-admin-view="security" hidden>
+            <div class="admin-section-heading">
+              <div>
+                <h2>Bảo mật</h2>
+                <p>
+                  IP bị bộ phát hiện bất thường cảnh báo và IP đang bị Load
+                  Balancer chặn.
+                </p>
+              </div>
+              <button
+                class="admin-button admin-button--primary"
+                id="security-block-manual"
+                type="button"
+              >
+                ⛔ Chặn IP thủ công
+              </button>
+            </div>
+            <div class="admin-notice" id="security-protected"></div>
+            <div class="admin-security-toolbar">
+              <label
+                >Cảnh báo trong
+                <select id="security-window">
+                  <option value="15">15 phút qua</option>
+                  <option value="60" selected>1 giờ qua</option>
+                  <option value="1440">24 giờ qua</option>
+                </select></label
+              >
+              <label
+                ><input id="security-auto" type="checkbox" checked /> Tự động
+                làm mới (10 giây)</label
+              >
+              <button
+                class="admin-button admin-button--secondary"
+                id="security-refresh"
+                type="button"
+              >
+                ↻ Làm mới
+              </button>
+              <span class="admin-result-count" id="security-updated"></span>
+            </div>
+
+            <div class="admin-panel admin-security-panel">
+              <div class="admin-panel__heading">
+                <div>
+                  <h2>IP bị cảnh báo</h2>
+                  <p>
+                    Gộp theo IP từ các luật R1, R2, R3. Bấm "Chặn" để Load
+                    Balancer trả 403 cho IP đó.
+                  </p>
+                </div>
+                <span class="admin-result-count" id="suspicious-count"></span>
+              </div>
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>IP</th>
+                      <th>Vi phạm</th>
+                      <th>Mức độ</th>
+                      <th>Số cảnh báo</th>
+                      <th>Lần cuối</th>
+                      <th class="admin-table__actions">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="suspicious-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="admin-panel admin-security-panel">
+              <div class="admin-panel__heading">
+                <div>
+                  <h2>IP đang bị chặn</h2>
+                  <p>Tự động gỡ khi hết thời gian, hoặc bấm "Gỡ chặn".</p>
+                </div>
+                <span class="admin-result-count" id="blocked-count"></span>
+              </div>
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>IP</th>
+                      <th>Lý do</th>
+                      <th>Người chặn</th>
+                      <th>Bắt đầu</th>
+                      <th>Hết hạn</th>
+                      <th class="admin-table__actions">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="blocked-table-body"></tbody>
                 </table>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { initEpisodes } from '../admin/episodes.js';
 import { initGenres } from '../admin/genres.js';
 import { initMovies } from '../admin/movies.js';
 import { initReviews } from '../admin/reviews.js';
+import { initSecurity } from '../admin/security.js';
 import { initUsers } from '../admin/users.js';
 import { getAdminSession, renderAdminAccessDenied } from '../auth/admin-guard.js';
 import { clearSession } from '../auth/session.js';
@@ -20,7 +21,8 @@ if (!session) {
     genres: () => initGenres(),
     episodes: () => initEpisodes(),
     users: () => initUsers(session),
-    reviews: () => initReviews()
+    reviews: () => initReviews(),
+    security: () => initSecurity()
   };
 
   mountAdminLayout(session, (route) => routeLoaders[route]?.());

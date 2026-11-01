@@ -59,5 +59,11 @@ export const adminApi = {
   deleteUser: (id) => adminRequest(`/users/${id}`, { method: 'DELETE' }),
 
   getReviews: (movieId) => adminRequest(`/movies/${movieId}/reviews`),
-  deleteReview: (reviewId) => adminRequest(`/reviews/${reviewId}`, { method: 'DELETE' })
+  deleteReview: (reviewId) => adminRequest(`/reviews/${reviewId}`, { method: 'DELETE' }),
+
+  // Bao mat: IP bi canh bao (tu Elasticsearch) va chan / go chan IP tai Load Balancer
+  getSuspiciousIps: (minutes = 60) => adminRequest(`/admin/security/suspicious-ips?minutes=${encodeURIComponent(minutes)}`),
+  getBlockedIps: () => adminRequest('/admin/security/blocked-ips'),
+  blockIp: (body) => adminRequest('/admin/security/blocked-ips', jsonBody('POST', body)),
+  unblockIp: (ip) => adminRequest(`/admin/security/blocked-ips/${encodeURIComponent(ip)}`, { method: 'DELETE' })
 };

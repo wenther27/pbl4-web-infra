@@ -1009,3 +1009,71 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Trang Bao mat (chan IP) ===== */
+.admin-badge--danger {
+  color: #a9232e;
+  background: #fdecee;
+}
+
+.admin-security-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  margin-bottom: 18px;
+  color: var(--color-text-soft);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.admin-security-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-security-toolbar select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: #fff;
+  font: inherit;
+}
+
+.admin-security-panel {
+  margin-bottom: 22px;
+}
+
+.admin-ip {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+.admin-alert-message {
+  display: block;
+  max-width: 340px;
+  margin-top: 3px;
+  white-space: normal;
+  color: var(--color-text-soft);
+  font-size: 0.65rem;
+}
+
+.admin-rule-list,
+.admin-security-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.admin-security-actions {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.admin-countdown {
+  display: block;
+  color: var(--color-text-soft);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+}
