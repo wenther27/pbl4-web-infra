@@ -44,6 +44,13 @@ x-web-common: &web-common
     # Log JSON (instance/path/status/durationMs...) cho ELK, xem logback-spring.xml
     SPRING_PROFILES_ACTIVE: docker
     JAVA_TOOL_OPTIONS: -Xmx256m -XX:+UseSerialGC
+    # Trang Admin > Bao mat: doc canh bao tu ES, chan IP qua API quan tri cua LB
+    ES_URL: http://host.docker.internal:9200
+    LB_ADMIN_URL: http://load-balancer:8090
+    LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
+  # ES nam o project ELK khac -> goi qua cong 9200 cua may that
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   networks:
     - cinehub-network
   volumes:

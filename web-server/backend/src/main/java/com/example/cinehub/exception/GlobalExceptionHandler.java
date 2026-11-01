@@ -102,4 +102,14 @@ public class GlobalExceptionHandler  {
         exceptionResponse.setTimestamp(LocalDateTime.now());
         return new ResponseEntity<>(exceptionResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    // Loi khi goi Elasticsearch / API quan tri cua LB: giu nguyen ma loi (400/404/409/502/503)
+    @ExceptionHandler(UpstreamServiceException.class)
+    public ResponseEntity<Object> handleUpstream(UpstreamServiceException ex) {
+        ExceptionResponse exceptionResponse = new ExceptionResponse();
+        exceptionResponse.setError("Không thực hiện được thao tác bảo mật");
+        exceptionResponse.setDetails(ex.getMessage());
+        exceptionResponse.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.status(ex.getStatus()).body(exceptionResponse);
+    }
 }

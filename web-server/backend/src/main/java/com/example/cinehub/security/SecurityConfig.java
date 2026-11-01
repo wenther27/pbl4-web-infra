@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/episodes/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/reviews/*").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // Public: nội dung dùng để duyệt website mà không cần đăng nhập.
                         .requestMatchers(HttpMethod.GET, "/api/movies").permitAll()
