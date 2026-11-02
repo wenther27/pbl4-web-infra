@@ -91,6 +91,26 @@ public class AnomalyDetectorApp {
             }
             """;
 
+    // R8: lay TUNG request (khong dem) trong vai giay gan nhat de xem noi dung.
+    //  - chi lay cac field can thiet (_source) cho nhe
+    //  - cua so = chu ky + 5s: chong len nhau mot chut de khong lot request nao giua 2 vong;
+    //    request bi xet 2 lan khong sao vi AlertNotifier da chong bao trung (cooldown)
+    //  - size gioi han: luu luong qua lon thi chi xet cac request moi nhat (in canh bao trong log)
+    private static final int RECENT_MAX = 5000;
+    private static final String RECENT_TEMPLATE = """
+            {
+              "size": %d,
+              "track_total_hits": true,
+              "_source": ["@timestamp", "clientIp", "path", "query", "userAgent", "status"],
+              "sort": [ { "@timestamp": "desc" } ],
+              "query": { "bool": { "filter": [
+                { "term":  { "instance": "lb" } },
+                { "term":  { "event": "request" } },
+                { "range": { "@timestamp": { "gte": "now-%ds" } } }
+              ]}}
+            }
+            """;
+
     public static void main(String[] args) {
         String esUrl = env("ES_URL", "http://localhost:9200");
         DetectorConfig config = RulesConfigLoader.load();
@@ -101,6 +121,9 @@ public class AnomalyDetectorApp {
 
         ElasticsearchClient es = new ElasticsearchClient(esUrl);
         RuleEngine engine = new RuleEngine(config.rules());
+        // Chi hoi them ES khi R8 dang bat
+        boolean needRecent = engine.ruleIds().contains("ATTACK_SIGNATURE");
+        String recentQuery = RECENT_TEMPLATE.formatted(RECENT_MAX, config.intervalSeconds() + 5);
         AlertNotifier notifier = new AlertNotifier(es, config.cooldownSeconds(), window);
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -116,7 +139,13 @@ public class AnomalyDetectorApp {
 
                 JsonNode res = es.search("weblogs-*", QUERY_TEMPLATE.formatted(window));
                 JsonNode baselineRes = es.search("weblogs-*", baselineQuery);
-                Snapshot snapshot = Snapshot.from(res, baselineRes, window);
+                JsonNode recentRes = needRecent ? es.search("weblogs-*", recentQuery) : null;
+                if (recentRes != null
+                        && recentRes.path("hits").path("total").path("value").asLong() > RECENT_MAX) {
+                    log.warn("R8 chi xet " + RECENT_MAX + " request moi nhat (luu luong qua lon)",
+                            kv("event", "r8_truncated"));
+                }
+                Snapshot snapshot = Snapshot.from(res, baselineRes, recentRes, window);
                 log.info(snapshot.summary(), kv("event", "snapshot"), kv("total", snapshot.total()));
 
                 List<Alert> alerts = engine.evaluate(snapshot);

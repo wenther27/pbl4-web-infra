@@ -20,16 +20,32 @@ public record Snapshot(
         Map<String, Long> scanPathsByIp,        // IP -> so path 403/404 khac nhau (R2)
         Map<String, Long> downEventsByBackend,  // backend -> so lan bao DOWN   (R6)
         Map<String, Long> loginFailByIp,        // IP -> so lan dang nhap sai    (R3)
-        List<Long> baselinePerMinute            // so request moi phut trong N phut truoc (R7)
+        List<Long> baselinePerMinute,           // so request moi phut trong N phut truoc (R7)
+        List<RequestRecord> recentRequests      // tung request gan day, xem noi dung   (R8)
 ) {
+
+    // Constructor cu (khong co recentRequests) -> R8 khong co gi de xet. Giu de test cu van chay.
+    public Snapshot(int windowSeconds, long total, long err4xx, long err5xx, Double p95Ms,
+                    Map<String, Long> requestsByIp, Map<String, Long> scanPathsByIp,
+                    Map<String, Long> downEventsByBackend, Map<String, Long> loginFailByIp,
+                    List<Long> baselinePerMinute) {
+        this(windowSeconds, total, err4xx, err5xx, p95Ms, requestsByIp, scanPathsByIp,
+                downEventsByBackend, loginFailByIp, baselinePerMinute, List.of());
+    }
 
     // Giu cach goi cu (khong co baseline) -> R7 tu bo qua vi thieu lich su
     public static Snapshot from(JsonNode res, int windowSeconds) {
         return from(res, null, windowSeconds);
     }
 
-    // res: ket qua QUERY_TEMPLATE, baselineRes: ket qua BASELINE_TEMPLATE (co the null)
+    // Giu cach goi cu (khong co request le) -> R8 khong co gi de xet
     public static Snapshot from(JsonNode res, JsonNode baselineRes, int windowSeconds) {
+        return from(res, baselineRes, null, windowSeconds);
+    }
+
+    // res: ket qua QUERY_TEMPLATE, baselineRes: ket qua BASELINE_TEMPLATE,
+    // recentRes: ket qua RECENT_TEMPLATE (tung request gan day) - 2 cai sau co the null
+    public static Snapshot from(JsonNode res, JsonNode baselineRes, JsonNode recentRes, int windowSeconds) {
         JsonNode aggs = res.path("aggregations");
         JsonNode req = aggs.path("req");
 
@@ -56,7 +72,27 @@ public record Snapshot(
                 Collections.unmodifiableMap(scan),
                 Collections.unmodifiableMap(down),
                 Collections.unmodifiableMap(loginFail),
-                List.copyOf(readBaseline(baselineRes)));
+                List.copyOf(readBaseline(baselineRes)),
+                List.copyOf(readRecent(recentRes)));
+    }
+
+    // hits -> danh sach RequestRecord (chi lay cac field can cho R8)
+    private static List<RequestRecord> readRecent(JsonNode recentRes) {
+        List<RequestRecord> list = new ArrayList<>();
+        if (recentRes == null) {
+            return list;
+        }
+        for (JsonNode hit : recentRes.path("hits").path("hits")) {
+            JsonNode d = hit.path("_source");
+            list.add(new RequestRecord(
+                    d.path("@timestamp").asText(""),
+                    d.path("clientIp").asText(""),
+                    d.path("path").asText(""),
+                    d.path("query").asText(""),
+                    d.path("userAgent").asText(""),
+                    d.path("status").asInt(0)));
+        }
+        return list;
     }
 
     // date_histogram -> danh sach so request cua tung phut (ke ca phut = 0)

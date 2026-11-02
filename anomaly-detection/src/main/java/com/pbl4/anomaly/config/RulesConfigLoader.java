@@ -1,5 +1,6 @@
 package com.pbl4.anomaly.config;
 
+import com.pbl4.anomaly.rule.AttackSignatureRule;
 import com.pbl4.anomaly.rule.BackendDownRule;
 import com.pbl4.anomaly.rule.BruteForceLoginRule;
 import com.pbl4.anomaly.rule.ZScoreRule;
@@ -78,6 +79,7 @@ public class RulesConfigLoader {
             case "HIGH_LATENCY"   -> new HighLatencyRule(params);
             case "BACKEND_DOWN"   -> new BackendDownRule(params);
             case "TRAFFIC_SPIKE"  -> new ZScoreRule(params);
+            case "ATTACK_SIGNATURE" -> new AttackSignatureRule(params);
             default -> {
                 log.warn("Bo qua luat khong biet: " + id);
                 yield null;

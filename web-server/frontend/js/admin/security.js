@@ -9,7 +9,8 @@ import { confirmAction, errorMessage, escapeHtml, openAdminDialog, showToast, ta
 const RULE_LABELS = {
   HIGH_RATE_IP: 'R1 · Quá nhiều request',
   SCAN_PATHS: 'R2 · Dò quét đường dẫn',
-  BRUTE_FORCE_LOGIN: 'R3 · Đoán mật khẩu'
+  BRUTE_FORCE_LOGIN: 'R3 · Đoán mật khẩu',
+  ATTACK_SIGNATURE: 'R8 · Mẫu tấn công'
 };
 const BLOCK_MINUTES = [5, 30, 60];
 const AUTO_REFRESH_SECONDS = 10;

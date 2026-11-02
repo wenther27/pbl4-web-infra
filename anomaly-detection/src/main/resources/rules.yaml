@@ -51,3 +51,29 @@ rules:
     min_requests: 30
     min_std: 5
     min_history: 10
+
+  # R8: request chua dau hieu tan cong trong NOI DUNG (path, query, User-Agent) - giong WAF.
+  # Khac R1-R7 (dem so luong): chi 1 request khop mau la da bao.
+  # Mau la bieu thuc chinh quy Java, khong phan biet hoa/thuong. Viet trong dau nhay don '...'
+  # de YAML giu nguyen dau \ . Path va query duoc giai ma URL (%27 -> ') truoc khi so khop.
+  ATTACK_SIGNATURE:
+    enabled: true
+    severity: HIGH
+    min_matches: 1
+    signatures:
+      SQL_INJECTION:
+        - '\bunion\b[\s\S]{0,40}\bselect\b'
+        - '''\s*(or|and)\s+''?\w+''?\s*=\s*''?\w+'
+        - '\b(sleep|benchmark|pg_sleep)\s*\('
+        - ';\s*(drop|delete|truncate|insert|update)\s+'
+      XSS:
+        - '<\s*script'
+        - 'javascript\s*:'
+        - '\bon(error|load|mouseover)\s*='
+      PATH_TRAVERSAL:
+        - '\.\./'
+        - '\.\.\\'
+        - '/etc/(passwd|shadow)'
+    # User-Agent mac dinh cua cac cong cu quet lo hong pho bien
+    user_agent_signatures:
+      - '(sqlmap|nikto|nmap|masscan|acunetix|wpscan|dirbuster|gobuster|nuclei)'

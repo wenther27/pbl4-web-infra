@@ -70,6 +70,10 @@ public class ProxyHandler implements HttpHandler {
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
         String clientIp = originalClientIp(exchange);
+        // R8 cua bo phat hien can NOI DUNG request: query (nguyen van, con ma hoa %xx) va User-Agent.
+        // Cat bot de 1 request qua dai khong lam phinh log.
+        String query = truncate(exchange.getRequestURI().getRawQuery(), 1000);
+        String userAgent = truncate(exchange.getRequestHeaders().getFirst("User-Agent"), 300);
 
         // Gia tri mac dinh, se duoc cap nhat dan -> finally ghi 1 dong log du thong tin
         int status = 500;
@@ -162,7 +166,9 @@ public class ProxyHandler implements HttpHandler {
                     kv("attempts", attempt),
                     kv("clientIp", clientIp),
                     kv("blocked", blocked),
-                    kv("strategy", strategy.name()));
+                    kv("strategy", strategy.name()),
+                    kv("query", query),
+                    kv("userAgent", userAgent));
             exchange.close();
         }
     }
@@ -245,6 +251,14 @@ public class ProxyHandler implements HttpHandler {
                 os.write(resBody);
             }
         }
+    }
+
+    // null -> "", dai qua -> cat bot
+    private static String truncate(String s, int max) {
+        if (s == null) {
+            return "";
+        }
+        return s.length() > max ? s.substring(0, max) : s;
     }
 
     private void sendText(HttpExchange exchange, int status, String text) throws IOException {

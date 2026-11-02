@@ -29,7 +29,8 @@ import java.util.Set;
 public class SecurityAdminService {
 
     // Chi cac luat co doi tuong la IP (R4, R5, R7 la "global", R6 la backend)
-    private static final List<String> IP_RULES = List.of("HIGH_RATE_IP", "SCAN_PATHS", "BRUTE_FORCE_LOGIN");
+    private static final List<String> IP_RULES =
+            List.of("HIGH_RATE_IP", "SCAN_PATHS", "BRUTE_FORCE_LOGIN", "ATTACK_SIGNATURE");
 
     private final RestClient es;
     private final RestClient lb;
