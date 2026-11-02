@@ -9,6 +9,8 @@ public interface LoadBalancingStrategy {
 
     //ten thuat toan dung khi ghi log va so sanh
     String name();
+
+    default void release(String backend, long latencyMs, boolean success) {}
 }
 
 //Day la strategy pattern

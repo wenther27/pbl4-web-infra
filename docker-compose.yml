@@ -154,6 +154,8 @@ services:
     environment:
       LB_PORT: "8080"
       LB_BACKENDS: "http://web-1:8080,http://web-2:8080,http://web-3:8080"
+      # Thuat toan chia tai: dwlc hoac round-robin
+      LB_STRATEGY: ${LB_STRATEGY:-dwlc}
       # true: tin X-Forwarded-For client gui (gia lap nhieu IP khi test bat thuong)
       # false: chi ghi IP ket noi that (dung khi demo bao mat)
       LB_TRUST_XFF: "true"

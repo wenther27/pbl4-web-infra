@@ -102,8 +102,11 @@ public class ProxyHandler implements HttpHandler {
                 attempt++;
                 backend = pickBackend(healthy, tried);
                 tried.add(backend);
+                long attemptStart = System.nanoTime();
+                boolean attemptOk = false;
                 try {
                     response = forward(exchange, backend, method, body);
+                    attemptOk = response.statusCode() < 500;
                     break;
                 } catch (IOException e) {
                     lastError = e.getClass().getSimpleName();
@@ -125,6 +128,9 @@ public class ProxyHandler implements HttpHandler {
                     if (!neverReached && !IDEMPOTENT.contains(method)) {
                         break; // request khong idempotent da toi backend -> khong gui lai
                     }
+                }
+                finally {
+                    strategy.release(backend, (System.nanoTime() - attemptStart) / 1_000_000, attemptOk);
                 }
             }
 
@@ -174,16 +180,8 @@ public class ProxyHandler implements HttpHandler {
 
     // Hoi strategy; neu no chon trung backend da thu thi lay backend chua thu dau tien
     private String pickBackend(List<String> healthy, Set<String> tried) {
-        String candidate = strategy.next(healthy);
-        if (!tried.contains(candidate)) {
-            return candidate;
-        }
-        for (String b : healthy) {
-            if (!tried.contains(b)) {
-                return b;
-            }
-        }
-        return candidate;
+        List<String> candidates = healthy.stream().filter(b -> !tried.contains(b)).toList();
+        return strategy.next(candidates.isEmpty() ? healthy : candidates);
     }
 
     // Gui 1 request sang 1 backend, nem exception neu backend loi

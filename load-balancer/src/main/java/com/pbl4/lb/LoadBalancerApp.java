@@ -11,6 +11,9 @@ import com.sun.net.httpserver.HttpServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.pbl4.lb.strategy.DwlcStrategy;
+import java.util.Locale;
+
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
@@ -19,9 +22,20 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 public class LoadBalancerApp {
     private static final Logger log = LoggerFactory.getLogger(LoadBalancerApp.class);
 
+    // LB_STRATEGY=dwlc (mac dinh) hoac round-robin
+    private static LoadBalancingStrategy createStrategy() {
+        String name = System.getenv().getOrDefault("LB_STRATEGY", "dwlc").trim().toLowerCase(Locale.ROOT);
+        return switch (name) {
+            case "dwlc" -> new DwlcStrategy();
+            case "round-robin", "rr" -> new RoundRobinStrategy();
+            default -> throw new IllegalStateException(
+                    "LB_STRATEGY khong hop le: " + name + " (chi nhan dwlc hoac round-robin)");
+        };
+    }
+
     public static void main(String[] args) throws Exception {
         ServerConfigLoader.Config config = ServerConfigLoader.load();
-        LoadBalancingStrategy strategy = new RoundRobinStrategy();
+        LoadBalancingStrategy strategy = createStrategy();
 
         // Kiem tra moi 5s, that bai 3 lan -> DOWN, thanh cong 2 lan -> UP
         HealthChecker health = new HealthChecker(config.backends(), 5, 3, 2);
