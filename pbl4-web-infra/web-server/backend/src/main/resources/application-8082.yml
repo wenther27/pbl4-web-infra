@@ -1,5 +1,0 @@
-server:
-  port: 8082
-
-app:
-  instance-id: web-2
