@@ -1,5 +1,6 @@
 package com.pbl4.anomaly.config;
 
+import com.pbl4.anomaly.alert.AutoBlocker;
 import com.pbl4.anomaly.rule.AttackSignatureRule;
 import com.pbl4.anomaly.rule.BackendDownRule;
 import com.pbl4.anomaly.rule.BruteForceLoginRule;
@@ -31,7 +32,7 @@ public class RulesConfigLoader {
     private static final Logger log = LoggerFactory.getLogger(RulesConfigLoader.class);
 
     public record DetectorConfig(int windowSeconds, int intervalSeconds, int cooldownSeconds,
-                                 int baselineMinutes, List<Rule> rules) {}
+                                 int baselineMinutes, List<Rule> rules, AutoBlocker.Config autoBlock) {}
 
     public static DetectorConfig load() {
         Map<String, Object> root = readYaml();
@@ -66,7 +67,26 @@ public class RulesConfigLoader {
                 }
             }
         }
-        return new DetectorConfig(window, interval, cooldown, baseline, rules);
+        return new DetectorConfig(window, interval, cooldown, baseline, rules, autoBlock(root.get("auto_block")));
+    }
+
+    // Muc auto_block trong rules.yaml; khong khai bao -> tat
+    private static AutoBlocker.Config autoBlock(Object raw) {
+        if (!(raw instanceof Map<?, ?> m)) {
+            return AutoBlocker.Config.disabled();
+        }
+        Set<String> ruleIds = new HashSet<>();
+        if (m.get("rules") instanceof List<?> list) {
+            for (Object o : list) {
+                ruleIds.add(String.valueOf(o));
+            }
+        }
+        return new AutoBlocker.Config(
+                Boolean.TRUE.equals(m.get("enabled")),
+                Boolean.TRUE.equals(m.get("dry_run")),
+                Set.copyOf(ruleIds),
+                intOf(null, m.get("minutes"), 15),
+                intOf(null, m.get("max_per_minute"), 10));
     }
 
     // "Nha may" tao luat theo ma. Them luat moi: them 1 dong case.

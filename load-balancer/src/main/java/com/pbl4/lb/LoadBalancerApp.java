@@ -38,7 +38,9 @@ public class LoadBalancerApp {
         LoadBalancingStrategy strategy = createStrategy();
 
         // Kiem tra moi 5s, that bai 3 lan -> DOWN, thanh cong 2 lan -> UP
-        HealthChecker health = new HealthChecker(config.backends(), 5, 3, 2);
+        // LB_STARTUP_GRACE_SECONDS: thoi gian cho backend khoi dong truoc khi coi la su co (mac dinh 180s)
+        long grace = Long.parseLong(System.getenv().getOrDefault("LB_STARTUP_GRACE_SECONDS", "180").trim());
+        HealthChecker health = new HealthChecker(config.backends(), 5, 3, 2, grace);
         health.start();
 
         // Danh sach IP bi chan: dung chung giua ProxyHandler (kiem tra) va AdminHandler (them/xoa)

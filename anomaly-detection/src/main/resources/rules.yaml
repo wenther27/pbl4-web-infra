@@ -6,6 +6,17 @@ baseline_minutes: 30
 # IP tin cay: khong bao R1, R2 cho cac IP nay (vd: may chay JMeter do tai)
 whitelist_ips: []
 
+# Tu dong chan IP qua API quan tri cua Load Balancer (cong 8090).
+# Chi cac luat do chinh xac cao; R1, R2 de admin quyet (de chan oan: NAT, bot tim kiem...).
+# CANH BAO: khi LB_TRUST_XFF=true ke xau co the gia X-Forwarded-For de LB chan IP nguoi khac.
+# Trien khai that ma bat auto_block thi phai dat LB_TRUST_XFF=false.
+auto_block:
+  enabled: true
+  dry_run: false            # true: chi ghi log "le ra da chan", khong chan that (thu truoc khi bat)
+  rules: [ATTACK_SIGNATURE, BRUTE_FORCE_LOGIN]
+  minutes: 15               # chan bao lau, LB tu go khi het han
+  max_per_minute: 10        # chan qua so IP nay trong 1 phut -> tam dung, cho admin kiem tra
+
 rules:
   # R1: mot IP gui qua nhieu request trong cua so (DoS, bot cao du lieu)
   HIGH_RATE_IP:

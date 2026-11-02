@@ -48,6 +48,15 @@ function remaining(until) {
   return minutes ? `còn ${minutes} phút ${seconds} giây` : `còn ${total} giây`;
 }
 
+// Bo phat hien tu dong chan thi LB ghi by = "auto-detector" (xem AutoBlocker.java)
+const AUTO_BLOCKER = 'auto-detector';
+
+function blockedByLabel(by) {
+  return by === AUTO_BLOCKER
+    ? '<span class="admin-badge admin-badge--warning" title="Bộ phát hiện bất thường tự động chặn">Tự động</span>'
+    : escapeHtml(by || '—');
+}
+
 function ruleBadges(rules = []) {
   return `<div class="admin-rule-list">${rules.map((rule) =>
     `<span class="admin-badge">${escapeHtml(RULE_LABELS[rule] || rule)}</span>`).join('')}</div>`;
@@ -65,7 +74,7 @@ function suspiciousActions(item, blockedEntry) {
     return '<span class="admin-badge" title="Gateway Docker = trình duyệt của admin sau NAT. Chặn IP này sẽ khóa luôn admin.">IP được bảo vệ</span>';
   }
   if (blockedEntry) {
-    return `<span class="admin-badge admin-badge--danger">Đang chặn</span>
+    return `<span class="admin-badge admin-badge--danger">${blockedEntry.by === AUTO_BLOCKER ? 'Tự động chặn' : 'Đang chặn'}</span>
       <small class="admin-countdown" data-until="${escapeHtml(blockedEntry.until)}">${remaining(blockedEntry.until)}</small>
       <button class="admin-icon-button" data-unblock-ip="${escapeHtml(item.ip)}" type="button">Gỡ chặn</button>`;
   }
@@ -114,7 +123,7 @@ function renderBlocked() {
   body.innerHTML = blocked.map((entry) => `<tr>
     <td><strong class="admin-ip">${escapeHtml(entry.ip)}</strong></td>
     <td style="white-space:normal;min-width:200px">${escapeHtml(entry.reason || '—')}</td>
-    <td>${escapeHtml(entry.by || '—')}</td>
+    <td>${blockedByLabel(entry.by)}</td>
     <td>${formatTime(entry.since)}</td>
     <td>${formatTime(entry.until)}<small class="admin-countdown" data-until="${escapeHtml(entry.until)}">${remaining(entry.until)}</small></td>
     <td class="admin-table__actions"><button class="admin-icon-button" data-unblock-ip="${escapeHtml(entry.ip)}" type="button">Gỡ chặn</button></td>

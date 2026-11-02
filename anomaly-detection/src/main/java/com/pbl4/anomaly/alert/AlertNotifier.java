@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,13 +74,13 @@ public class AlertNotifier {
         }
     }
 
-    // Tra ve so canh bao da phat that su (sau khi loc trung)
-    public int notify(List<Alert> alerts) {
+    // Tra ve cac canh bao da phat that su (sau khi loc trung) -> AutoBlocker dung tiep
+    public List<Alert> notify(List<Alert> alerts) {
         Instant now = Instant.now();
         // Don cac khoa da het cooldown cho Map khong phinh to mai
         lastSent.entrySet().removeIf(e -> Duration.between(e.getValue(), now).compareTo(cooldown) >= 0);
 
-        int sent = 0;
+        List<Alert> sent = new ArrayList<>();
         int suppressed = 0;
         for (Alert a : alerts) {
             if (lastSent.containsKey(a.key())) {
@@ -88,7 +89,7 @@ public class AlertNotifier {
             }
             lastSent.put(a.key(), now);
             publish(a, now);
-            sent++;
+            sent.add(a);
         }
         if (suppressed > 0) {
             log.info("Bo qua " + suppressed + " canh bao trung (cooldown " + cooldown.toSeconds() + "s)",

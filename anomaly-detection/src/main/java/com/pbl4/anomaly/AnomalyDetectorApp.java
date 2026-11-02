@@ -1,6 +1,7 @@
 package com.pbl4.anomaly;
 
 import com.pbl4.anomaly.alert.AlertNotifier;
+import com.pbl4.anomaly.alert.AutoBlocker;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.pbl4.anomaly.alert.Alert;
 import com.pbl4.anomaly.client.ElasticsearchClient;
@@ -125,6 +126,9 @@ public class AnomalyDetectorApp {
         boolean needRecent = engine.ruleIds().contains("ATTACK_SIGNATURE");
         String recentQuery = RECENT_TEMPLATE.formatted(RECENT_MAX, config.intervalSeconds() + 5);
         AlertNotifier notifier = new AlertNotifier(es, config.cooldownSeconds(), window);
+        // Tu dong chan IP qua API quan tri cua LB (cau hinh: muc auto_block trong rules.yaml)
+        AutoBlocker autoBlocker = AutoBlocker.create(config.autoBlock(),
+                env("LB_ADMIN_URL", "http://localhost:8090"), System.getenv("LB_ADMIN_TOKEN"));
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         log.info("Anomaly detector: ES=" + esUrl + ", cua so " + window + "s, kiem tra moi "
@@ -149,7 +153,8 @@ public class AnomalyDetectorApp {
                 log.info(snapshot.summary(), kv("event", "snapshot"), kv("total", snapshot.total()));
 
                 List<Alert> alerts = engine.evaluate(snapshot);
-                notifier.notify(alerts);   // loc trung + in log + ghi alerts-*
+                List<Alert> published = notifier.notify(alerts);   // loc trung + in log + ghi alerts-*
+                autoBlocker.handle(published);                      // canh bao nao du dieu kien -> chan IP
             } catch (Exception e) {
                 // In ca ten loai loi: "ConnectException: null" de hieu hon "null"
                 log.error("Loi trong vong phat hien: " + e.getClass().getSimpleName() + ": " + e.getMessage());

@@ -184,6 +184,9 @@ services:
     environment:
       ES_URL: "http://host.docker.internal:9200"
       RULES_FILE: /app/rules.yaml
+      # Tu dong chan IP (muc auto_block trong rules.yaml): goi API quan tri cua LB
+      LB_ADMIN_URL: http://load-balancer:8090
+      LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
       JAVA_TOOL_OPTIONS: -Xmx96m -XX:+UseSerialGC
     volumes:
       # Doi nguong: sua file nay roi "docker compose restart anomaly-detector", khong can build lai
