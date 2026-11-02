@@ -21,7 +21,6 @@ public class DwlcStrategy implements LoadBalancingStrategy {
 
     private final Map<String, State> states = new ConcurrentHashMap<>();
     private final Object selectLock = new Object();
-    private int tieCounter = 0; // chi dung trong selectLock
 
     @Override
     public String next(List<String> backends) {
@@ -39,21 +38,43 @@ public class DwlcStrategy implements LoadBalancingStrategy {
             }
             double ref = known > 0 ? sum / known : Double.NaN;
 
+            // 1) Least connection co trong so: diem = active / weight, lay diem nho nhat
+            double[] weights = new double[backends.size()];
             double best = Double.MAX_VALUE;
-            List<String> ties = new ArrayList<>();
-            for (String b : backends) {
-                State s = state(b);
-                double score = s.active.get() / s.weight(ref, now);
+            List<Integer> ties = new ArrayList<>();
+            for (int i = 0; i < backends.size(); i++) {
+                State s = state(backends.get(i));
+                weights[i] = s.weight(ref, now);
+                double score = s.active.get() / weights[i];
                 if (score < best - EPSILON) {
                     best = score;
                     ties.clear();
-                    ties.add(b);
+                    ties.add(i);
                 } else if (Math.abs(score - best) <= EPSILON) {
-                    ties.add(b);
+                    ties.add(i);
                 }
             }
 
-            String chosen = ties.get(Math.floorMod(tieCounter++, ties.size()));
+            // 2) Hoa nhau (vd luc tai thap, moi backend deu active = 0):
+            //    Smooth Weighted Round-Robin (nhu Nginx) -> chia theo DUNG ti le trong so.
+            //    Backend trong so 0.76 nhan it hon backend 1.0 theo dung ti le, khong bi coi la ngang nhau.
+            int chosenIdx = ties.get(0);
+            if (ties.size() > 1) {
+                double total = 0;
+                double bestCurrent = -Double.MAX_VALUE;
+                for (int i : ties) {
+                    State s = state(backends.get(i));
+                    s.current += weights[i];
+                    total += weights[i];
+                    if (s.current > bestCurrent) {
+                        bestCurrent = s.current;
+                        chosenIdx = i;
+                    }
+                }
+                state(backends.get(chosenIdx)).current -= total;
+            }
+
+            String chosen = backends.get(chosenIdx);
             state(chosen).active.incrementAndGet();
             return chosen;
         }
@@ -76,6 +97,7 @@ public class DwlcStrategy implements LoadBalancingStrategy {
 
     private static final class State {
         final AtomicInteger active = new AtomicInteger(0);
+        double current = 0;             // bo dem cua Smooth WRR, chi dung trong selectLock
         private double latencyEwma = Double.NaN;
         private double errorEwma = 0.0;
         private long lastUpdate = 0;
