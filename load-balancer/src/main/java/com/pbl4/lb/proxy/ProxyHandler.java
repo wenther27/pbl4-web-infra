@@ -125,6 +125,7 @@ public class ProxyHandler implements HttpHandler {
                             kv("attempt", attempt),
                             kv("clientIp", clientIp));
 
+
                     if (!neverReached && !IDEMPOTENT.contains(method)) {
                         break; // request khong idempotent da toi backend -> khong gui lai
                     }
@@ -160,7 +161,8 @@ public class ProxyHandler implements HttpHandler {
                     kv("backend", backend),
                     kv("attempts", attempt),
                     kv("clientIp", clientIp),
-                    kv("blocked", blocked));
+                    kv("blocked", blocked),
+                    kv("strategy", strategy.name()));
             exchange.close();
         }
     }
