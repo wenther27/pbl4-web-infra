@@ -164,6 +164,9 @@ services:
       LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
       # IP khong bao gio bi chan: gateway cua mang Docker (= trinh duyet cua admin sau NAT)
       LB_NEVER_BLOCK: "172.18.0.1,127.0.0.1"
+      # API thuong timeout nhanh; upload video duoc stream va co toi 10 phut de hoan tat.
+      LB_REQUEST_TIMEOUT_SECONDS: "30"
+      LB_UPLOAD_TIMEOUT_SECONDS: "600"
       JAVA_TOOL_OPTIONS: -Xmx128m -XX:+UseSerialGC
     ports:
       - "8080:8080"
