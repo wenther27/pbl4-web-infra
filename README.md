@@ -1,110 +1,149 @@
-# CineHub Web Infrastructure
+# CineHub Web Infrastructure - PBL4
 
-Kho mã nguồn kết hợp backend CineHub với hạ tầng chạy nhiều instance.
+Hạ tầng phân tán hoàn chỉnh cho nền tảng xem phim trực tuyến CineHub, kết hợp cân bằng tải thông minh, cơ sở dữ liệu phân tán, bộ đệm RAM phân tán, hệ thống giám sát log tập trung và phát hiện tấn công mạng tự động.
 
-## Thành phần hiện có
+---
 
-- `web-server/backend`: Spring Boot 3 / Java 21, REST API, JWT, Spring Data JPA.
-- `web-server/frontend`: giao diện độc lập viết bằng HTML, CSS và JavaScript thuần.
-- `database`: schema MySQL và dữ liệu mẫu.
-- `load-balancer`: bộ khung load balancer Java (chưa triển khai).
-- `elk-stack`: Filebeat → Elasticsearch → Kibana, có dashboard giám sát traffic (chưa dùng Logstash).
-- `anomaly-detection`: bộ khung phát hiện bất thường (chưa triển khai).
-- `load-testing`: vị trí dành cho kịch bản Apache Bench/JMeter.
+## 1. Cấu trúc tổng thể các thành phần
 
-## Chạy bằng Docker
+Dự án gồm các module chuyên biệt:
 
-1. Sao chép `.env.example` thành `.env` và thay mật khẩu/JWT secret.
-2. Chạy `docker compose up --build`.
-3. Ba instance API được mở tại `http://localhost:8081`, `:8082`, `:8083`.
-4. MySQL primary (ghi) mở tại `localhost:3307`, replica (chỉ đọc) tại `localhost:3308`.
+- **`load-balancer`**: Bộ cân bằng tải tự viết bằng Java HTTP Server:
+  - Hỗ trợ 2 thuật toán: **Round-Robin** và **DWLC (Dynamic Weighted Least Connection)** kết hợp Smooth WRR, tự động hạ tải node chậm.
+  - Kiểm tra sức khỏe tự động (**HealthChecker** định kỳ 5s) với **Grace Period 180s** tránh báo lỗi giả khi khởi động.
+  - Cơ chế **Streaming Video / Range Request (206 Partial Content)** với buffer 64KB, chống tràn RAM (OOM) khi xem hoặc tải lên video lớn (đến 500MB).
+  - Cổng quản trị bảo mật riêng biệt (`:8090`) bảo vệ bằng token, hỗ trợ chặn và tự động mở khóa IP theo thời gian.
+- **`web-server/backend`**: Cụm backend chạy Spring Boot 3 / Java 21:
+  - Chạy mô hình cụm 3 instance không trạng thái (`web-1`, `web-2`, `web-3`) dùng chung JWT.
+  - Header phản hồi `X-Instance-Id` xác định rõ instance phục vụ từng request.
+  - Tích hợp API Quản trị Bảo mật (`SecurityAdminController`) cho phép tra cứu cảnh báo và chặn IP.
+- **`redis`**: Bộ đệm In-Memory (Redis 7.4 Alpine) dùng chung cho cả 3 instance backend:
+  - Mô hình **Cache-Aside** cho các truy vấn đọc nhiều: danh sách phim, top thịnh hành, phân loại phim và thể loại.
+  - Giảm thời gian phản hồi từ ~50ms (MySQL) xuống **< 1ms** trên RAM.
+  - Cơ chế tự động làm sạch cache (`@CacheEvict`) khi Admin thêm, sửa, xóa phim.
+  - Khả năng chịu lỗi cao (*Fault-Tolerant*): Nếu Redis gặp sự cố, backend tự động đọc trực tiếp từ MySQL mà không gây lỗi 500.
+- **`database`**: Cụm MySQL 8.4 phân tán sao chép theo chuẩn **GTID**:
+  - `mysql-primary` (Cổng `3307`): Nhận toàn bộ thao tác ghi (`INSERT`, `UPDATE`, `DELETE`).
+  - `mysql-replica` (Cổng `3308`): Bật chế độ `super_read_only`, nhận toàn bộ thao tác đọc (`@Transactional(readOnly = true)`).
+  - Tự động hóa thiết lập người dùng nhân bản và bật Replication ngay lần đầu khởi động container.
+- **`anomaly-detection`**: Ứng dụng Java độc lập quét log từ Elasticsearch để bảo vệ hệ thống:
+  - **8 luật phát hiện tấn công tự động**: DoS (`HIGH_RATE_IP`), quét lỗ hổng (`SCAN_PATHS`), Brute Force đăng nhập (`BRUTE_FORCE_LOGIN`), lỗi hệ thống (`ERROR_RATE_5XX`), quá tải độ trễ (`HIGH_LATENCY`), backend ngừng hoạt động (`BACKEND_DOWN`), lưu lượng bất thường (`TRAFFIC_SPIKE` theo thuật toán Z-Score), và chữ ký tấn công WAF (`ATTACK_SIGNATURE`: SQL Injection, XSS, Path Traversal, Scanners).
+  - **AutoBlocker**: Tự động phát lệnh khóa IP nguy hiểm qua cổng 8090 của Load Balancer, có chốt an toàn và danh sách IP tin cậy (whitelist).
+- **`elk-stack`**: Hệ thống thu thập và phân tích log tập trung:
+  - Filebeat thu thập log JSON có cấu trúc từ stdout của container backend và load balancer.
+  - Elasticsearch lưu trữ và đánh index `weblogs-*` và `alerts-*`.
+  - Kibana hiển thị trực quan thông qua Dashboard mẫu (`cinehub-traffic`).
+- **`web-server/frontend`**: Giao diện người dùng độc lập viết bằng HTML, CSS và JavaScript thuần (Vite).
+  - Tích hợp thêm trang **Admin > Bảo mật** hiển thị IP bị cảnh báo, bộ đếm ngược thời gian chặn và nút gỡ chặn thủ công.
+- **`load-testing`**: Kịch bản kiểm thử tải bằng Apache JMeter (`traffic-test-plan.jmx`) đo đạc hiệu năng giữa Round-Robin và DWLC.
 
-Tài khoản mẫu: `admin` / `123456` (role `ADMIN`).
+---
 
-Mỗi response có header `X-Instance-Id` (web-1/2/3) để biết request rơi vào instance nào.
-Trong Docker, log backend là JSON một dòng (`instance`, `path`, `status`, `durationMs`, `clientIp`)
-để Filebeat/Logstash đẩy sang Elasticsearch.
+## 2. Hướng dẫn chạy hệ thống
 
-### Demo tự kiểm tra toàn hệ thống (Windows)
+### 2.1. Yêu cầu môi trường
+- Đã cài đặt **Docker Desktop** (bật WSL2 trên Windows).
+- Đã cài đặt **Node.js** (để chạy frontend).
+
+### 2.2. Khởi chạy cụm hạ tầng chính (Backend + Load Balancer + Database + Redis + Anomaly Detector)
+
+1. Tạo file biến môi trường từ mẫu:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+2. Khởi chạy toàn bộ container:
+   ```powershell
+   docker compose up --build -d
+   ```
+
+3. Các cổng dịch vụ mở trên máy:
+   - **Load Balancer (Điểm vào chính)**: `http://localhost:8080` (API tại `http://localhost:8080/api`).
+   - **Cổng quản trị chặn IP của Load Balancer**: `http://localhost:8090`.
+   - **Các Backend trực tiếp (để kiểm tra/debug)**:
+     - `web-1`: `http://localhost:8081`
+     - `web-2`: `http://localhost:8082`
+     - `web-3`: `http://localhost:8083`
+   - **MySQL Primary (Ghi)**: `localhost:3307`
+   - **MySQL Replica (Chỉ đọc)**: `localhost:3308`
+   - **Redis Cache**: `localhost:6379`
+
+Tài khoản quản trị mặc định: `admin` / `123456` (Role `ADMIN`).
+
+---
+
+### 2.3. Khởi chạy ELK Stack (Giám sát log & Kibana)
+
+Khởi chạy cụm Elasticsearch, Kibana và Filebeat trong một cửa sổ terminal riêng:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\demo.ps1          # dừng sau mỗi bước
-powershell -ExecutionPolicy Bypass -File .\demo.ps1 -NoPause # chạy liền
+# 1. Bật cụm ELK
+docker compose -f elk-stack/docker-compose.elk.yml up -d
+
+# 2. Cài đặt tự động dashboard và index pattern (chỉ cần chạy 1 lần)
+powershell -ExecutionPolicy Bypass -File .\elk-stack\setup-kibana.ps1
 ```
 
-Script tự bật web + MySQL + ELK + frontend, rồi kiểm tra: 3 instance, token dùng chéo instance,
-replication, replica chỉ đọc, phân quyền, log JSON vào Elasticsearch/Kibana, phát hiện instance chết.
+- **Kibana Web UI**: `http://localhost:5601`
+- **Dashboard trực quan**: `http://localhost:5601/app/dashboards#/view/cinehub-traffic`
+- **Elasticsearch API**: `http://localhost:9200`
 
-### ELK: xem log trên Kibana
+---
+
+### 2.4. Khởi chạy Frontend
+
+Mở một cửa sổ terminal tại thư mục frontend:
 
 ```powershell
-docker compose up -d                                              # web-1/2/3 + MySQL (chạy trước)
-docker compose -f elk-stack/docker-compose.elk.yml up -d          # Elasticsearch + Kibana + Filebeat
-powershell -ExecutionPolicy Bypass -File .\elk-stack\setup-kibana.ps1   # nạp data view + dashboard (1 lần)
-```
-
-- Kibana: http://localhost:5601/app/dashboards#/view/cinehub-traffic (Elasticsearch: http://localhost:9200).
-- Luồng log: web-1/2/3 in JSON ra stdout → Docker lưu file log → **Filebeat** (`elk-stack/filebeat/filebeat.yml`)
-  tự tìm container `cinehub-infrastructure-web-*`, tách JSON thành field → **Elasticsearch** index `weblogs-YYYY.MM.DD`.
-- Kiểu dữ liệu khai báo trong `elk-stack/filebeat/weblogs-template.json`: `status` integer, `durationMs` long,
-  `clientIp` ip, `instance`/`path` keyword.
-- Không cần `vm.max_map_count`: Elasticsearch đặt `node.store.allow_mmap: false`.
-- RAM: Elasticsearch giới hạn heap 1GB; cả ELK dùng thêm khoảng 2–2,5GB.
-- Tắt ELK: `docker compose -f elk-stack/docker-compose.elk.yml down` (thêm `-v` để xoá sạch log đã lưu).
-
-### Database primary / replica
-
-- Replication theo GTID, **tự cấu hình lần đầu** `docker compose up`: primary tạo user `repl`
-  (`database/primary/init/`), replica copy dữ liệu từ primary rồi bật replication
-  (`database/replica/init/`). Không cần gõ lệnh tay.
-- Replica chỉ báo `healthy` khi cả hai luồng replication đang chạy; các instance `web-*` chờ cả hai DB healthy.
-- Replica bật `super_read_only`: mọi lệnh ghi vào replica đều bị từ chối, kể cả root.
-- Backend: transaction `@Transactional(readOnly = true)` đọc từ replica, còn lại ghi vào primary
-  (`DataSourceConfig`, `RoutingDataSource`).
-- Chỉ chạy DB (khi dev backend bằng IDE): `docker compose up -d mysql-primary mysql-replica`.
-- Kiểm tra replication:
-  `docker compose exec mysql-replica bash /usr/local/bin/replica-healthcheck.sh && echo OK`
-- Script init chỉ chạy khi volume còn trống. Muốn khởi tạo lại từ đầu: `docker compose down -v`
-  (**xóa toàn bộ dữ liệu**).
-- Đổi cổng host bằng `MYSQL_PRIMARY_PORT` / `MYSQL_REPLICA_PORT` trong `.env`.
-
-Kiểm tra sức khỏe một instance:
-
-```bash
-curl http://localhost:8081/actuator/health
-```
-
-## Swagger / OpenAPI
-
-- Swagger UI: `http://localhost:8081/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8081/v3/api-docs`
-- OpenAPI YAML: `http://localhost:8081/v3/api-docs.yaml`
-
-Để thử API cần đăng nhập, gọi `POST /api/auth/login`, sao chép token trả về, chọn **Authorize** và nhập token JWT. Swagger tự thêm tiền tố `Bearer`.
-
-Swagger được bật mặc định để phát triển. Khi triển khai production, đặt `SWAGGER_ENABLED=false` trong `.env` nếu không muốn công khai tài liệu API.
-
-## Phân quyền API
-
-- `PUBLIC`: đăng ký, đăng nhập, xem phim, thể loại, tập phim và bình luận.
-- `USER`: quản lý yêu thích, lịch sử xem, thêm bình luận và đánh giá.
-- `ADMIN`: quản lý phim, thể loại, tập phim, người dùng, tải ảnh và xóa bình luận.
-
-Các endpoint không được khai báo trong ma trận phân quyền sẽ bị từ chối mặc định.
-
-## Ảnh tải lên
-
-Admin có thể chọn ảnh JPG, PNG, WebP hoặc GIF (tối đa 5 MB) khi thêm/sửa phim và tập phim. Backend lưu file trong `web-server/backend/uploads` khi chạy local; database chỉ lưu URL. Thư mục này không được commit lên Git. Khi chạy Docker, volume `cinehub-uploads` giữ ảnh dùng chung cho các instance backend.
-
-Lưu ý: load balancer, ELK và anomaly detection vẫn là các module khung và chưa được đưa vào Compose.
-
-## Chạy frontend
-
-```bash
 cd web-server/frontend
 npm install
 npm run dev
 ```
 
-Frontend chạy tại `http://localhost:5173` và gọi REST API tại `http://localhost:8080/api`.
-Có thể đổi địa chỉ API trong `web-server/frontend/js/config.js` mà không cần sửa backend.
+- Truy cập web tại: `http://localhost:5173`
+- Frontend gọi API thông qua cổng của Load Balancer: `http://localhost:8080/api`.
+
+---
+
+## 3. Demo kiểm thử toàn diện tự động (Windows)
+
+Dự án cung cấp 2 kịch bản PowerShell tự động kiểm tra hệ thống:
+
+1. **`demo.ps1`**: Kiểm tra toàn bộ luồng tích hợp:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\demo.ps1          # Dừng sau mỗi bước để quan sát
+   powershell -ExecutionPolicy Bypass -File .\demo.ps1 -NoPause # Chạy liên tục
+   ```
+   Kịch bản kiểm tra:
+   - Cân bằng tải đều qua 3 instance (`web-1`, `web-2`, `web-3`).
+   - Token JWT xác thực hoán đổi trơn tru giữa các instance.
+   - Dữ liệu thêm ở Primary tự động đồng bộ sang Replica.
+   - Replica chặn tuyệt đối các lệnh ghi (`super_read_only`).
+   - Đánh sập thử 1 node để kiểm tra Load Balancer tự động loại bỏ node lỗi (Failover).
+   - Log được đánh index thành công sang Elasticsearch.
+
+2. **`demo-lb.ps1`**: Kiểm tra chuyên sâu các tính năng của Load Balancer và Bảo mật:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\demo-lb.ps1
+   ```
+   Kiểm tra: Thuật toán DWLC, API chặn/gỡ chặn IP cổng 8090, tự động chặn khi phát hiện tấn công SQLi/Brute-force.
+
+---
+
+## 4. Tài liệu API (Swagger / OpenAPI)
+
+Khi cụm backend đã khởi chạy, có thể truy cập tài liệu API trực tiếp qua instance:
+- **Swagger UI**: `http://localhost:8081/swagger-ui.html`
+- **OpenAPI JSON**: `http://localhost:8081/v3/api-docs`
+
+---
+
+## 5. Phân quyền và Quy định tải file
+
+- **Phân quyền người dùng**:
+  - `PUBLIC`: Đăng ký, đăng nhập, xem danh sách phim, chi tiết phim, thể loại và bình luận.
+  - `USER`: Đánh giá phim, bình luận, quản lý danh sách yêu thích và lịch sử xem.
+  - `ADMIN`: Quản lý toàn bộ phim, tập phim, thể loại, tài khoản người dùng, xem cảnh báo an ninh và chặn/gỡ chặn IP.
+- **Tệp tải lên (Upload)**:
+  - Hình ảnh (Poster, Backdrop): Hỗ trợ JPG, PNG, WebP, GIF (tối đa 5MB).
+  - Video tập phim: Hỗ trợ MP4, WebM (tối đa 500MB). Dữ liệu được truyền phát theo dạng stream đệm 64KB qua Load Balancer (timeout cấu hình 10 phút `LB_UPLOAD_TIMEOUT_SECONDS=600`).
