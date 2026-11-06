@@ -1,5 +1,6 @@
 package com.example.cinehub.service.impl;
 
+import com.example.cinehub.config.RedisCacheConfig;
 import com.example.cinehub.constant.Movie.MovieStatus;
 import com.example.cinehub.constant.Movie.MovieType;
 import com.example.cinehub.dto.request.MovieRequest;
@@ -15,6 +16,8 @@ import com.example.cinehub.service.MovieService;
 import com.example.cinehub.specification.MovieSpecification;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -44,6 +47,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional(readOnly = true)
     @Override
+    @Cacheable(cacheNames = RedisCacheConfig.MOVIES_TRENDING, keyGenerator = RedisCacheConfig.KEY_GENERATOR)
     public List<MovieDTO> getTrendingMovies() {
         List<Movie> movies = movieRepository.findAll();
         return movies.stream()
@@ -54,6 +58,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional(readOnly = true)
     @Override
+    @Cacheable(cacheNames = RedisCacheConfig.MOVIES_BY_TYPE, keyGenerator = RedisCacheConfig.KEY_GENERATOR)
     public List<MovieDTO> getMoviesByMovieType(MovieType movieType) {
         List<Movie> movies = movieRepository.findByMovieType(movieType);
         return movies.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -61,6 +66,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional(readOnly = true)
     @Override
+    @Cacheable(cacheNames = RedisCacheConfig.MOVIES_BY_GENRE, keyGenerator = RedisCacheConfig.KEY_GENERATOR)
     public List<MovieDTO> getMoviesByGenre(String genreSlug) {
         List<Movie> movies = movieRepository.findMoviesByGenreSlug(genreSlug);
 
@@ -71,6 +77,9 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional
     @Override
+    // Them/sua/xoa phim: xoa het cache doc phim (chay SAU khi transaction commit, xem RedisCacheConfig)
+    @CacheEvict(cacheNames = {RedisCacheConfig.MOVIES_PAGE, RedisCacheConfig.MOVIES_TRENDING,
+            RedisCacheConfig.MOVIES_BY_TYPE, RedisCacheConfig.MOVIES_BY_GENRE}, allEntries = true)
     public MovieDTO createMovie(MovieRequest request) {
         Movie movie  = new Movie();
         movie.setTitle(request.getTitle());
@@ -97,6 +106,8 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional
     @Override
+    @CacheEvict(cacheNames = {RedisCacheConfig.MOVIES_PAGE, RedisCacheConfig.MOVIES_TRENDING,
+            RedisCacheConfig.MOVIES_BY_TYPE, RedisCacheConfig.MOVIES_BY_GENRE}, allEntries = true)
     public MovieDTO updateMovie(Long id, MovieRequest movieDetails) {
         Movie movie = movieRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy phim"));
         movie.setTitle(movieDetails.getTitle());
@@ -123,6 +134,8 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional
     @Override
+    @CacheEvict(cacheNames = {RedisCacheConfig.MOVIES_PAGE, RedisCacheConfig.MOVIES_TRENDING,
+            RedisCacheConfig.MOVIES_BY_TYPE, RedisCacheConfig.MOVIES_BY_GENRE}, allEntries = true)
     public void deleteMovie(Long id) {
         Movie m = movieRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Không tìm thấy phim"));
         movieRepository.delete(m);
@@ -149,6 +162,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional(readOnly = true)
     @Override
+    @Cacheable(cacheNames = RedisCacheConfig.MOVIES_PAGE, keyGenerator = RedisCacheConfig.KEY_GENERATOR)
     public PageResponse<MovieDTO> searchAndFilterMovies(String title, MovieType movieType, MovieStatus movieStatus, Pageable pageable) {
         Specification<Movie> spec = MovieSpecification.hasTitle(title)
                 .and(MovieSpecification.hasMovieType(movieType))

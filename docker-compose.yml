@@ -28,6 +28,9 @@ x-web-common: &web-common
       condition: service_healthy
     mysql-replica:
       condition: service_healthy
+    # Redis chi la cache: cho Redis khoi dong (khong bat buoc healthy) -> Redis loi web van chay
+    redis:
+      condition: service_started
   environment: &web-env
     DB_PRIMARY_URL: jdbc:mysql://mysql-primary:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
     DB_REPLICA_URL: jdbc:mysql://mysql-replica:3306/${MYSQL_DATABASE:-cinehub_db}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
@@ -48,6 +51,10 @@ x-web-common: &web-common
     ES_URL: http://host.docker.internal:9200
     LB_ADMIN_URL: http://load-balancer:8090
     LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
+    # Redis cache dung chung cho web-1/2/3 (xem web-server/backend/.../config/RedisCacheConfig.java)
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-300}
   # ES nam o project ELK khac -> goi qua cong 9200 cua may that
   extra_hosts:
     - "host.docker.internal:host-gateway"
@@ -112,6 +119,35 @@ services:
       timeout: 5s
       retries: 30
       start_period: 60s
+
+  # ============================================================
+  # Redis: bo dem (cache) tren RAM dung chung cho web-1/2/3.
+  # Chi la cache -> khong ghi xuong dia; day 128MB thi xoa muc it dung nhat (LRU).
+  # Redis chet thi backend van chay (doc thang MySQL), chi cham hon.
+  # ============================================================
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+    ports:
+      # Chi mo cho may nay (xem bang redis-cli / RedisInsight), khong mo ra mang ngoai
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - cinehub-network
 
   web-1:
     <<: *web-common
