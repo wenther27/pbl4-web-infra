@@ -1,0 +1,4 @@
+# Chi dung khi do so sanh thuat toan: gioi han CPU cua web-3 de no cham hon
+services:
+  web-3:
+    cpus: 0.25
