@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
@@ -36,6 +37,8 @@ public class HealthChecker {
     private final int passThreshold;
     private final long startupGraceSeconds;
     private final long startedAtNanos = System.nanoTime();
+    // Backend dang bao tri co ke hoach (drain) -> DOWN la du kien, khong phai su co
+    private volatile Predicate<String> inMaintenance = b -> false;
 
     private final HttpClient client;
     private final ScheduledExecutorService scheduler;
@@ -94,6 +97,10 @@ public class HealthChecker {
         return healthy;
     }
 
+    public void setMaintenanceCheck(Predicate<String> inMaintenance) {
+        this.inMaintenance = inMaintenance;
+    }
+
     private void checkAll() {
         try {
             for (String b : backends) {
@@ -141,7 +148,11 @@ public class HealthChecker {
             int fails = failStreak.merge(backend, 1, Integer::sum);
             if (up.get(backend) && fails >= failThreshold) {
                 up.put(backend, false);
-                if (everUp.get(backend) || !inStartupGrace()) {
+                if (inMaintenance.test(backend)) {
+                    // Dang drain de cap nhat (rolling deploy) -> tat la du kien, khong bao dong
+                    logState("backend_maintenance", backend,
+                            backend + " dang bao tri (drain), tam DOWN theo ke hoach", fails);
+                } else if (everUp.get(backend) || !inStartupGrace()) {
                     downReported.put(backend, true);
                     logState("backend_down", backend,
                             backend + " DOWN (" + fails + " lan that bai lien tiep)", fails);

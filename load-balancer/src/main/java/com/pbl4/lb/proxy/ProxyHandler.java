@@ -1,5 +1,6 @@
 package com.pbl4.lb.proxy;
 
+import com.pbl4.lb.health.BackendMaintenance;
 import com.pbl4.lb.health.HealthChecker;
 import com.pbl4.lb.security.BlockList;
 import com.pbl4.lb.strategy.LoadBalancingStrategy;
@@ -58,12 +59,19 @@ public class ProxyHandler implements HttpHandler {
     private final HealthChecker health;
     private final LoadBalancingStrategy strategy;
     private final BlockList blockList;
+    private final BackendMaintenance maintenance;
     private final HttpClient client;
 
     public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy, BlockList blockList) {
+        this(health, strategy, blockList, new BackendMaintenance());
+    }
+
+    public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy, BlockList blockList,
+                        BackendMaintenance maintenance) {
         this.health = health;
         this.strategy = strategy;
         this.blockList = blockList;
+        this.maintenance = maintenance;
         this.client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(3))
@@ -104,7 +112,8 @@ public class ProxyHandler implements HttpHandler {
                 return;
             }
 
-            List<String> healthy = health.healthyBackends();
+            // Backend dang UP va KHONG bi drain (dang bao tri) moi nhan request moi
+            List<String> healthy = maintenance.available(health.healthyBackends());
             if (healthy.isEmpty()) {
                 status = 503;
                 sendText(exchange, status, "Khong con backend nao kha dung");
@@ -125,6 +134,7 @@ public class ProxyHandler implements HttpHandler {
                 tried.add(backend);
                 long attemptStart = System.nanoTime();
                 boolean attemptOk = false;
+                maintenance.begin(backend);      // dem request dang xu ly (rolling deploy cho ve 0)
                 try {
                     response = forward(exchange, backend, method, bufferedBody, streamingRequest);
                     attemptOk = response.statusCode() < 500;
@@ -156,6 +166,7 @@ public class ProxyHandler implements HttpHandler {
                     if (pendingBackend == null) {
                         // Lan thu that bai (khong co response) -> nha backend ngay
                         strategy.release(backend, (System.nanoTime() - attemptStart) / 1_000_000, attemptOk);
+                        maintenance.end(backend);
                     }
                 }
             }
@@ -178,6 +189,7 @@ public class ProxyHandler implements HttpHandler {
             if (pendingBackend != null) {
                 // Da stream xong body (hoac client ngat giua chung) -> moi nha backend cho DWLC
                 strategy.release(pendingBackend, (System.nanoTime() - pendingStart) / 1_000_000, pendingOk);
+                maintenance.end(pendingBackend);
             }
             long durationMs = (System.nanoTime() - start) / 1_000_000;
             log.info(method + " " + path + " -> " + backend + " " + status

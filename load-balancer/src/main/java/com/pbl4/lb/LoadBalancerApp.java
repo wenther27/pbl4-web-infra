@@ -1,7 +1,9 @@
 package com.pbl4.lb;
 
 import com.pbl4.lb.admin.AdminHandler;
+import com.pbl4.lb.admin.BackendAdminHandler;
 import com.pbl4.lb.config.ServerConfigLoader;
+import com.pbl4.lb.health.BackendMaintenance;
 import com.pbl4.lb.health.HealthChecker;
 import com.pbl4.lb.proxy.ProxyHandler;
 import com.pbl4.lb.security.BlockList;
@@ -41,13 +43,16 @@ public class LoadBalancerApp {
         // LB_STARTUP_GRACE_SECONDS: thoi gian cho backend khoi dong truoc khi coi la su co (mac dinh 180s)
         long grace = Long.parseLong(System.getenv().getOrDefault("LB_STARTUP_GRACE_SECONDS", "180").trim());
         HealthChecker health = new HealthChecker(config.backends(), 5, 3, 2, grace);
+        // Bao tri co ke hoach (drain): dung chung giua ProxyHandler, HealthChecker va API quan tri
+        BackendMaintenance maintenance = new BackendMaintenance();
+        health.setMaintenanceCheck(maintenance::isDraining);
         health.start();
 
         // Danh sach IP bi chan: dung chung giua ProxyHandler (kiem tra) va AdminHandler (them/xoa)
         BlockList blockList = BlockList.fromEnv();
 
         HttpServer server = HttpServer.create(new InetSocketAddress(config.port()), 0);
-        server.createContext("/", new ProxyHandler(health, strategy, blockList));
+        server.createContext("/", new ProxyHandler(health, strategy, blockList, maintenance));
 
         // Mac dinh HttpServer chi dung 1 luong -> request xep hang doi nhau.
         // Co thread pool thi 50 request den cung luc moi duoc xu ly song song.
@@ -62,11 +67,12 @@ public class LoadBalancerApp {
                 kv("strategy", strategy.name()),
                 kv("backends", config.backends()));
 
-        startAdminServer(blockList);
+        startAdminServer(blockList, config.backends(), health, maintenance);
     }
 
     // API quan tri chay o cong rieng. Khong dat LB_ADMIN_TOKEN thi KHONG mo -> mac dinh an toan.
-    private static void startAdminServer(BlockList blockList) throws Exception {
+    private static void startAdminServer(BlockList blockList, java.util.List<String> backends,
+                                         HealthChecker health, BackendMaintenance maintenance) throws Exception {
         String token = System.getenv("LB_ADMIN_TOKEN");
         if (token == null || token.isBlank()) {
             log.warn("Khong dat LB_ADMIN_TOKEN -> tat API quan tri (chan IP)", kv("event", "admin_disabled"));
@@ -75,6 +81,8 @@ public class LoadBalancerApp {
         int port = Integer.parseInt(System.getenv().getOrDefault("LB_ADMIN_PORT", "8090").trim());
         HttpServer admin = HttpServer.create(new InetSocketAddress(port), 0);
         admin.createContext("/admin", new AdminHandler(blockList, token.trim()));
+        // Context dai hon duoc uu tien: /admin/backends/... vao day, con lai (/admin/blocked) vao AdminHandler
+        admin.createContext("/admin/backends", new BackendAdminHandler(backends, health, maintenance, token.trim()));
         admin.setExecutor(Executors.newFixedThreadPool(2));
         admin.start();
         log.info("API quan tri chay tai cong " + port + ", khong bao gio chan: " + blockList.neverBlock(),
