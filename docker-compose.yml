@@ -200,6 +200,9 @@ services:
       LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
       # IP khong bao gio bi chan: gateway cua mang Docker (= trinh duyet cua admin sau NAT)
       LB_NEVER_BLOCK: "172.18.0.1,127.0.0.1"
+      # Gioi han toc do theo IP (token bucket): 10 request/giay, burst 20. Dat RPS = 0 de tat.
+      LB_RATE_LIMIT_RPS: ${LB_RATE_LIMIT_RPS:-10}
+      LB_RATE_LIMIT_BURST: ${LB_RATE_LIMIT_BURST:-20}
       # API thuong timeout nhanh; upload video duoc stream va co toi 10 phut de hoan tat.
       LB_REQUEST_TIMEOUT_SECONDS: "30"
       LB_UPLOAD_TIMEOUT_SECONDS: "600"

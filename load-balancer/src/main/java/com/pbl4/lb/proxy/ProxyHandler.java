@@ -3,6 +3,7 @@ package com.pbl4.lb.proxy;
 import com.pbl4.lb.health.BackendMaintenance;
 import com.pbl4.lb.health.HealthChecker;
 import com.pbl4.lb.security.BlockList;
+import com.pbl4.lb.security.RateLimiter;
 import com.pbl4.lb.strategy.LoadBalancingStrategy;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -60,6 +61,7 @@ public class ProxyHandler implements HttpHandler {
     private final LoadBalancingStrategy strategy;
     private final BlockList blockList;
     private final BackendMaintenance maintenance;
+    private final RateLimiter rateLimiter;
     private final HttpClient client;
 
     public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy, BlockList blockList) {
@@ -68,10 +70,16 @@ public class ProxyHandler implements HttpHandler {
 
     public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy, BlockList blockList,
                         BackendMaintenance maintenance) {
+        this(health, strategy, blockList, maintenance, RateLimiter.disabled());
+    }
+
+    public ProxyHandler(HealthChecker health, LoadBalancingStrategy strategy, BlockList blockList,
+                        BackendMaintenance maintenance, RateLimiter rateLimiter) {
         this.health = health;
         this.strategy = strategy;
         this.blockList = blockList;
         this.maintenance = maintenance;
+        this.rateLimiter = rateLimiter;
         this.client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(3))
@@ -94,6 +102,7 @@ public class ProxyHandler implements HttpHandler {
         String backend = "-";
         int attempt = 0;
         boolean blocked = false;
+        boolean rateLimited = false;
         boolean streamingRequest = isStreamingRequest(method, path);
 
         // Backend da tra header nhung body (vd video) con dang stream ve client.
@@ -109,6 +118,20 @@ public class ProxyHandler implements HttpHandler {
                 blocked = true;
                 status = 403;
                 sendText(exchange, status, "IP cua ban dang bi tam chan boi quan tri vien");
+                return;
+            }
+
+            // Gioi han toc do theo IP (token bucket): vuot -> 429, KHONG gui toi backend
+            RateLimiter.Decision quota = rateLimiter.tryAcquire(clientIp);
+            if (quota.remaining() >= 0) {
+                exchange.getResponseHeaders().set("X-RateLimit-Limit", String.valueOf(rateLimiter.limits().burst()));
+                exchange.getResponseHeaders().set("X-RateLimit-Remaining", String.valueOf(quota.remaining()));
+            }
+            if (!quota.allowed()) {
+                rateLimited = true;
+                status = 429;
+                exchange.getResponseHeaders().set("Retry-After", String.valueOf(quota.retryAfterSeconds()));
+                sendText(exchange, status, "Qua nhieu request, thu lai sau " + quota.retryAfterSeconds() + " giay");
                 return;
             }
 
@@ -203,6 +226,7 @@ public class ProxyHandler implements HttpHandler {
                     kv("attempts", attempt),
                     kv("clientIp", clientIp),
                     kv("blocked", blocked),
+                    kv("rateLimited", rateLimited),
                     kv("strategy", strategy.name()),
                     kv("query", query),
                     kv("userAgent", userAgent));
