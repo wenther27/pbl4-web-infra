@@ -88,6 +88,13 @@ public class ProxyHandler implements HttpHandler {
         boolean blocked = false;
         boolean streamingRequest = isStreamingRequest(method, path);
 
+        // Backend da tra header nhung body (vd video) con dang stream ve client.
+        // Chua "nha" backend nay cho DWLC: release o finally cuoi cung, SAU KHI gui xong body,
+        // de so ket noi dang mo (active) va do tre phan anh dung thoi gian phuc vu that.
+        String pendingBackend = null;
+        long pendingStart = 0;
+        boolean pendingOk = false;
+
         try {
             // IP bi admin chan: tu choi ngay, khong cho vao backend nao
             if (blockList.isBlocked(clientIp)) {
@@ -121,6 +128,9 @@ public class ProxyHandler implements HttpHandler {
                 try {
                     response = forward(exchange, backend, method, bufferedBody, streamingRequest);
                     attemptOk = response.statusCode() < 500;
+                    pendingBackend = backend;      // release sau khi stream xong (xem finally cuoi)
+                    pendingStart = attemptStart;
+                    pendingOk = attemptOk;
                     break;
                 } catch (IOException e) {
                     lastError = e.getClass().getSimpleName();
@@ -143,7 +153,10 @@ public class ProxyHandler implements HttpHandler {
                         break; // request khong idempotent da toi backend -> khong gui lai
                     }
                 } finally {
-                    strategy.release(backend, (System.nanoTime() - attemptStart) / 1_000_000, attemptOk);
+                    if (pendingBackend == null) {
+                        // Lan thu that bai (khong co response) -> nha backend ngay
+                        strategy.release(backend, (System.nanoTime() - attemptStart) / 1_000_000, attemptOk);
+                    }
                 }
             }
 
@@ -162,6 +175,10 @@ public class ProxyHandler implements HttpHandler {
             status = 502;
             sendText(exchange, status, "LB bi ngat khi dang cho backend");
         } finally {
+            if (pendingBackend != null) {
+                // Da stream xong body (hoac client ngat giua chung) -> moi nha backend cho DWLC
+                strategy.release(pendingBackend, (System.nanoTime() - pendingStart) / 1_000_000, pendingOk);
+            }
             long durationMs = (System.nanoTime() - start) / 1_000_000;
             log.info(method + " " + path + " -> " + backend + " " + status
                             + " (" + durationMs + "ms, lan " + attempt + ")",
