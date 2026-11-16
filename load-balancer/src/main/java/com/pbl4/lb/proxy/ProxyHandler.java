@@ -37,15 +37,11 @@ public class ProxyHandler implements HttpHandler {
     private static final Duration VIDEO_UPLOAD_TIMEOUT = timeoutFromEnvironment(
             "LB_UPLOAD_TIMEOUT_SECONDS", 600);
 
-    // LB_TRUST_XFF=true : tin X-Forwarded-For client gui (dung de gia lap nhieu IP khi test bat thuong)
-    // LB_TRUST_XFF=false: bo qua, chi ghi IP ket noi that (an toan khi LB la lop ngoai cung)
     private static final boolean TRUST_CLIENT_FORWARDED_FOR =
             Boolean.parseBoolean(System.getenv().getOrDefault("LB_TRUST_XFF", "true"));
 
-    // Phuong thuc gui lai nhieu lan van cho cung ket qua -> retry an toan
     private static final Set<String> IDEMPOTENT = Set.of("GET", "HEAD", "OPTIONS", "PUT", "DELETE");
 
-    // Header khong chuyen tiep: hop-by-hop + header HttpClient cam tu dat + header LB tu dat lai
     private static final Set<String> SKIP_REQUEST_HEADERS = Set.of(
             "connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade",
             "proxy-authorization", "proxy-authenticate",
@@ -92,12 +88,9 @@ public class ProxyHandler implements HttpHandler {
         String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
         String clientIp = originalClientIp(exchange);
-        // R8 cua bo phat hien can NOI DUNG request: query (nguyen van, con ma hoa %xx) va User-Agent.
-        // Cat bot de 1 request qua dai khong lam phinh log.
         String query = truncate(exchange.getRequestURI().getRawQuery(), 1000);
         String userAgent = truncate(exchange.getRequestHeaders().getFirst("User-Agent"), 300);
 
-        // Gia tri mac dinh, se duoc cap nhat dan -> finally ghi 1 dong log du thong tin
         int status = 500;
         String backend = "-";
         int attempt = 0;
@@ -105,15 +98,11 @@ public class ProxyHandler implements HttpHandler {
         boolean rateLimited = false;
         boolean streamingRequest = isStreamingRequest(method, path);
 
-        // Backend da tra header nhung body (vd video) con dang stream ve client.
-        // Chua "nha" backend nay cho DWLC: release o finally cuoi cung, SAU KHI gui xong body,
-        // de so ket noi dang mo (active) va do tre phan anh dung thoi gian phuc vu that.
         String pendingBackend = null;
         long pendingStart = 0;
         boolean pendingOk = false;
 
         try {
-            // IP bi admin chan: tu choi ngay, khong cho vao backend nao
             if (blockList.isBlocked(clientIp)) {
                 blocked = true;
                 status = 403;
@@ -121,7 +110,6 @@ public class ProxyHandler implements HttpHandler {
                 return;
             }
 
-            // Gioi han toc do theo IP (token bucket): vuot -> 429, KHONG gui toi backend
             RateLimiter.Decision quota = rateLimiter.tryAcquire(clientIp);
             if (quota.remaining() >= 0) {
                 exchange.getResponseHeaders().set("X-RateLimit-Limit", String.valueOf(rateLimiter.limits().burst()));
@@ -135,7 +123,6 @@ public class ProxyHandler implements HttpHandler {
                 return;
             }
 
-            // Backend dang UP va KHONG bi drain (dang bao tri) moi nhan request moi
             List<String> healthy = maintenance.available(health.healthyBackends());
             if (healthy.isEmpty()) {
                 status = 503;
@@ -143,8 +130,6 @@ public class ProxyHandler implements HttpHandler {
                 return;
             }
 
-            // Video co the toi 500 MB: khong doc toan bo vao RAM. Cac request JSON/anh nho
-            // van duoc buffer de co the retry an toan khi backend chua nhan duoc request.
             byte[] bufferedBody = streamingRequest ? null : exchange.getRequestBody().readAllBytes();
             Set<String> tried = new HashSet<>();
             HttpResponse<InputStream> response = null;
@@ -157,11 +142,11 @@ public class ProxyHandler implements HttpHandler {
                 tried.add(backend);
                 long attemptStart = System.nanoTime();
                 boolean attemptOk = false;
-                maintenance.begin(backend);      // dem request dang xu ly (rolling deploy cho ve 0)
+                maintenance.begin(backend);
                 try {
                     response = forward(exchange, backend, method, bufferedBody, streamingRequest);
                     attemptOk = response.statusCode() < 500;
-                    pendingBackend = backend;      // release sau khi stream xong (xem finally cuoi)
+                    pendingBackend = backend;
                     pendingStart = attemptStart;
                     pendingOk = attemptOk;
                     break;
@@ -170,8 +155,6 @@ public class ProxyHandler implements HttpHandler {
                     boolean neverReached = e instanceof ConnectException
                             || e instanceof HttpConnectTimeoutException;
 
-                    // Ten field "errorType" (khong dung "error"): Filebeat drop_fields xoa field "error",
-                    // va "error" la ten dat truoc trong chuan ECS cua Elastic (kieu object).
                     log.warn("RETRY " + method + " " + path + " -> " + backend
                                     + " loi " + lastError + " (lan " + attempt + ")",
                             kv("event", "retry"),
@@ -183,11 +166,10 @@ public class ProxyHandler implements HttpHandler {
                             kv("clientIp", clientIp));
 
                     if (!neverReached && !IDEMPOTENT.contains(method)) {
-                        break; // request khong idempotent da toi backend -> khong gui lai
+                        break;
                     }
                 } finally {
                     if (pendingBackend == null) {
-                        // Lan thu that bai (khong co response) -> nha backend ngay
                         strategy.release(backend, (System.nanoTime() - attemptStart) / 1_000_000, attemptOk);
                         maintenance.end(backend);
                     }
@@ -210,7 +192,6 @@ public class ProxyHandler implements HttpHandler {
             sendText(exchange, status, "LB bi ngat khi dang cho backend");
         } finally {
             if (pendingBackend != null) {
-                // Da stream xong body (hoac client ngat giua chung) -> moi nha backend cho DWLC
                 strategy.release(pendingBackend, (System.nanoTime() - pendingStart) / 1_000_000, pendingOk);
                 maintenance.end(pendingBackend);
             }
@@ -234,7 +215,6 @@ public class ProxyHandler implements HttpHandler {
         }
     }
 
-    // IP goc cua client: phan tu dau cua X-Forwarded-For (neu tin), neu khong la IP ket noi truc tiep
     private String originalClientIp(HttpExchange exchange) {
         String remote = exchange.getRemoteAddress().getAddress().getHostAddress();
         if (!TRUST_CLIENT_FORWARDED_FOR) {
@@ -247,13 +227,11 @@ public class ProxyHandler implements HttpHandler {
         return xff.split(",")[0].trim();
     }
 
-    // Hoi strategy; neu no chon trung backend da thu thi lay backend chua thu dau tien
     private String pickBackend(List<String> healthy, Set<String> tried) {
         List<String> candidates = healthy.stream().filter(b -> !tried.contains(b)).toList();
         return strategy.next(candidates.isEmpty() ? healthy : candidates);
     }
 
-    // Gui 1 request sang 1 backend, nem exception neu backend loi
     private HttpResponse<InputStream> forward(HttpExchange exchange,
                                               String backend,
                                               String method,
@@ -279,7 +257,6 @@ public class ProxyHandler implements HttpHandler {
                 .timeout(streamingRequest ? VIDEO_UPLOAD_TIMEOUT : DEFAULT_REQUEST_TIMEOUT)
                 .method(method, publisher);
 
-        // 1. Chuyen tiep moi header cua client, tru danh sach bo qua
         exchange.getRequestHeaders().forEach((name, values) -> {
             if (!SKIP_REQUEST_HEADERS.contains(name.toLowerCase(Locale.ROOT))) {
                 for (String v : values) {
@@ -288,7 +265,6 @@ public class ProxyHandler implements HttpHandler {
             }
         });
 
-        // 2. X-Forwarded-For: IP cua ben vua ket noi toi LB
         String remoteIp = exchange.getRemoteAddress().getAddress().getHostAddress();
         String prior = exchange.getRequestHeaders().getFirst("X-Forwarded-For");
         String xff = (TRUST_CLIENT_FORWARDED_FOR && prior != null && !prior.isBlank())
@@ -296,7 +272,6 @@ public class ProxyHandler implements HttpHandler {
                 : remoteIp;
         builder.header("X-Forwarded-For", xff);
 
-        // 3. Dia chi, cong va giao thuc client da goi (localhost:8080, http)
         String host = exchange.getRequestHeaders().getFirst("Host");
         if (host != null) {
             builder.header("X-Forwarded-Host", host);
@@ -306,12 +281,9 @@ public class ProxyHandler implements HttpHandler {
         }
         builder.header("X-Forwarded-Proto", "http");
 
-        // Chi cho den khi co response headers, phan body duoc doc dan trong writeResponse.
         return client.send(builder.build(), HttpResponse.BodyHandlers.ofInputStream());
     }
 
-    // Tra response theo tung khoi 64 KB. Dieu nay rat quan trong voi video/Range:
-    // LB khong con giu ca file trong heap/direct memory truoc khi gui cho trinh duyet.
     private void writeResponse(HttpExchange exchange, HttpResponse<InputStream> response)
             throws IOException {
         response.headers().map().forEach((name, values) -> {
@@ -331,7 +303,7 @@ public class ProxyHandler implements HttpHandler {
 
             long contentLength = response.headers()
                     .firstValueAsLong("Content-Length")
-                    .orElse(0L); // 0 = chunked khi backend khong biet truoc kich thuoc
+                    .orElse(0L);
             exchange.sendResponseHeaders(responseStatus, contentLength);
 
             byte[] buffer = new byte[STREAM_BUFFER_SIZE];
@@ -382,7 +354,6 @@ public class ProxyHandler implements HttpHandler {
         }
     }
 
-    // null -> "", dai qua -> cat bot
     private static String truncate(String s, int max) {
         if (s == null) {
             return "";

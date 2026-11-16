@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-// Chay lan luot moi luat tren cung mot Snapshot, gom tat ca canh bao lai.
 public class RuleEngine {
     private static final Logger log = LoggerFactory.getLogger(RuleEngine.class);
 
@@ -23,7 +22,6 @@ public class RuleEngine {
             try {
                 all.addAll(rule.evaluate(snapshot));
             } catch (Exception e) {
-                // 1 luat loi khong duoc lam hong cac luat con lai
                 log.error("Luat " + rule.id() + " bi loi: " + e);
             }
         }

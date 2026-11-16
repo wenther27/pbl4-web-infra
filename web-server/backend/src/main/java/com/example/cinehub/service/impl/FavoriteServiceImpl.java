@@ -36,7 +36,6 @@ public class FavoriteServiceImpl implements FavoriteService {
     @Transactional
     @Override
     public FavoriteDTO addFavorite(Long userId, Long movieId) {
-        //Kiểm tra xem thích chưa. nếu rồi thì báo lỗi
         if (favoriteRepository.existsByIdUserIdAndIdMovieId(userId, movieId))
             throw  new BadRequestException("Phim đã có trong danh sách yêu thích");
         User user = userRepository.findById(userId)

@@ -3,58 +3,46 @@ interval_seconds: 10
 cooldown_seconds: 300
 baseline_minutes: 30
 
-# IP tin cay: khong bao R1, R2 cho cac IP nay (vd: may chay JMeter do tai)
 whitelist_ips: []
 
-# Tu dong chan IP qua API quan tri cua Load Balancer (cong 8090).
-# Chi cac luat do chinh xac cao; R1, R2 de admin quyet (de chan oan: NAT, bot tim kiem...).
-# CANH BAO: khi LB_TRUST_XFF=true ke xau co the gia X-Forwarded-For de LB chan IP nguoi khac.
-# Trien khai that ma bat auto_block thi phai dat LB_TRUST_XFF=false.
 auto_block:
   enabled: true
-  dry_run: false            # true: chi ghi log "le ra da chan", khong chan that (thu truoc khi bat)
+  dry_run: false
   rules: [ATTACK_SIGNATURE, BRUTE_FORCE_LOGIN]
-  minutes: 15               # chan bao lau, LB tu go khi het han
-  max_per_minute: 10        # chan qua so IP nay trong 1 phut -> tam dung, cho admin kiem tra
+  minutes: 15
+  max_per_minute: 10
 
 rules:
-  # R1: mot IP gui qua nhieu request trong cua so (DoS, bot cao du lieu)
   HIGH_RATE_IP:
     enabled: true
     severity: HIGH
-    threshold: 100            # so request / cua so
+    threshold: 100
 
-  # R2: mot IP nhan 403/404 tren qua nhieu duong dan KHAC NHAU (do quet)
   SCAN_PATHS:
     enabled: true
     severity: MEDIUM
     threshold: 15
 
-  # R3: mot IP dang nhap that bai (401) qua nhieu lan
   BRUTE_FORCE_LOGIN:
     enabled: true
     severity: HIGH
     threshold: 10
 
-  # R4: ti le loi 5xx cao (DB chet, loi code, tat ca backend DOWN)
   ERROR_RATE_5XX:
     enabled: true
     severity: HIGH
-    threshold_percent: 5      # % request loi 5xx
-    min_requests: 20          # it hon so nay thi khong xet (tranh 1/2 = 50%)
+    threshold_percent: 5
+    min_requests: 20
 
-  # R5: he thong cham
   HIGH_LATENCY:
     enabled: true
     severity: MEDIUM
-    threshold_ms: 1000      # p95 thoi gian phan hoi (ms)
+    threshold_ms: 1000
     min_requests: 20
 
-  # R6: LB bao mot backend DOWN
   BACKEND_DOWN:
     enabled: true
     severity: HIGH
-  # R7: tong luu luong tang dot bien so voi N phut truoc (z-score)
   TRAFFIC_SPIKE:
     enabled: true
     severity: MEDIUM
@@ -63,10 +51,6 @@ rules:
     min_std: 5
     min_history: 10
 
-  # R8: request chua dau hieu tan cong trong NOI DUNG (path, query, User-Agent) - giong WAF.
-  # Khac R1-R7 (dem so luong): chi 1 request khop mau la da bao.
-  # Mau la bieu thuc chinh quy Java, khong phan biet hoa/thuong. Viet trong dau nhay don '...'
-  # de YAML giu nguyen dau \ . Path va query duoc giai ma URL (%27 -> ') truoc khi so khop.
   ATTACK_SIGNATURE:
     enabled: true
     severity: HIGH
@@ -85,6 +69,5 @@ rules:
         - '\.\./'
         - '\.\.\\'
         - '/etc/(passwd|shadow)'
-    # User-Agent mac dinh cua cac cong cu quet lo hong pho bien
     user_agent_signatures:
       - '(sqlmap|nikto|nmap|masscan|acunetix|wpscan|dirbuster|gobuster|nuclei)'

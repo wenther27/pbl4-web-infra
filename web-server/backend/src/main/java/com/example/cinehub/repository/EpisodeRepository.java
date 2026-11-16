@@ -8,6 +8,5 @@ import java.util.List;
 
 @Repository
 public interface EpisodeRepository extends JpaRepository<Episode, Long> {
-    // Lọc danh sách tập theo ID phim và sắp xếp tăng dần theo số tập
     List<Episode> findByMovieIdOrderByEpisodeNumberAsc(Long movieId);
 }

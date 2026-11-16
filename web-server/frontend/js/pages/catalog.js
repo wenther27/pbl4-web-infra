@@ -21,7 +21,7 @@ function initialValues() {
 
 async function loadGenres() {
   let genres = fallbackGenres;
-  try { genres = await movieApi.getGenres(); } catch { /* giao diện vẫn hoạt động bằng dữ liệu mẫu */ }
+  try { genres = await movieApi.getGenres(); } catch {}
   elements.genre.innerHTML += genres.map((genre) => `<option value="${genre.slug}">${genre.name}</option>`).join('');
   elements.genre.value = url.searchParams.get('genre') || '';
 }

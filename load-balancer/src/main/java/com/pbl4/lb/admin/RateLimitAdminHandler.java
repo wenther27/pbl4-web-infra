@@ -13,10 +13,6 @@ import java.security.MessageDigest;
 import java.util.Map;
 import java.util.Optional;
 
-// API gioi han toc do (cung cong 8090, cung X-Admin-Token):
-//   GET  /admin/ratelimit   -> cau hinh hien tai + top IP bi tra 429 nhieu nhat
-//   POST /admin/ratelimit   -> doi nguong luc dang chay  body: {"ratePerSecond":10,"burst":20}
-//                              ratePerSecond = 0 -> tat gioi han
 public class RateLimitAdminHandler implements HttpHandler {
 
     private static final String PATH = "/admin/ratelimit";
@@ -61,7 +57,6 @@ public class RateLimitAdminHandler implements HttpHandler {
                     return;
                 }
                 double rps = body.get("ratePerSecond").asDouble();
-                // Khong gui burst -> giu burst hien tai
                 int burst = body.hasNonNull("burst") ? body.get("burst").asInt() : limiter.limits().burst();
                 String by = Optional.ofNullable(ex.getRequestHeaders().getFirst("X-Admin-User")).orElse("admin");
                 try {
@@ -80,7 +75,6 @@ public class RateLimitAdminHandler implements HttpHandler {
         }
     }
 
-    // Giong AdminHandler: so sanh token thoi gian hang so
     private boolean authorized(HttpExchange ex) {
         String given = ex.getRequestHeaders().getFirst("X-Admin-Token");
         return given != null && MessageDigest.isEqual(token, given.getBytes(StandardCharsets.UTF_8));

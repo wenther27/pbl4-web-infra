@@ -9,10 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-//Đọc danh sách BE từ servers.yaml
-
 public class ServerConfigLoader {
-    // Ket qua docj cau hinh: port LB nghe va danh sach BE
     public record Config(int port, List<String> backends) {
 
     }
@@ -29,10 +26,8 @@ public class ServerConfigLoader {
 
         int port = ((Number)data.getOrDefault("port", 8080)).intValue();
 
-        //Lấy giá trị thô
         Object raw = data.get("backends");
         if(!(raw instanceof List<?> list) || list.isEmpty())
-            //pattern matching kiem tra raw co phai list ? đúng thì tạo list ép kiểu sẵn
             throw new IllegalStateException("servers.yaml phai co danh sach backends");
 
         List<String> backends = list.stream().map(Object::toString).toList();
@@ -49,6 +44,5 @@ public class ServerConfigLoader {
             port = Integer.parseInt(envPort.trim());
 
         return new Config(port, List.copyOf(backends));
-        //tạo bản sao không sửa được
     }
 }

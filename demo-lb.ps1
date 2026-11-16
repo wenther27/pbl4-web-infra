@@ -1,12 +1,3 @@
-# ============================================================
-# CineHub - Demo Load Balancer + Phat hien bat thuong (theo PBL4_ThuTuChayKiemThu.pdf)
-# Chay:  powershell -ExecutionPolicy Bypass -File .\demo-lb.ps1
-#   -NoPause      : khong dung giua cac buoc
-#   -SkipManual   : bo qua cac buoc can thao tac tay tren web (R7, R3, R4)
-# Yeu cau: da chay "docker compose up -d" va ELK; cac backend da UP.
-# Script chi gui vai request kiem tra chuc nang; cac buoc R7, R3, R4 do NGUOI thao tac tren web,
-# script chi cho va doc ket qua tu Elasticsearch.
-# ============================================================
 param([switch]$NoPause, [switch]$SkipManual, [int]$ManualTimeout = 150)
 
 $ErrorActionPreference = "Continue"
@@ -25,9 +16,6 @@ Add-Type -AssemblyName System.Net.Http
 $script:Http = New-Object System.Net.Http.HttpClient
 $script:Http.Timeout = [TimeSpan]::FromSeconds(20)
 
-# ------------------------------------------------------------
-# Ham hien thi
-# ------------------------------------------------------------
 function Title($text) {
     Write-Host ""
     Write-Host ("=" * 70) -ForegroundColor DarkGray
@@ -48,19 +36,14 @@ function Skip($code, $name, $why) {
 }
 function Pause-Step { if (-not $NoPause) { Read-Host "  (Enter de sang buoc tiep)" | Out-Null } }
 
-# ------------------------------------------------------------
-# Ham goi he thong
-# ------------------------------------------------------------
 function NowUtc { (Get-Date).ToUniversalTime() }
 function Iso($t) { $t.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") }
-# Do lech giua 2 moc thoi gian. $isoTo la chuoi ISO (PowerShell 5.1) hoac DateTime (PowerShell 7 tu doi)
 function Seconds($fromUtc, $isoTo) {
     if ($isoTo -is [DateTime]) { $to = $isoTo.ToUniversalTime() }
     else { $to = [DateTimeOffset]::Parse([string]$isoTo).UtcDateTime }
     [math]::Round(($to - $fromUtc).TotalSeconds, 1)
 }
 
-# GET qua LB, tra ve status / body / header X-LB-Attempts (khong nem loi khi 5xx)
 function Lb-Get([string]$path, [string]$ip = $TagIp) {
     $req = New-Object System.Net.Http.HttpRequestMessage([System.Net.Http.HttpMethod]::Get, "$LbUrl$path")
     if ($ip) { [void]$req.Headers.TryAddWithoutValidation("X-Forwarded-For", $ip) }
@@ -90,9 +73,7 @@ function Wait-Up([string[]]$names, [int]$timeout = 180) {
     return $false
 }
 
-# Doc log JSON cua container tu thoi diem $sinceUtc
 function Container-Json([string]$container, $sinceUtc) {
-    # Lui 3 giay: dong ho Windows va may ao Docker co the lech nhau mot chut
     $lines = docker logs $container --since (Iso $sinceUtc.AddSeconds(-3)) 2>&1 | ForEach-Object { "$_" } | Where-Object { $_.StartsWith("{") }
     foreach ($l in $lines) { try { $l | ConvertFrom-Json } catch { } }
 }
@@ -113,7 +94,6 @@ function Last-Snapshot {
     if ($s) { return $s.message } else { return "(chua co snapshot)" }
 }
 
-# Tim canh bao trong alerts-* tu thoi diem $sinceUtc (target = "" nghia la khong loc)
 function Find-Alert([string]$rule, [string]$target, $sinceUtc) {
     $filter = @(
         @{ term  = @{ rule = $rule } },
@@ -129,7 +109,6 @@ function Find-Alert([string]$rule, [string]$target, $sinceUtc) {
     } catch { }
     return $null
 }
-# Cho canh bao, moi 10 giay in dong snapshot de thay so request tang dan
 function Wait-Alert([string]$rule, [string]$target, $sinceUtc, [int]$timeout, [switch]$ShowSnapshot) {
     $deadline = (Get-Date).AddSeconds($timeout)
     $nextShow = Get-Date
@@ -149,9 +128,6 @@ function Show-Alert($a, $fromUtc) {
     if ($fromUtc) { Write-Host "    Do tre tu luc gay su co: $(Seconds $fromUtc $a.'@timestamp') s" -ForegroundColor Yellow }
 }
 
-# ============================================================
-# BAT DAU
-# ============================================================
 Title "0. Kiem tra truoc khi demo"
 $es = $false; try { Invoke-RestMethod "$EsUrl/_cluster/health" -TimeoutSec 5 | Out-Null; $es = $true } catch { }
 Check "P0" "Elasticsearch san sang" $es
@@ -171,7 +147,6 @@ Todo "DONG tab web CineHub (de request cua giao dien khong lan vao buoc 1)."
 Explain "He thong co 1 cong vao duy nhat la LB :8080; LB chia tai cho 3 backend va ghi log JSON; Filebeat dua log vao Elasticsearch; bo phat hien doc log moi 10s va ghi canh bao vao alerts-*."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "1. Load Balancer khi moi thu khoe (L1, L5, L6)"
 $t = NowUtc
 1..6 | ForEach-Object { [void](Lb-Get "/api/movies") }
@@ -203,7 +178,6 @@ if ($urls.Count -gt 0) {
 Explain "Backend luu duong dan tuong doi, dung URL day du tu X-Forwarded-Host/Port ma LB gui, nen anh hien dung du backend nao phuc vu."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "2. Luu luong tang dot bien - R7 TRAFFIC_SPIKE (z-score) (D7, D8)"
 if ($SkipManual) { Skip "D7" "R7 TRAFFIC_SPIKE" "-SkipManual" } else {
     Info "Nen hien tai: $(Last-Snapshot)"
@@ -222,7 +196,6 @@ if ($SkipManual) { Skip "D7" "R7 TRAFFIC_SPIKE" "-SkipManual" } else {
 }
 Pause-Step
 
-# ------------------------------------------------------------
 Title "3. Do mat khau - R3 BRUTE_FORCE_LOGIN (D3)"
 if ($SkipManual) { Skip "D3" "R3 BRUTE_FORCE_LOGIN" "-SkipManual" } else {
     Todo "Tren web, DANG NHAP SAI 11 lan trong 1 phut (nguong 10). Script dang cho canh bao (toi da $ManualTimeout s)."
@@ -234,7 +207,6 @@ if ($SkipManual) { Skip "D3" "R3 BRUTE_FORCE_LOGIN" "-SkipManual" } else {
 }
 Pause-Step
 
-# ------------------------------------------------------------
 Title "4. Su co mot backend: tat web-2 (L3, L2, D6)"
 $t0 = NowUtc
 Info "$((Get-Date).ToString('HH:mm:ss.fff'))  docker compose stop web-2"
@@ -272,7 +244,6 @@ $up = if ($ok) { Wait-LbEvent "backend_up" "http://web-2:8080" $t1 30 } else { $
 Check "L2" "web-2 duoc nhan lai" ($null -ne $up) $(if ($up) { "LB ghi UP sau $(Seconds $t1 $up.'@timestamp') s" } else { "" })
 Pause-Step
 
-# ------------------------------------------------------------
 Title "5. Su co toan bo backend (L4, D4)"
 $t0 = NowUtc
 Info "docker compose stop web-1 web-2 web-3"
@@ -301,7 +272,6 @@ Check "P5" "3 backend UP tro lai" $ok
 Start-Sleep 12   # cho LB health check nhan lai (2 lan x 5s)
 Pause-Step
 
-# ------------------------------------------------------------
 Title "6. Tong ket"
 docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}"
 $t = (NowUtc).AddHours(-1)

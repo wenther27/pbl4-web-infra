@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface GenreService {
     List<GenreDTO> getAllGenres();
-    GenreDTO createGenre(Genre genre); // Nhận vào Entity và trả về DTO;
+    GenreDTO createGenre(Genre genre);
 
 }

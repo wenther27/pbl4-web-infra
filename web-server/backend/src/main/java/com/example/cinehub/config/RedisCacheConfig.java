@@ -41,36 +41,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Redis cache cho cac API DOC phim (mo hinh Cache-Aside).
- *
- * <pre>
- *  request doc -> co trong Redis?  -- co  --> tra ve ngay (khong cham MySQL)
- *                                  -- chua --> doc MySQL replica -> luu vao Redis (TTL) -> tra ve
- *  request ghi (them/sua/xoa phim) -> ghi MySQL primary -> xoa cac cache phim lien quan
- * </pre>
- *
- * Nguyen tac an toan:
- * <ul>
- *   <li>Redis chi la bo dem: Redis chet thi app van chay, moi request doc thang MySQL
- *       ({@link #errorHandler()} nuot loi, Lettuce tu choi lenh ngay khi mat ket noi).</li>
- *   <li>Redis KHONG duoc dua vao /actuator/health (management.health.redis.enabled=false),
- *       neu khong Load Balancer se loai ca 3 backend khi Redis chet.</li>
- *   <li>Cache nam NGOAI transaction (order thap hon TransactionInterceptor): cache hit khong mo
- *       transaction/ket noi DB; lenh xoa cache chay SAU khi transaction ghi da commit.</li>
- * </ul>
- */
 @Configuration
 @EnableCaching(order = Ordered.LOWEST_PRECEDENCE - 1)
 public class RedisCacheConfig implements CachingConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(RedisCacheConfig.class);
 
-    // Ten cac vung cache. Key that trong Redis: "cinehub::<ten vung>::<key>"
-    public static final String MOVIES_PAGE = "movies:page";         // GET /api/movies (trang chu, tim kiem, loc)
-    public static final String MOVIES_TRENDING = "movies:trending"; // GET /api/movies/trending
-    public static final String MOVIES_BY_TYPE = "movies:byType";    // GET /api/movies/type
-    public static final String MOVIES_BY_GENRE = "movies:byGenre";  // GET /api/movies/genre/{slug}
+    public static final String MOVIES_PAGE = "movies:page";
+    public static final String MOVIES_TRENDING = "movies:trending";
+    public static final String MOVIES_BY_TYPE = "movies:byType";
+    public static final String MOVIES_BY_GENRE = "movies:byGenre";
 
     public static final String KEY_GENERATOR = "requestAwareKeyGenerator";
 
@@ -79,9 +59,6 @@ public class RedisCacheConfig implements CachingConfigurer {
     @Value("${app.cache.ttl-seconds:300}")
     private long ttlSeconds;
 
-    // ------------------------------------------------------------------
-    // 1. Dinh dang luu trong Redis: key la chuoi, value la JSON (doc duoc bang redis-cli)
-    // ------------------------------------------------------------------
     @Bean
     public RedisCacheConfiguration redisCacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
@@ -93,12 +70,6 @@ public class RedisCacheConfig implements CachingConfigurer {
                         new GenericJackson2JsonRedisSerializer(redisObjectMapper())));
     }
 
-    /**
-     * ObjectMapper RIENG cho Redis (khong dung chung ObjectMapper cua REST API):
-     * ghi kem ten lop (@class) de doc nguoc lai dung kieu MovieDTO/PageResponse.
-     * Chi cho phep cac lop trong goi DTO cua du an va java.util/java.lang -> tranh lo hong
-     * deserialization khi du lieu trong Redis bi ke xau sua.
-     */
     static ObjectMapper redisObjectMapper() {
         BasicPolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
                 .allowIfSubType("com.example.cinehub.dto.")
@@ -107,17 +78,15 @@ public class RedisCacheConfig implements CachingConfigurer {
                 .build();
 
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());                        // LocalDate releaseDate
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);       // "2024-05-01" thay vi [2024,5,1]
-        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);    // DTO them/bot field van doc duoc
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         mapper.activateDefaultTyping(typeValidator, ObjectMapper.DefaultTyping.NON_FINAL,
                 JsonTypeInfo.As.PROPERTY);
-        // PageResponse khong co constructor rong -> chi cho Jackson dung constructor co tham so
         mapper.addMixIn(PageResponse.class, PageResponseMixin.class);
         return mapper;
     }
 
-    /** Khong sua PageResponse: dung mix-in de Jackson biet tao doi tuong tu JSON trong Redis. */
     abstract static class PageResponseMixin {
         @JsonCreator
         PageResponseMixin(@JsonProperty("content") List<?> content,
@@ -128,10 +97,6 @@ public class RedisCacheConfig implements CachingConfigurer {
         }
     }
 
-    // ------------------------------------------------------------------
-    // 2. Cache manager: xoa cache bang SCAN (khong dung KEYS chan Redis),
-    //    va hoan lenh put/evict den khi transaction bao quanh (neu co) commit xong
-    // ------------------------------------------------------------------
     @Bean
     public RedisCacheManagerBuilderCustomizer cinehubCacheManagerCustomizer(RedisConnectionFactory connectionFactory) {
         return builder -> builder
@@ -139,28 +104,17 @@ public class RedisCacheConfig implements CachingConfigurer {
                 .transactionAware();
     }
 
-    // ------------------------------------------------------------------
-    // 3. Redis chet -> fail nhanh thay vi treo request
-    // ------------------------------------------------------------------
     @Bean
     public LettuceClientConfigurationBuilderCustomizer cinehubLettuceCustomizer(
             @Value("${spring.data.redis.connect-timeout:500ms}") Duration connectTimeout) {
         return builder -> builder.clientOptions(ClientOptions.builder()
-                .autoReconnect(true)                                               // Redis song lai -> tu ket noi lai
-                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS) // dang mat ket noi -> bao loi ngay
+                .autoReconnect(true)
+                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
                 .socketOptions(SocketOptions.builder().connectTimeout(connectTimeout).build())
                 .timeoutOptions(TimeoutOptions.enabled())
                 .build());
     }
 
-    // ------------------------------------------------------------------
-    // 4. Key cache: kem dia chi goc cua request
-    // ------------------------------------------------------------------
-    /**
-     * MediaUrlConverter ghep dia chi request vao posterUrl/backdropUrl (vd http://localhost:8080/uploads/..).
-     * Vi vay key phai kem dia chi goc, neu khong JSON tao cho cong 8080 se bi tra cho request vao 8081.
-     * Request qua Load Balancer deu co X-Forwarded-Host = localhost:8080 -> web-1/2/3 dung CHUNG mot key.
-     */
     @Bean(KEY_GENERATOR)
     public KeyGenerator requestAwareKeyGenerator() {
         return (target, method, params) -> currentBaseUrl() + "|" + method.getName() + "("
@@ -185,15 +139,11 @@ public class RedisCacheConfig implements CachingConfigurer {
         return param.toString();
     }
 
-    // ------------------------------------------------------------------
-    // 5. Loi Redis khong bao gio lam hong request
-    // ------------------------------------------------------------------
     @Override
     public CacheErrorHandler errorHandler() {
         return new CacheErrorHandler() {
             @Override
             public void handleCacheGetError(RuntimeException e, Cache cache, Object key) {
-                // Coi nhu cache miss -> Spring goi tiep method doc MySQL
                 log.warn("Redis GET loi ({}), doc thang MySQL: {}", cache.getName(), e.getMessage());
             }
 

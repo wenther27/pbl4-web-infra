@@ -25,9 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// Doc rules.yaml -> cau hinh + danh sach luat dang bat.
-// Mac dinh doc file trong classpath (src/main/resources/rules.yaml).
-// Dat bien RULES_FILE=<duong dan> de doc file ben ngoai (dung cho Docker o buoi 5).
 public class RulesConfigLoader {
     private static final Logger log = LoggerFactory.getLogger(RulesConfigLoader.class);
 
@@ -70,7 +67,6 @@ public class RulesConfigLoader {
         return new DetectorConfig(window, interval, cooldown, baseline, rules, autoBlock(root.get("auto_block")));
     }
 
-    // Muc auto_block trong rules.yaml; khong khai bao -> tat
     private static AutoBlocker.Config autoBlock(Object raw) {
         if (!(raw instanceof Map<?, ?> m)) {
             return AutoBlocker.Config.disabled();
@@ -89,7 +85,6 @@ public class RulesConfigLoader {
                 intOf(null, m.get("max_per_minute"), 10));
     }
 
-    // "Nha may" tao luat theo ma. Them luat moi: them 1 dong case.
     private static Rule create(String id, Map<String, Object> params, Set<String> whitelist) {
         return switch (id) {
             case "HIGH_RATE_IP"   -> new HighRateIpRule(params, whitelist);
@@ -122,7 +117,6 @@ public class RulesConfigLoader {
         }
     }
 
-    // Uu tien bien moi truong, roi den YAML, cuoi cung la mac dinh
     private static int intOf(String envValue, Object yamlValue, int defaultValue) {
         if (envValue != null) {
             return Integer.parseInt(envValue);

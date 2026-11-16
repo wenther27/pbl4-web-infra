@@ -1,8 +1,3 @@
-# ============================================================
-# CineHub - Demo he thong nen cho de tai Load Balancing + ELK
-# Chay:  powershell -ExecutionPolicy Bypass -File .\demo.ps1
-# Tu dong (khong dung giua cac buoc):  ... -File .\demo.ps1 -NoPause
-# ============================================================
 param([switch]$NoPause, [switch]$NoBrowser)
 
 $ErrorActionPreference = "Continue"   # PS 5.1: stderr cua docker khong phai loi
@@ -12,7 +7,6 @@ Set-Location $PSScriptRoot
 $Compose  = @("-f", "docker-compose.yml")
 $Ports    = 8081, 8082, 8083
 $DbPass   = "change-me-for-local-development"
-# Neu da tao .env (xem .env.example) thi dung dung mat khau MySQL trong do
 if (Test-Path ".env") {
     $envPass = Select-String -Path ".env" -Pattern '^\s*MYSQL_ROOT_PASSWORD\s*=\s*(.+)$' | Select-Object -First 1
     if ($envPass) { $DbPass = $envPass.Matches[0].Groups[1].Value.Trim().Trim('"') }
@@ -52,9 +46,7 @@ function Open-Fe($url) { if (-not $NoBrowser) { Start-Process $url } }
 function FeHint($text) { Write-Host "  [FE] $text" -ForegroundColor Magenta }
 function FeUp { try { Invoke-WebRequest "http://127.0.0.1:5173" -UseBasicParsing -TimeoutSec 5 | Out-Null; $true } catch { $false } }
 
-# ------------------------------------------------------------
 Title "0. Khoi dong: 2 MySQL (primary/replica) + 3 backend (web-1/2/3) + giao dien web"
-# Lan dau se build image backend (vai phut), cac lan sau dung cache
 docker compose @Compose up -d --build *> $null
 Write-Host "  Doi 3 backend san sang..."
 for ($i = 0; $i -lt 40; $i++) {
@@ -80,7 +72,6 @@ Open-Fe (Fe 8081)
 FeHint "Trang chu da mo, dang goi web-1. Goc phai duoi: 'Phuc vu boi: web-1' + nut doi server."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "1. Ba server chay song song, moi server tu bao ten (X-Instance-Id)"
 $seen = @()
 foreach ($p in $Ports) {
@@ -93,7 +84,6 @@ Check "Moi cong tra ve dung instance" (($seen -join ",") -eq "web-1,web-2,web-3"
 FeHint "Bam nut web-2, web-3 o goc phai duoi: cung giao dien, cung du lieu, khung doi thanh web-2/web-3."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "2. Stateless: dang nhap o web-1, dung token goi web-3"
 $login = Invoke-RestMethod "http://localhost:8081/api/auth/login" -Method Post `
     -ContentType "application/json" -Body '{"username":"admin","password":"123456"}'
@@ -104,7 +94,6 @@ Check "Token dung duoc tren server khac" ($fav -eq 200)
 FeHint "Bam web-1, dang nhap admin / 123456. Bam sang web-3: VAN dang nhap (JWT, khong can session tren server)."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "3. Du lieu dung chung + replication: dang ky o web-2 -> co tren replica"
 $user = "demo" + (Get-Date -Format "HHmmss")
 $body = @{ username = $user; email = "$user@cinehub.com"; password = "12345678" } | ConvertTo-Json
@@ -117,15 +106,12 @@ Check "Replica tu co user moi" ($onReplica -eq $user)
 FeHint "Dang xuat, dang nhap '$user' / 12345678 tren web-1 hoac web-3: tai khoan tao o web-2 van dung duoc."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "4. Replica chi doc: ghi truc tiep vao replica phai bi tu choi"
-# Xoa 1 dong KHONG ton tai: neu replica lo chua chan ghi thi cung khong lam lech du lieu
 $out = docker exec -e MYSQL_PWD=$DbPass $Replica mysql -uroot -e "DELETE FROM cinehub_db.users WHERE username='__khong_ton_tai__'" 2>&1 | ForEach-Object { "$_" } | Out-String
 Write-Host ("  " + ($out.Trim() -split "`n" | Select-Object -First 1))
 Check "Replica chan ghi (super_read_only)" ($out -match "super-read-only")
 Pause-Step
 
-# ------------------------------------------------------------
 Title "5. Phan quyen: khong token bi chan, user thuong goi API admin -> 403"
 $u = Invoke-RestMethod "http://localhost:8081/api/auth/login" -Method Post -ContentType "application/json" `
     -Body (@{ username = $user; password = "12345678" } | ConvertTo-Json)
@@ -139,7 +125,6 @@ Check "Phan quyen dung" ($cNo -in 401, 403 -and $c403 -eq 403 -and $c200 -eq 200
 FeHint "Dang nhap admin -> vao duoc trang quan tri: http://localhost:5173/pages/admin/  ; tai khoan USER thi khong."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "6. Log JSON co cau truc -> Filebeat -> Elasticsearch -> Kibana"
 FeHint "Moi thao tac tren web deu sinh 1 dong log JSON o server dang phuc vu."
 $line = docker logs cinehub-infrastructure-web-2-1 --tail 50 2>&1 | Where-Object { "$_" -match '"path"' } | Select-Object -Last 1
@@ -168,7 +153,6 @@ FeHint "Kibana: dashboard 'CineHub - Giam sat traffic' tu refresh 10s. Bam web-1
 FeHint "Kibana > Discover: go  instance : web-2 and status >= 400  de loc log."
 Pause-Step
 
-# ------------------------------------------------------------
 Title "7. Mot server sap -> health check phat hien (ly do can Load Balancer)"
 docker stop cinehub-infrastructure-web-2-1 | Out-Null
 Write-Host "  Da tat web-2."
@@ -184,7 +168,6 @@ Write-Host "  localhost:8082  ->  $(Health 8082)"
 Check "Phat hien web-2 DOWN va khoi phuc" ($down -and (Health 8082) -eq "UP")
 FeHint "Bam web-2 lan nua: hoat dong lai."
 
-# ------------------------------------------------------------
 Sql $Primary "DELETE FROM cinehub_db.users WHERE username='$user'" | Out-Null
 
 Title "TONG KET"

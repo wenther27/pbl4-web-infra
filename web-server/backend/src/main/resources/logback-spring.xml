@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Hai che do log:
-
-  - Mac dinh (chay local, IntelliJ): log dang text de doc bang mat.
-  - Profile "docker": log dang JSON mot dong ra stdout. Filebeat doc stdout
-    cua container roi day qua Logstash -> Elasticsearch -> Kibana.
-    Cac field trong MDC (instanceId, httpMethod, path, status, durationMs,
-    clientIp - xem RequestLogFilter) tro thanh cot rieng trong Elasticsearch.
-
-  Bat JSON bang: SPRING_PROFILES_ACTIVE=docker
--->
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
     <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="CineHub-BE"/>
     <springProperty scope="context" name="instanceId" source="app.instance-id" defaultValue="local"/>
 
-    <!-- ===================== Local: text de doc ===================== -->
     <springProfile name="!docker">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
@@ -30,7 +18,6 @@
         </root>
     </springProfile>
 
-    <!-- ===================== Docker: JSON cho ELK ===================== -->
     <springProfile name="docker">
         <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">

@@ -3,6 +3,7 @@ package com.pbl4.lb.admin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pbl4.lb.health.BackendMaintenance;
 import com.pbl4.lb.health.HealthChecker;
+import com.pbl4.lb.strategy.LoadBalancingStrategy;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -15,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// API bao tri backend (cung cong 8090, cung X-Admin-Token voi API chan IP):
-//   GET  /admin/backends                 -> trang thai tung backend: up, draining, inFlight
-//   POST /admin/backends/{ten}/drain     -> ngung gui request moi vao backend (vd ten = web-1)
-//   POST /admin/backends/{ten}/undrain   -> nhan request tro lai
 public class BackendAdminHandler implements HttpHandler {
 
     private static final String PREFIX = "/admin/backends";
@@ -27,13 +24,20 @@ public class BackendAdminHandler implements HttpHandler {
     private final List<String> backends;
     private final HealthChecker health;
     private final BackendMaintenance maintenance;
+    private final LoadBalancingStrategy strategy;
     private final byte[] token;
 
     public BackendAdminHandler(List<String> backends, HealthChecker health,
                                BackendMaintenance maintenance, String token) {
+        this(backends, health, maintenance, null, token);
+    }
+
+    public BackendAdminHandler(List<String> backends, HealthChecker health, BackendMaintenance maintenance,
+                               LoadBalancingStrategy strategy, String token) {
         this.backends = backends;
         this.health = health;
         this.maintenance = maintenance;
+        this.strategy = strategy;
         this.token = token.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -49,11 +53,19 @@ public class BackendAdminHandler implements HttpHandler {
             String by = Optional.ofNullable(ex.getRequestHeaders().getFirst("X-Admin-User")).orElse("admin");
 
             if (path.equals(PREFIX) && method.equals("GET")) {
-                send(ex, 200, Map.of("backends", backends.stream().map(this::status).toList()));
+                Map<String, Map<String, Object>> stats = strategy == null ? Map.of() : strategy.snapshot(backends);
+                Map<String, Object> body = new LinkedHashMap<>();
+                body.put("strategy", strategy == null ? null : strategy.name());
+                body.put("timestamp", System.currentTimeMillis());
+                body.put("backends", backends.stream().map(b -> {
+                    Map<String, Object> m = status(b);
+                    m.putAll(stats.getOrDefault(b, Map.of()));
+                    return m;
+                }).toList());
+                send(ex, 200, body);
                 return;
             }
 
-            // /admin/backends/{ten}/drain | /undrain
             String[] parts = path.substring(Math.min(path.length(), PREFIX.length())).split("/");
             if (parts.length == 3 && method.equals("POST")
                     && (parts[2].equals("drain") || parts[2].equals("undrain"))) {
@@ -64,7 +76,6 @@ public class BackendAdminHandler implements HttpHandler {
                 }
                 String b = backend.get();
                 if (parts[2].equals("drain")) {
-                    // Khong cho drain backend cuoi cung dang phuc vu -> tranh tu tay lam sap he thong
                     List<String> serving = health.healthyBackends().stream()
                             .filter(x -> !x.equals(b) && !maintenance.isDraining(x)).toList();
                     if (serving.isEmpty()) {
@@ -93,10 +104,10 @@ public class BackendAdminHandler implements HttpHandler {
         m.put("up", health.healthyBackends().contains(b));
         m.put("draining", maintenance.isDraining(b));
         m.put("inFlight", maintenance.inFlight(b));
+        m.put("served", maintenance.served(b));
         return m;
     }
 
-    // Giong AdminHandler: so sanh token thoi gian hang so
     private boolean authorized(HttpExchange ex) {
         String given = ex.getRequestHeaders().getFirst("X-Admin-Token");
         return given != null && MessageDigest.isEqual(token, given.getBytes(StandardCharsets.UTF_8));

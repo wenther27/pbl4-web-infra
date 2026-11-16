@@ -13,7 +13,6 @@ public class WatchHistoryDTO {
     private String movieTitle;
     private String posterUrl;
 
-    //2 cái này có thể null nếu là phim lẻ
     private Long episodeId;
     private Integer episodeNumber;
 

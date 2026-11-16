@@ -20,25 +20,22 @@ public class EpisodeController {
 
     @GetMapping("/movies/{movieId}/episodes")
     @SecurityRequirements
-    public ResponseEntity<List<EpisodeDTO>> getEpisodeByMovieId(@PathVariable Long movieId) { // 🌟 Sửa 'id' thành 'movieId' cho khớp URL
+    public ResponseEntity<List<EpisodeDTO>> getEpisodeByMovieId(@PathVariable Long movieId) {
         return ResponseEntity.ok(episodeService.getEpisodeByMovieId(movieId));
     }
 
-    // 2. Thêm tập phim mới
     @PostMapping("/movies/{movieId}/episodes")
-    public ResponseEntity<EpisodeDTO> addEpisode(@PathVariable Long movieId, @RequestBody Episode episode) { // 🌟 Sửa 'id' thành 'movieId'
+    public ResponseEntity<EpisodeDTO> addEpisode(@PathVariable Long movieId, @RequestBody Episode episode) {
         return ResponseEntity.ok(episodeService.addEpisode(movieId, episode));
     }
 
-    // 3. Sửa tập phim
     @PutMapping("/episodes/{episodeId}")
-    public ResponseEntity<EpisodeDTO> updateEpisode(@PathVariable Long episodeId, @RequestBody Episode episodeDetails) { // 🌟 Sửa 'id' thành 'episodeId'
+    public ResponseEntity<EpisodeDTO> updateEpisode(@PathVariable Long episodeId, @RequestBody Episode episodeDetails) {
         return ResponseEntity.ok(episodeService.updateEpisode(episodeId, episodeDetails));
     }
 
-    // 4. Xóa tập phim
     @DeleteMapping("/episodes/{episodeId}")
-    public ResponseEntity<String> deleteEpisode(@PathVariable Long episodeId) { // 🌟 Sửa 'id' thành 'episodeId'
+    public ResponseEntity<String> deleteEpisode(@PathVariable Long episodeId) {
         episodeService.deleteEpisode(episodeId);
         return ResponseEntity.ok("Đã xóa tập film thành công");
     }

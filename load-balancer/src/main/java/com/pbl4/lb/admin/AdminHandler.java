@@ -16,11 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// API quan tri cua LB, chay tren cong RIENG (LB_ADMIN_PORT, mac dinh 8090), khong qua ProxyHandler.
-//   GET    /admin/blocked          -> danh sach IP dang bi chan
-//   POST   /admin/blocked          -> chan IP   body: {"ip":"..","minutes":30,"reason":"..","by":".."}
-//   DELETE /admin/blocked/{ip}     -> go chan
-// Moi request phai co header X-Admin-Token dung bang LB_ADMIN_TOKEN.
 public class AdminHandler implements HttpHandler {
 
     private static final String PREFIX = "/admin/blocked";
@@ -70,24 +65,21 @@ public class AdminHandler implements HttpHandler {
                 send(ex, 404, Map.of("error", "Khong co API " + method + " " + path));
             }
         } catch (ProtectedIpException e) {
-            send(ex, 409, Map.of("error", e.getMessage()));     // 409: IP duoc bao ve
+            send(ex, 409, Map.of("error", e.getMessage()));
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             send(ex, 400, Map.of("error", "Body khong phai JSON hop le"));
         } catch (IllegalArgumentException e) {
-            send(ex, 400, Map.of("error", e.getMessage()));     // 400: du lieu sai
+            send(ex, 400, Map.of("error", e.getMessage()));
         } finally {
             ex.close();
         }
     }
 
-    // So sanh token bang MessageDigest.isEqual: thoi gian so sanh khong phu thuoc
-    // vi tri ky tu sai dau tien -> khong doan token qua thoi gian phan hoi duoc
     private boolean authorized(HttpExchange ex) {
         String given = ex.getRequestHeaders().getFirst("X-Admin-Token");
         return given != null && MessageDigest.isEqual(token, given.getBytes(StandardCharsets.UTF_8));
     }
 
-    // Instant -> chuoi ISO, khong can them module jackson-datatype-jsr310
     private static Map<String, Object> toJson(Entry e) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("ip", e.ip());

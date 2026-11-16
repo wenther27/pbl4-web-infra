@@ -9,9 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface WatchHistoryRepository extends JpaRepository<WatchHistory, Long> {
-    //Xắp xếp
     List<WatchHistory> findByUserIdOrderByUpdatedAtDesc(Long userId);
 
-    // Tìm 1 record theo userId + movieId (dùng cho upsert)
     Optional<WatchHistory> findByUserIdAndMovieId(Long userId, Long movieId);
 }

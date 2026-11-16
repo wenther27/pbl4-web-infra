@@ -23,7 +23,7 @@ async function loadDetail() {
   try {
     const response = await movieApi.getMovies({ page: 0, size: 100 });
     movie = response.content?.find((item) => String(item.id) === String(id));
-  } catch { /* dùng dữ liệu mẫu ở dưới */ }
+  } catch {}
   movie ||= fallbackMovies.find((item) => String(item.id) === String(id)) || fallbackMovies[0];
   render(movie);
 }

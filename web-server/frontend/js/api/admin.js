@@ -61,9 +61,12 @@ export const adminApi = {
   getReviews: (movieId) => adminRequest(`/movies/${movieId}/reviews`),
   deleteReview: (reviewId) => adminRequest(`/reviews/${reviewId}`, { method: 'DELETE' }),
 
-  // Bao mat: IP bi canh bao (tu Elasticsearch) va chan / go chan IP tai Load Balancer
   getSuspiciousIps: (minutes = 60) => adminRequest(`/admin/security/suspicious-ips?minutes=${encodeURIComponent(minutes)}`),
   getBlockedIps: () => adminRequest('/admin/security/blocked-ips'),
   blockIp: (body) => adminRequest('/admin/security/blocked-ips', jsonBody('POST', body)),
-  unblockIp: (ip) => adminRequest(`/admin/security/blocked-ips/${encodeURIComponent(ip)}`, { method: 'DELETE' })
+  unblockIp: (ip) => adminRequest(`/admin/security/blocked-ips/${encodeURIComponent(ip)}`, { method: 'DELETE' }),
+  getInfraOverview: () => adminRequest('/admin/infra/overview'),
+  drainBackend: (name) => adminRequest(`/admin/infra/backends/${encodeURIComponent(name)}/drain`, { method: 'POST' }),
+  undrainBackend: (name) => adminRequest(`/admin/infra/backends/${encodeURIComponent(name)}/undrain`, { method: 'POST' }),
+  updateRateLimit: (body) => adminRequest('/admin/infra/rate-limit', jsonBody('PUT', body))
 };

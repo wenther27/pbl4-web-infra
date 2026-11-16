@@ -44,8 +44,6 @@ public class WatchHistoryServiceImpl implements WatchHistoryService {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(()->new ResourceNotFoundException("Không tìm thấy phim"));
 
-        // Upsert: tìm record cũ nếu có, không có thì tạo mới
-        // Tránh tạo nhiều record trùng nhau cho cùng 1 user + phim
         WatchHistory watchHistory = watchHistoryRepository
                 .findByUserIdAndMovieId(userId, movieId)
                 .orElse(new WatchHistory());
@@ -54,7 +52,6 @@ public class WatchHistoryServiceImpl implements WatchHistoryService {
         watchHistory.setLastPosition(lastPosition);
         watchHistory.setUpdatedAt(LocalDateTime.now());
 
-
         if (episodeId != null) {
             Episode episode = episodeRepository.findById(episodeId)
                     .orElseThrow(()->new ResourceNotFoundException("Không tìm thấy tập phim"));
@@ -62,7 +59,6 @@ public class WatchHistoryServiceImpl implements WatchHistoryService {
         }
         return convertToDTO(watchHistoryRepository.save(watchHistory));
     }
-
 
     private WatchHistoryDTO convertToDTO(WatchHistory watchHistory) {
         WatchHistoryDTO dto = modelMapper.map(watchHistory, WatchHistoryDTO.class);

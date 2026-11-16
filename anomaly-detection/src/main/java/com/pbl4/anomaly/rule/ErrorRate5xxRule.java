@@ -5,7 +5,6 @@ import com.pbl4.anomaly.alert.Alert;
 import java.util.List;
 import java.util.Map;
 
-// R4: ti le loi 5xx vuot nguong
 public class ErrorRate5xxRule extends ThresholdRule {
 
     private final double thresholdPercent;
@@ -19,7 +18,6 @@ public class ErrorRate5xxRule extends ThresholdRule {
 
     @Override
     public List<Alert> evaluate(Snapshot s) {
-        // It request qua thi ti le khong dang tin (1 loi / 2 request = 50%)
         if (s.total() < minRequests) {
             return List.of();
         }

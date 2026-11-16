@@ -10,22 +10,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
-// Bao tri co ke hoach (rolling deploy): "drain" 1 backend truoc khi khoi dong lai no.
-//
-//   drain   -> LB KHONG gui request MOI vao backend nay, request dang xu ly van chay tiep
-//   cho     -> so request dang xu ly (inFlight) ve 0
-//   restart -> khoi dong lai / cap nhat backend (script ops/rolling-deploy.ps1 lam)
-//   undrain -> backend len lai thi nhan request binh thuong
-//
-// Lam lan luot tung backend -> nguoi dung khong gap loi nao trong luc cap nhat ca he thong.
 public class BackendMaintenance {
     private static final Logger log = LoggerFactory.getLogger(BackendMaintenance.class);
 
     private final Set<String> draining = ConcurrentHashMap.newKeySet();
     private final Map<String, AtomicInteger> inFlight = new ConcurrentHashMap<>();
+    private final Map<String, AtomicLong> served = new ConcurrentHashMap<>();
 
     public boolean isDraining(String backend) {
         return draining.contains(backend);
@@ -46,9 +40,14 @@ public class BackendMaintenance {
         }
     }
 
-    // Dem request dang xu ly: ProxyHandler goi begin khi gui sang backend, end khi xong han (ke ca stream)
     public void begin(String backend) {
         inFlight.computeIfAbsent(backend, k -> new AtomicInteger()).incrementAndGet();
+        served.computeIfAbsent(backend, k -> new AtomicLong()).incrementAndGet();
+    }
+
+    public long served(String backend) {
+        AtomicLong n = served.get(backend);
+        return n == null ? 0 : n.get();
     }
 
     public void end(String backend) {
@@ -63,14 +62,11 @@ public class BackendMaintenance {
         return n == null ? 0 : n.get();
     }
 
-    // Backend duoc nhan request moi = dang UP va khong bi drain.
-    // Neu vi ly do nao do khong con backend nao -> dung ca backend dang drain (con hon tra 503).
     public List<String> available(List<String> healthy) {
         List<String> result = healthy.stream().filter(b -> !draining.contains(b)).toList();
         return result.isEmpty() ? healthy : result;
     }
 
-    // "web-1" hoac "http://web-1:8080" -> URL backend trong danh sach
     public static Optional<String> resolve(String nameOrUrl, List<String> backends) {
         for (String b : backends) {
             if (b.equalsIgnoreCase(nameOrUrl) || nameOf(b).equalsIgnoreCase(nameOrUrl)) {
@@ -80,7 +76,6 @@ public class BackendMaintenance {
         return Optional.empty();
     }
 
-    // "http://web-1:8080" -> "web-1"
     public static String nameOf(String backend) {
         try {
             String host = URI.create(backend).getHost();

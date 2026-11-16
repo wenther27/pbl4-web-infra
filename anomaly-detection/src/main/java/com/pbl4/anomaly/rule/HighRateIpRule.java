@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// R1: mot IP gui qua nhieu request trong cua so
 public class HighRateIpRule extends ThresholdRule {
 
     private final double threshold;

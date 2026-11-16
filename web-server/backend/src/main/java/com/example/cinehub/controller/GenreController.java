@@ -18,7 +18,6 @@ public class GenreController {
     @Autowired
     private GenreService genreService;
 
-    //1. Lấy danh sách tất cả thể loại
     @GetMapping
     @SecurityRequirements
     public ResponseEntity<List<GenreDTO>> getAllGenres() {
@@ -26,7 +25,6 @@ public class GenreController {
         return ResponseEntity.ok(genreService.getAllGenres());
     }
 
-    //2. Thêm một thể loai mới
     @PostMapping
     public ResponseEntity<GenreDTO> createGenre(@RequestBody Genre genre) {
 

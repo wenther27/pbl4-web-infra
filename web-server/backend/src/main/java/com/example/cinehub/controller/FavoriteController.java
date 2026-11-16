@@ -38,7 +38,6 @@ public class FavoriteController {
         return ResponseEntity.ok("Đã xóa khỏi danh sách yêu thích");
     }
 
-    // FE dùng để hiển thị icon tim đỏ hay trắng
     @GetMapping("{movieId}/check")
     public ResponseEntity<Boolean> isFavorited(@PathVariable Long movieId, Authentication authentication) {
         Long userId = getUserId(authentication);

@@ -24,7 +24,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -77,7 +76,6 @@ public class MovieServiceImpl implements MovieService {
 
     @Transactional
     @Override
-    // Them/sua/xoa phim: xoa het cache doc phim (chay SAU khi transaction commit, xem RedisCacheConfig)
     @CacheEvict(cacheNames = {RedisCacheConfig.MOVIES_PAGE, RedisCacheConfig.MOVIES_TRENDING,
             RedisCacheConfig.MOVIES_BY_TYPE, RedisCacheConfig.MOVIES_BY_GENRE}, allEntries = true)
     public MovieDTO createMovie(MovieRequest request) {
@@ -127,7 +125,7 @@ public class MovieServiceImpl implements MovieService {
                     .map(genreId -> genreRepository.findById(genreId)
                             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thể loại với ID: " + genreId)))
                     .collect(Collectors.toSet());
-            movie.setGenres(updatedGenres); // Đè danh sách thể loại mới lên phim
+            movie.setGenres(updatedGenres);
         }
         return convertToDTO(movieRepository.save(movie));
     }
@@ -184,11 +182,9 @@ public class MovieServiceImpl implements MovieService {
         );
     }
 
-    //Ham bổ trợ đóng vai trò convert thủ công(Mapping) từ Entity sang DTO sạch sẽ
     private MovieDTO convertToDTO(Movie movie) {
          MovieDTO dto = modelMapper.map(movie, MovieDTO.class);
 
-        // Convert tập hợp các Genres lồng bên trong sang GenreDTO công thức song song
         if (movie.getGenres() != null) {
             Set<GenreDTO> genreDTOs = movie.getGenres().stream().map(
                     genre -> modelMapper.map(genre, GenreDTO.class)
@@ -197,7 +193,5 @@ public class MovieServiceImpl implements MovieService {
         }
         return dto;
     }
-
-
 
 }

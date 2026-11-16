@@ -8,23 +8,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// "Anh chup" luu luong trong mot cua so: ket qua cua 1 lan hoi Elasticsearch,
-// da doi tu JSON sang doi tuong Java. Moi luat chi doc Snapshot, khong tu goi ES.
 public record Snapshot(
         int windowSeconds,
-        long total,                             // tong so request
+        long total,
         long err4xx,
         long err5xx,
-        Double p95Ms,                           // null neu khong co request nao
-        Map<String, Long> requestsByIp,         // IP -> so request            (R1)
-        Map<String, Long> scanPathsByIp,        // IP -> so path 403/404 khac nhau (R2)
-        Map<String, Long> downEventsByBackend,  // backend -> so lan bao DOWN   (R6)
-        Map<String, Long> loginFailByIp,        // IP -> so lan dang nhap sai    (R3)
-        List<Long> baselinePerMinute,           // so request moi phut trong N phut truoc (R7)
-        List<RequestRecord> recentRequests      // tung request gan day, xem noi dung   (R8)
+        Double p95Ms,
+        Map<String, Long> requestsByIp,
+        Map<String, Long> scanPathsByIp,
+        Map<String, Long> downEventsByBackend,
+        Map<String, Long> loginFailByIp,
+        List<Long> baselinePerMinute,
+        List<RequestRecord> recentRequests
 ) {
 
-    // Constructor cu (khong co recentRequests) -> R8 khong co gi de xet. Giu de test cu van chay.
     public Snapshot(int windowSeconds, long total, long err4xx, long err5xx, Double p95Ms,
                     Map<String, Long> requestsByIp, Map<String, Long> scanPathsByIp,
                     Map<String, Long> downEventsByBackend, Map<String, Long> loginFailByIp,
@@ -33,18 +30,14 @@ public record Snapshot(
                 downEventsByBackend, loginFailByIp, baselinePerMinute, List.of());
     }
 
-    // Giu cach goi cu (khong co baseline) -> R7 tu bo qua vi thieu lich su
     public static Snapshot from(JsonNode res, int windowSeconds) {
         return from(res, null, windowSeconds);
     }
 
-    // Giu cach goi cu (khong co request le) -> R8 khong co gi de xet
     public static Snapshot from(JsonNode res, JsonNode baselineRes, int windowSeconds) {
         return from(res, baselineRes, null, windowSeconds);
     }
 
-    // res: ket qua QUERY_TEMPLATE, baselineRes: ket qua BASELINE_TEMPLATE,
-    // recentRes: ket qua RECENT_TEMPLATE (tung request gan day) - 2 cai sau co the null
     public static Snapshot from(JsonNode res, JsonNode baselineRes, JsonNode recentRes, int windowSeconds) {
         JsonNode aggs = res.path("aggregations");
         JsonNode req = aggs.path("req");
@@ -58,7 +51,6 @@ public record Snapshot(
 
         Map<String, Long> byIp = countBuckets(req.path("by_ip"));
 
-        // Moi bucket IP co them so do con "paths" (cardinality = so gia tri khac nhau)
         Map<String, Long> scan = new LinkedHashMap<>();
         for (JsonNode b : req.path("scan").path("by_ip").path("buckets")) {
             scan.put(b.path("key").asText(), b.path("paths").path("value").asLong());
@@ -76,7 +68,6 @@ public record Snapshot(
                 List.copyOf(readRecent(recentRes)));
     }
 
-    // hits -> danh sach RequestRecord (chi lay cac field can cho R8)
     private static List<RequestRecord> readRecent(JsonNode recentRes) {
         List<RequestRecord> list = new ArrayList<>();
         if (recentRes == null) {
@@ -95,7 +86,6 @@ public record Snapshot(
         return list;
     }
 
-    // date_histogram -> danh sach so request cua tung phut (ke ca phut = 0)
     private static List<Long> readBaseline(JsonNode baselineRes) {
         List<Long> list = new ArrayList<>();
         if (baselineRes == null) {
@@ -114,7 +104,6 @@ public record Snapshot(
         return sum / baselinePerMinute.size();
     }
 
-    // Do lech chuan (chia cho n): do muc "dao dong binh thuong" quanh trung binh
     public double baselineStd() {
         if (baselinePerMinute.isEmpty()) return 0;
         double mean = baselineMean();
@@ -123,7 +112,6 @@ public record Snapshot(
         return Math.sqrt(sq / baselinePerMinute.size());
     }
 
-    // terms aggregation -> Map<key, doc_count>, giu nguyen thu tu (nhieu nhat truoc)
     private static Map<String, Long> countBuckets(JsonNode termsAgg) {
         Map<String, Long> map = new LinkedHashMap<>();
         for (JsonNode b : termsAgg.path("buckets")) {
@@ -132,13 +120,12 @@ public record Snapshot(
         return map;
     }
 
-    // Mot dong tom tat de in log (giong buoi 1)
     public String summary() {
         String p95 = (p95Ms == null) ? "-" : String.format("%.0fms", p95Ms);
         StringBuilder top = new StringBuilder();
         int n = 0;
         for (Map.Entry<String, Long> e : requestsByIp.entrySet()) {
-            if (n++ == 5) break;   // chi in 5 IP dau
+            if (n++ == 5) break;
             top.append(e.getKey()).append('=').append(e.getValue()).append(' ');
         }
         return windowSeconds + "s qua: " + total + " request, 4xx=" + err4xx + ", 5xx=" + err5xx

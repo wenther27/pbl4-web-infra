@@ -34,6 +34,7 @@
           <a href="#reviews" data-admin-route="reviews"
             ><span>☆</span>Đánh giá</a
           >
+          <a href="#infra" data-admin-route="infra"><span>◎</span>Hạ tầng</a>
           <a href="#security" data-admin-route="security"
             ><span>⛨</span>Bảo mật</a
           >
@@ -295,6 +296,50 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </section>
+
+          <section class="admin-view" data-admin-view="infra" hidden>
+            <div class="admin-section-heading">
+              <div>
+                <h2>Hạ tầng</h2>
+                <p>
+                  Trạng thái 3 backend do Load Balancer theo dõi: health
+                  check, bảo trì (drain) và số liệu thuật toán chia tải.
+                </p>
+              </div>
+            </div>
+            <div class="admin-notice" id="infra-error" hidden></div>
+            <div class="admin-security-toolbar">
+              <label
+                ><input id="infra-auto" type="checkbox" checked /> Tự động làm
+                mới (2 giây)</label
+              >
+              <button
+                class="admin-button admin-button--secondary"
+                id="infra-refresh"
+                type="button"
+              >
+                ↻ Làm mới
+              </button>
+              <span class="admin-result-count" id="infra-updated"></span>
+            </div>
+
+            <div class="admin-infra-summary" id="infra-summary"></div>
+            <div class="admin-infra-grid" id="infra-backends"></div>
+
+            <div class="admin-panel admin-security-panel" id="infra-ratelimit-panel">
+              <div class="admin-panel__heading">
+                <div>
+                  <h2>Giới hạn tốc độ (rate limit)</h2>
+                  <p>
+                    Token bucket theo IP: vượt ngưỡng thì Load Balancer trả
+                    429 ngay, không chuyển xuống backend. Đổi ngưỡng có hiệu
+                    lực ngay, không cần khởi động lại.
+                  </p>
+                </div>
+              </div>
+              <div class="admin-infra-ratelimit" id="infra-ratelimit"></div>
             </div>
           </section>
 

@@ -19,24 +19,11 @@ import java.util.Set;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
-// Tu dong chan IP: nhan cac canh bao VUA PHAT (da qua cooldown), canh bao nao thuoc luat
-// duoc phep tu dong chan thi goi API quan tri cua LB (cong 8090) de chan IP do.
-//
-// Chi bat cho luat co do chinh xac cao (mac dinh R8, R3). R1, R2 de admin quyet vi de chan oan
-// (nhieu nguoi dung chung 1 IP sau NAT, bot tim kiem gap 404...).
-//
-// Chot an toan:
-//  - enabled / dry_run trong rules.yaml (dry_run: chi ghi log "le ra da chan", khong chan that)
-//  - chan co thoi han (minutes), LB tu go khi het han
-//  - toi da max_per_minute IP/phut; vuot -> tam dung tu dong chan, bao admin qua log
-//  - IP duoc bao ve (LB_NEVER_BLOCK) -> LB tra 409, bo qua
-//  - by = "auto-detector" -> trang Bao mat phan biet duoc voi admin chan tay, admin van go duoc
 public class AutoBlocker {
     private static final Logger log = LoggerFactory.getLogger(AutoBlocker.class);
 
     public static final String BY = "auto-detector";
 
-    // Cau hinh doc tu muc auto_block trong rules.yaml
     public record Config(boolean enabled, boolean dryRun, Set<String> rules,
                          int minutes, int maxPerMinute) {
         public static Config disabled() {
@@ -44,16 +31,14 @@ public class AutoBlocker {
         }
     }
 
-    // Cach goi LB. Tach thanh interface de test khong can LB that.
     @FunctionalInterface
     public interface LbClient {
-        // Tra ve ma HTTP cua LB: 201 da chan, 409 IP duoc bao ve, ...
         int block(String ip, int minutes, String reason) throws Exception;
     }
 
     private final Config config;
     private final LbClient lb;
-    private final Deque<Instant> recentBlocks = new ArrayDeque<>();   // cac lan chan trong 60s gan nhat
+    private final Deque<Instant> recentBlocks = new ArrayDeque<>();
     private Instant lastPauseWarning = Instant.EPOCH;
 
     public AutoBlocker(Config config, LbClient lb) {
@@ -61,7 +46,6 @@ public class AutoBlocker {
         this.lb = lb;
     }
 
-    // Tao AutoBlocker goi LB that qua HTTP. Thieu token -> tat, ghi log canh bao.
     public static AutoBlocker create(Config config, String lbAdminUrl, String token) {
         if (config.enabled() && (token == null || token.isBlank())) {
             log.warn("auto_block bat nhung thieu LB_ADMIN_TOKEN -> tat tu dong chan",
@@ -76,7 +60,6 @@ public class AutoBlocker {
         return new AutoBlocker(config, new HttpLbClient(lbAdminUrl, token));
     }
 
-    // published: cac canh bao AlertNotifier vua phat (da loc trung)
     public void handle(List<Alert> published) {
         if (!config.enabled()) {
             return;
@@ -91,7 +74,6 @@ public class AutoBlocker {
             String ip = a.target();
 
             if (recentBlocks.size() >= config.maxPerMinute()) {
-                // Qua nhieu IP bi chan trong 1 phut -> co the luat dang sai -> dung lai cho admin xem
                 if (Duration.between(lastPauseWarning, now).toSeconds() >= 60) {
                     lastPauseWarning = now;
                     log.warn("Da tu dong chan " + recentBlocks.size() + " IP trong 60s (toi da "
@@ -124,7 +106,6 @@ public class AutoBlocker {
                             kv("event", "auto_block_failed"), kv("clientIp", ip), kv("status", status));
                 }
             } catch (Exception e) {
-                // LB loi thi van con canh bao, admin chan tay duoc -> khong lam chet vong phat hien
                 log.error("Khong goi duoc LB de tu dong chan " + ip + ": "
                                 + e.getClass().getSimpleName() + ": " + e.getMessage(),
                         kv("event", "auto_block_failed"), kv("clientIp", ip));
@@ -132,7 +113,6 @@ public class AutoBlocker {
         }
     }
 
-    // R6 co target la URL backend, R4/R5/R7 la "global" -> chi nhan chuoi trong giong IP
     static boolean looksLikeIp(String target) {
         return target != null && target.matches("[0-9a-fA-F.:]{2,45}");
     }
@@ -141,7 +121,6 @@ public class AutoBlocker {
         return s.length() > max ? s.substring(0, max) : s;
     }
 
-    // Goi POST /admin/blocked cua LB, giong backend o buoi 2 nhung by = auto-detector
     static final class HttpLbClient implements LbClient {
         private final String baseUrl;
         private final String token;

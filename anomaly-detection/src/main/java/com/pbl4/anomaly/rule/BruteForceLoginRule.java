@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// R3: mot IP dang nhap that bai (401 tren /api/auth/login) qua nhieu lan.
-// Backend: sai mat khau -> BadCredentialsException -> GlobalExceptionHandler tra 401.
 public class BruteForceLoginRule extends ThresholdRule {
 
     private final double threshold;

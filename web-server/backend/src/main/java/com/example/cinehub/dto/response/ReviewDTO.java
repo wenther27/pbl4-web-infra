@@ -13,7 +13,6 @@ public class ReviewDTO {
     private String content;
     private LocalDateTime createAt;
 
-    // Chỉ lấy tên và ID của User để Front-End hiển thị, không lấy password hay email bảo mật
     private Long userId;
     private String username;
 }

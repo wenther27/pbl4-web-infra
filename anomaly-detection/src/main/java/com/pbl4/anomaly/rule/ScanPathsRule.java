@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// R2: mot IP nhan 403/404 tren qua nhieu duong dan KHAC NHAU -> dang do quet.
-// Dem so path khac nhau chu khong dem so lan loi: nguoi dung bam F5 5 lan
-// tren 1 link hong chi la 1 path.
 public class ScanPathsRule extends ThresholdRule {
 
     private final double threshold;

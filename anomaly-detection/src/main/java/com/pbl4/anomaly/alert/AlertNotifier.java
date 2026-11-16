@@ -16,17 +16,12 @@ import java.util.Map;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 
-// Nhan danh sach Alert tu RuleEngine:
-//  1. Loc trung (cooldown): cung luat + cung doi tuong da bao gan day -> bo qua
-//  2. Phat: in log WARN + ghi vao Elasticsearch index alerts-YYYY.MM.DD
 public class AlertNotifier {
     private static final Logger log = LoggerFactory.getLogger(AlertNotifier.class);
 
-    // Moi ngay 1 index, theo gio UTC giong weblogs-* cua Filebeat
     private static final DateTimeFormatter INDEX_DATE =
             DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(ZoneOffset.UTC);
 
-    // Kieu du lieu cho alerts-*: keyword de loc/dem, double de ve bieu do
     private static final String ALERTS_TEMPLATE = """
             {
               "index_patterns": ["alerts-*"],
@@ -53,8 +48,6 @@ public class AlertNotifier {
     private final Duration cooldown;
     private final int windowSeconds;
 
-    // Khoa canh bao (vd "HIGH_RATE_IP|203.0.113.66") -> lan phat gan nhat.
-    // Chi luong detector doc/ghi -> HashMap thuong la du.
     private final Map<String, Instant> lastSent = new HashMap<>();
     private boolean templateReady = false;
 
@@ -64,8 +57,6 @@ public class AlertNotifier {
         this.windowSeconds = windowSeconds;
     }
 
-    // Goi dau moi vong: tao template alerts-* neu chua co.
-    // ES chua san sang thi nem loi, vong sau thu lai.
     public void prepare() throws Exception {
         if (!templateReady) {
             es.putIndexTemplate("alerts", ALERTS_TEMPLATE);
@@ -74,17 +65,15 @@ public class AlertNotifier {
         }
     }
 
-    // Tra ve cac canh bao da phat that su (sau khi loc trung) -> AutoBlocker dung tiep
     public List<Alert> notify(List<Alert> alerts) {
         Instant now = Instant.now();
-        // Don cac khoa da het cooldown cho Map khong phinh to mai
         lastSent.entrySet().removeIf(e -> Duration.between(e.getValue(), now).compareTo(cooldown) >= 0);
 
         List<Alert> sent = new ArrayList<>();
         int suppressed = 0;
         for (Alert a : alerts) {
             if (lastSent.containsKey(a.key())) {
-                suppressed++;          // da bao trong cooldown -> cung mot su co
+                suppressed++;
                 continue;
             }
             lastSent.put(a.key(), now);
@@ -99,7 +88,6 @@ public class AlertNotifier {
     }
 
     private void publish(Alert a, Instant now) {
-        // Kenh 1: log (console, va Kibana neu detector chay trong Docker)
         log.warn("[" + a.severity() + "] " + a.rule() + ": " + a.message(),
                 kv("event", "alert"),
                 kv("rule", a.rule()),
@@ -108,9 +96,8 @@ public class AlertNotifier {
                 kv("value", a.value()),
                 kv("threshold", a.threshold()));
 
-        // Kenh 2: Elasticsearch -> Kibana doc tu day
         Map<String, Object> doc = new LinkedHashMap<>();
-        doc.put("@timestamp", now.toString());       // ISO-8601 UTC, vd 2026-10-19T09:30:00Z
+        doc.put("@timestamp", now.toString());
         doc.put("rule", a.rule());
         doc.put("severity", a.severity());
         doc.put("target", a.target());
@@ -121,7 +108,6 @@ public class AlertNotifier {
         try {
             es.index("alerts-" + INDEX_DATE.format(now), doc);
         } catch (Exception e) {
-            // ES loi thi van con canh bao tren console, khong lam chet vong phat hien
             log.error("Khong ghi duoc canh bao vao Elasticsearch: "
                     + e.getClass().getSimpleName() + ": " + e.getMessage());
         }

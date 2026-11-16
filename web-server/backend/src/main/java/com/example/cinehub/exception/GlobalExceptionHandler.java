@@ -1,6 +1,5 @@
 package com.example.cinehub.exception;
 
-
 import com.example.cinehub.dto.response.ExceptionResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +12,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +22,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler  {
 
-    //404
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Object> handleResourceNotFound(
              ResourceNotFoundException ex, WebRequest request) {
@@ -35,7 +32,6 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(exceptionResponse, HttpStatus.NOT_FOUND);
     }
 
-    //400: Logic nghiệp vụ sai hoặc trùng lặp dữ liệu
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Object> handleBadRequest(
             BadRequestException ex, WebRequest request) {
@@ -46,7 +42,6 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
-    //400:
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationException(
             MethodArgumentNotValidException ex, WebRequest request) {
@@ -62,7 +57,6 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
-    //401
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Object> handleBadCredentials(
             BadCredentialsException ex, WebRequest request) {
@@ -91,8 +85,6 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(exceptionResponse, HttpStatus.BAD_REQUEST);
     }
 
-
-    //500: lỗi BE
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGlobalException(
             Exception ex, WebRequest request) {
@@ -103,7 +95,6 @@ public class GlobalExceptionHandler  {
         return new ResponseEntity<>(exceptionResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // Loi khi goi Elasticsearch / API quan tri cua LB: giu nguyen ma loi (400/404/409/502/503)
     @ExceptionHandler(UpstreamServiceException.class)
     public ResponseEntity<Object> handleUpstream(UpstreamServiceException ex) {
         ExceptionResponse exceptionResponse = new ExceptionResponse();

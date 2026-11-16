@@ -26,7 +26,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Kiem tra du lieu ghi vao Redis doc nguoc lai dung kieu, va key cache tach dung theo request. */
 class RedisCacheConfigTests {
 
     private final GenericJackson2JsonRedisSerializer serializer =
@@ -75,7 +74,6 @@ class RedisCacheConfigTests {
 
     @Test
     void classesOutsideAllowListAreRejected() {
-        // Du lieu trong Redis bi sua de tro toi lop la -> khong duoc phep tao doi tuong
         byte[] malicious = "{\"@class\":\"org.springframework.context.support.ClassPathXmlApplicationContext\"}"
                 .getBytes(StandardCharsets.UTF_8);
 

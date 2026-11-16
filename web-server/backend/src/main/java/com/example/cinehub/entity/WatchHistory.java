@@ -35,7 +35,6 @@ public class WatchHistory {
     )
     private Movie movie;
 
-    //Có thẻ null vì phim lẻ có thể không có tập
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "episode_id")
     private Episode episode;

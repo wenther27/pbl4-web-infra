@@ -8,10 +8,10 @@ import java.util.List;
 @Getter
 @Setter
 public class PageResponse<T> {
-    private List<T> content;    // danh sách phim trang hiện tại
+    private List<T> content;
     private int currentPage;
     private int totalPages;
-    private long totalElements;    //Tổng số phim
+    private long totalElements;
     private boolean isLast;
 
     public PageResponse(List<T> content, int currentPage, int totalPages, long totalElements, boolean isLast) {

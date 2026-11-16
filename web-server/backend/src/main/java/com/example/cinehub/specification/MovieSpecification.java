@@ -7,7 +7,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class MovieSpecification {
 
-    // 1. Lọc theo từ khóa tựa đề phim (Tìm kiếm gần đúng - LIKE %keyword%)
     public static Specification<Movie> hasTitle(String title) {
         return ((root, query, criteriaBuilder) -> {
             if (title == null || title.trim().isEmpty())
@@ -16,7 +15,6 @@ public class MovieSpecification {
         });
     }
 
-    // 2. Lọc chính xác theo Loại phim (movie, series, anime)
     public static Specification<Movie> hasMovieType(MovieType movieType) {
         return ((root, query, criteriaBuilder) -> {
             if (movieType == null)
@@ -25,7 +23,6 @@ public class MovieSpecification {
         });
     }
 
-    // 3. Lọc chính xác theo Trạng thái (released, upcoming, ongoing)
     public static Specification<Movie> hasStatus(MovieStatus status) {
         return ((root, query, criteriaBuilder) -> {
             if (status == null)

@@ -25,7 +25,7 @@ export async function request(path, options = {}) {
         const errorBody = await response.json();
         if (typeof errorBody.details === 'string') message = errorBody.details;
         else if (errorBody.error) message = errorBody.error;
-      } catch { /* phản hồi lỗi không phải JSON */ }
+      } catch {}
       const error = new Error(message);
       error.status = response.status;
       throw error;

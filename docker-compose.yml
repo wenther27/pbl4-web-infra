@@ -1,11 +1,5 @@
 name: cinehub-infrastructure
 
-# ============================================================
-# MySQL primary (ghi) + replica (doc), replication theo GTID.
-# Lan dau "docker compose up", replica tu copy du lieu tu primary
-# va tu bat replication (xem database/replica/init/).
-# ============================================================
-
 x-mysql-common: &mysql-common
   image: mysql:8.4
   restart: unless-stopped
@@ -28,7 +22,6 @@ x-web-common: &web-common
       condition: service_healthy
     mysql-replica:
       condition: service_healthy
-    # Redis chi la cache: cho Redis khoi dong (khong bat buoc healthy) -> Redis loi web van chay
     redis:
       condition: service_started
   environment: &web-env
@@ -44,18 +37,14 @@ x-web-common: &web-common
     UPLOAD_MAX_SIZE: ${UPLOAD_MAX_SIZE:-5242880}
     UPLOAD_VIDEO_MAX_SIZE: ${UPLOAD_VIDEO_MAX_SIZE:-524288000}
     SERVER_PORT: 8080
-    # Log JSON (instance/path/status/durationMs...) cho ELK, xem logback-spring.xml
     SPRING_PROFILES_ACTIVE: docker
     JAVA_TOOL_OPTIONS: -Xmx256m -XX:+UseSerialGC
-    # Trang Admin > Bao mat: doc canh bao tu ES, chan IP qua API quan tri cua LB
     ES_URL: http://host.docker.internal:9200
     LB_ADMIN_URL: http://load-balancer:8090
     LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
-    # Redis cache dung chung cho web-1/2/3 (xem web-server/backend/.../config/RedisCacheConfig.java)
     REDIS_HOST: redis
     REDIS_PORT: 6379
     CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-300}
-  # ES nam o project ELK khac -> goi qua cong 9200 cua may that
   extra_hosts:
     - "host.docker.internal:host-gateway"
   networks:
@@ -82,8 +71,6 @@ services:
       - ./database/migrations/V1__init_schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - ./database/primary/init/02-create-repl-user.sh:/docker-entrypoint-initdb.d/02-create-repl-user.sh:ro
     healthcheck:
-      # Ping qua TCP (127.0.0.1): server tam cua entrypoint chay --skip-networking,
-      # nen chi healthy khi da init xong va server that da mo cong.
       test:
         [
           "CMD-SHELL",
@@ -120,11 +107,6 @@ services:
       retries: 30
       start_period: 60s
 
-  # ============================================================
-  # Redis: bo dem (cache) tren RAM dung chung cho web-1/2/3.
-  # Chi la cache -> khong ghi xuong dia; day 128MB thi xoa muc it dung nhat (LRU).
-  # Redis chet thi backend van chay (doc thang MySQL), chi cham hon.
-  # ============================================================
   redis:
     image: redis:7.4-alpine
     restart: unless-stopped
@@ -139,7 +121,6 @@ services:
       - --appendonly
       - "no"
     ports:
-      # Chi mo cho may nay (xem bang redis-cli / RedisInsight), khong mo ra mang ngoai
       - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -173,11 +154,6 @@ services:
     ports:
       - "8083:8080"
 
-  # ============================================================
-  # Load Balancer tu viet (Java): diem vao duy nhat cua nguoi dung.
-  # Goi backend bang TEN SERVICE trong mang cinehub-network,
-  # cong 8080 la cong BEN TRONG container (khong phai 8081-8083).
-  # ============================================================
   load-balancer:
     build:
       context: ./load-balancer
@@ -190,20 +166,13 @@ services:
     environment:
       LB_PORT: "8080"
       LB_BACKENDS: "http://web-1:8080,http://web-2:8080,http://web-3:8080"
-      # Thuat toan chia tai: dwlc hoac round-robin
       LB_STRATEGY: ${LB_STRATEGY:-dwlc}
-      # true: tin X-Forwarded-For client gui (gia lap nhieu IP khi test bat thuong)
-      # false: chi ghi IP ket noi that (dung khi demo bao mat)
       LB_TRUST_XFF: "true"
-      # API quan tri chan IP (cong rieng, chi mo cho may nay)
       LB_ADMIN_PORT: "8090"
       LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
-      # IP khong bao gio bi chan: gateway cua mang Docker (= trinh duyet cua admin sau NAT)
       LB_NEVER_BLOCK: "172.18.0.1,127.0.0.1"
-      # Gioi han toc do theo IP (token bucket): 10 request/giay, burst 20. Dat RPS = 0 de tat.
       LB_RATE_LIMIT_RPS: ${LB_RATE_LIMIT_RPS:-10}
       LB_RATE_LIMIT_BURST: ${LB_RATE_LIMIT_BURST:-20}
-      # API thuong timeout nhanh; upload video duoc stream va co toi 10 phut de hoan tat.
       LB_REQUEST_TIMEOUT_SECONDS: "30"
       LB_UPLOAD_TIMEOUT_SECONDS: "600"
       JAVA_TOOL_OPTIONS: -Xmx128m -XX:+UseSerialGC
@@ -213,11 +182,6 @@ services:
     networks:
       - cinehub-network
 
-  # ============================================================
-  # Bo phat hien bat thuong: doc log LB tu Elasticsearch, ghi canh bao alerts-*.
-  # Elasticsearch nam o project khac (elk-stack/docker-compose.elk.yml)
-  # -> goi qua cong 9200 da mo ra may that, bang ten host.docker.internal.
-  # ============================================================
   anomaly-detector:
     build:
       context: ./anomaly-detection
@@ -226,12 +190,10 @@ services:
     environment:
       ES_URL: "http://host.docker.internal:9200"
       RULES_FILE: /app/rules.yaml
-      # Tu dong chan IP (muc auto_block trong rules.yaml): goi API quan tri cua LB
       LB_ADMIN_URL: http://load-balancer:8090
       LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
       JAVA_TOOL_OPTIONS: -Xmx96m -XX:+UseSerialGC
     volumes:
-      # Doi nguong: sua file nay roi "docker compose restart anomaly-detector", khong can build lai
       - ./anomaly-detection/src/main/resources/rules.yaml:/app/rules.yaml:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"

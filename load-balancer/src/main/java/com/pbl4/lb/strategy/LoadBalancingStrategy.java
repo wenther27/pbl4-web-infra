@@ -1,16 +1,16 @@
 package com.pbl4.lb.strategy;
 
 import java.util.List;
+import java.util.Map;
 
-//Cach chon backend cho moi request
 public interface LoadBalancingStrategy {
-    //Chon 1 BE trong danh sach
     String next(List<String> backends);
 
-    //ten thuat toan dung khi ghi log va so sanh
     String name();
 
     default void release(String backend, long latencyMs, boolean success) {}
-}
 
-//Day la strategy pattern
+    default Map<String, Map<String, Object>> snapshot(List<String> backends) {
+        return Map.of();
+    }
+}

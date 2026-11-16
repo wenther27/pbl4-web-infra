@@ -15,18 +15,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Hai viec, lam trong cung mot vong filter:
- *
- * 1. Gan header X-Instance-Id vao response -> biet request roi vao
- *    web-1, web-2 hay web-3 khi test load balancer.
- * 2. Ghi mot dong log co cau truc cho moi request (method, path, status,
- *    thoi gian xu ly, IP) -> Filebeat/Logstash day sang Elasticsearch,
- *    Kibana ve dashboard va module anomaly-detection doc de phat hien bat thuong.
- *
- * Cac field duoc dat vao MDC nen o che do JSON chung se thanh cot rieng
- * trong Elasticsearch, khong phai parse lai tu chuoi message.
- */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestLogFilter extends OncePerRequestFilter {
@@ -66,8 +54,6 @@ public class RequestLogFilter extends OncePerRequestFilter {
         }
     }
 
-    // Dung sau load balancer thi request.getRemoteAddr() la IP cua LB,
-    // IP that cua client nam trong X-Forwarded-For.
     private String resolveClientIp(HttpServletRequest request) {
         String forwardedFor = request.getHeader("X-Forwarded-For");
         if (forwardedFor != null && !forwardedFor.isBlank()) {
@@ -76,7 +62,6 @@ public class RequestLogFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    // Health check cua load balancer goi lien tuc, khong log de do nhieu
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return request.getRequestURI().startsWith("/actuator");

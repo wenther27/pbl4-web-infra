@@ -14,8 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-
-// FIle nay:  Mọi request đều qua file nay trước. Có chìa đúng thì vào, không có thì ra.
 @Component
 public class JwtFilter extends OncePerRequestFilter {
     @Autowired private JwtUtil jwtUtil;

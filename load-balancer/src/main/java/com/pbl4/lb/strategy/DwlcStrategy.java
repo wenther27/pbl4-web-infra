@@ -1,15 +1,14 @@
 package com.pbl4.lb.strategy;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-// Dynamic Weighted Least Connection (DWLC)
-// Moi request chon backend co diem = soCapNoiDangMo / trongSo thap nhat.
-//   trongSo = (latencyThamChieu / latencyEWMA cua backend) * (1 - tiLeLoiEWMA)
+// DWLC: chon backend co active / weight nho nhat
 public class DwlcStrategy implements LoadBalancingStrategy {
 
     private static final double ALPHA_LATENCY = 0.2;
@@ -38,7 +37,6 @@ public class DwlcStrategy implements LoadBalancingStrategy {
             }
             double ref = known > 0 ? sum / known : Double.NaN;
 
-            // 1) Least connection co trong so: diem = active / weight, lay diem nho nhat
             double[] weights = new double[backends.size()];
             double best = Double.MAX_VALUE;
             List<Integer> ties = new ArrayList<>();
@@ -55,9 +53,7 @@ public class DwlcStrategy implements LoadBalancingStrategy {
                 }
             }
 
-            // 2) Hoa nhau (vd luc tai thap, moi backend deu active = 0):
-            //    Smooth Weighted Round-Robin (nhu Nginx) -> chia theo DUNG ti le trong so.
-            //    Backend trong so 0.76 nhan it hon backend 1.0 theo dung ti le, khong bi coi la ngang nhau.
+            // neu hoa nhau thi dung smooth WRR giong nginx
             int chosenIdx = ties.get(0);
             if (ties.size() > 1) {
                 double total = 0;
@@ -91,13 +87,31 @@ public class DwlcStrategy implements LoadBalancingStrategy {
     @Override
     public String name() { return "dwlc"; }
 
+    @Override
+    public Map<String, Map<String, Object>> snapshot(List<String> backends) {
+        long now = System.nanoTime();
+        double sum = 0;
+        int known = 0;
+        for (String b : backends) {
+            double lat = state(b).freshLatency(now);
+            if (!Double.isNaN(lat)) { sum += lat; known++; }
+        }
+        double ref = known > 0 ? sum / known : Double.NaN;
+
+        Map<String, Map<String, Object>> result = new LinkedHashMap<>();
+        for (String b : backends) {
+            result.put(b, state(b).describe(ref, now));
+        }
+        return result;
+    }
+
     private State state(String backend) {
         return states.computeIfAbsent(backend, k -> new State());
     }
 
     private static final class State {
         final AtomicInteger active = new AtomicInteger(0);
-        double current = 0;             // bo dem cua Smooth WRR, chi dung trong selectLock
+        double current = 0;
         private double latencyEwma = Double.NaN;
         private double errorEwma = 0.0;
         private long lastUpdate = 0;
@@ -117,6 +131,17 @@ public class DwlcStrategy implements LoadBalancingStrategy {
         private boolean fresh(long now) { return hasData && now - lastUpdate <= STALE_NANOS; }
 
         synchronized double freshLatency(long now) { return fresh(now) ? latencyEwma : Double.NaN; }
+
+        synchronized Map<String, Object> describe(double ref, long now) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            boolean f = fresh(now);
+            m.put("weight", Math.round(weight(ref, now) * 100) / 100.0);
+            m.put("latencyMs", f && !Double.isNaN(latencyEwma) ? Math.round(latencyEwma * 10) / 10.0 : null);
+            m.put("errorRate", f ? Math.round(errorEwma * 1000) / 10.0 : null);
+            m.put("fresh", f);
+            m.put("active", active.get());
+            return m;
+        }
 
         synchronized double weight(double ref, long now) {
             if (!fresh(now)) return 1.0;

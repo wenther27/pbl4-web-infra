@@ -32,10 +32,8 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép trình duyệt gửi CORS preflight trước các request có JSON/JWT.
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Public: đăng nhập, đăng ký, tài liệu API và health check.
                         .requestMatchers(
                                 "/error",
                                 "/api/auth/**",
@@ -47,7 +45,6 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // ADMIN: quản trị toàn bộ dữ liệu hệ thống.
                         .requestMatchers(HttpMethod.GET, "/api/movies/all" ).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/uploads/images").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/uploads/videos").hasRole("ADMIN")
@@ -61,7 +58,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // Public: nội dung dùng để duyệt website mà không cần đăng nhập.
                         .requestMatchers(HttpMethod.GET, "/api/movies").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/movies/trending",
@@ -72,11 +68,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/episodes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/reviews").permitAll()
 
-                        // USER và ADMIN: dữ liệu cá nhân và tương tác của thành viên.
                         .requestMatchers("/api/favorites/**", "/api/history/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/movies/*/reviews").authenticated()
 
-                        // Endpoint mới phải được khai báo quyền rõ ràng trước khi sử dụng.
                         .anyRequest().denyAll()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -104,7 +98,6 @@ public class SecurityConfig {
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        // Cho frontend doc duoc request roi vao instance nao (web-1/2/3)
         configuration.setExposedHeaders(List.of("X-Instance-Id"));
         configuration.setMaxAge(3600L);
 

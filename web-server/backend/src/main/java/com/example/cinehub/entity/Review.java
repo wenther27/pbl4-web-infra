@@ -38,7 +38,6 @@ public class Review {
     )
     private User user;
 
-    // Tự động lấy giờ hệ thống gán vào lúc vừa tạo object
     @PrePersist
     protected void onCreate() {
         createAt = LocalDateTime.now();

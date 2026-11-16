@@ -26,7 +26,6 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 public class LoadBalancerApp {
     private static final Logger log = LoggerFactory.getLogger(LoadBalancerApp.class);
 
-    // LB_STRATEGY=dwlc (mac dinh) hoac round-robin
     private static LoadBalancingStrategy createStrategy() {
         String name = System.getenv().getOrDefault("LB_STRATEGY", "dwlc").trim().toLowerCase(Locale.ROOT);
         return switch (name) {
@@ -41,25 +40,18 @@ public class LoadBalancerApp {
         ServerConfigLoader.Config config = ServerConfigLoader.load();
         LoadBalancingStrategy strategy = createStrategy();
 
-        // Kiem tra moi 5s, that bai 3 lan -> DOWN, thanh cong 2 lan -> UP
-        // LB_STARTUP_GRACE_SECONDS: thoi gian cho backend khoi dong truoc khi coi la su co (mac dinh 180s)
         long grace = Long.parseLong(System.getenv().getOrDefault("LB_STARTUP_GRACE_SECONDS", "180").trim());
         HealthChecker health = new HealthChecker(config.backends(), 5, 3, 2, grace);
-        // Bao tri co ke hoach (drain): dung chung giua ProxyHandler, HealthChecker va API quan tri
         BackendMaintenance maintenance = new BackendMaintenance();
         health.setMaintenanceCheck(maintenance::isDraining);
         health.start();
 
-        // Danh sach IP bi chan: dung chung giua ProxyHandler (kiem tra) va AdminHandler (them/xoa)
         BlockList blockList = BlockList.fromEnv();
-        // Gioi han toc do theo IP; IP duoc bao ve (LB_NEVER_BLOCK) khong bi gioi han
         RateLimiter rateLimiter = RateLimiter.fromEnv(blockList.neverBlock());
 
         HttpServer server = HttpServer.create(new InetSocketAddress(config.port()), 0);
         server.createContext("/", new ProxyHandler(health, strategy, blockList, maintenance, rateLimiter));
 
-        // Mac dinh HttpServer chi dung 1 luong -> request xep hang doi nhau.
-        // Co thread pool thi 50 request den cung luc moi duoc xu ly song song.
         server.setExecutor(Executors.newFixedThreadPool(50));
 
         server.start();
@@ -71,13 +63,12 @@ public class LoadBalancerApp {
                 kv("strategy", strategy.name()),
                 kv("backends", config.backends()));
 
-        startAdminServer(blockList, config.backends(), health, maintenance, rateLimiter);
+        startAdminServer(blockList, config.backends(), health, maintenance, rateLimiter, strategy);
     }
 
-    // API quan tri chay o cong rieng. Khong dat LB_ADMIN_TOKEN thi KHONG mo -> mac dinh an toan.
     private static void startAdminServer(BlockList blockList, java.util.List<String> backends,
                                          HealthChecker health, BackendMaintenance maintenance,
-                                         RateLimiter rateLimiter) throws Exception {
+                                         RateLimiter rateLimiter, LoadBalancingStrategy strategy) throws Exception {
         String token = System.getenv("LB_ADMIN_TOKEN");
         if (token == null || token.isBlank()) {
             log.warn("Khong dat LB_ADMIN_TOKEN -> tat API quan tri (chan IP)", kv("event", "admin_disabled"));
@@ -86,8 +77,7 @@ public class LoadBalancerApp {
         int port = Integer.parseInt(System.getenv().getOrDefault("LB_ADMIN_PORT", "8090").trim());
         HttpServer admin = HttpServer.create(new InetSocketAddress(port), 0);
         admin.createContext("/admin", new AdminHandler(blockList, token.trim()));
-        // Context dai hon duoc uu tien: /admin/backends/... vao day, con lai (/admin/blocked) vao AdminHandler
-        admin.createContext("/admin/backends", new BackendAdminHandler(backends, health, maintenance, token.trim()));
+        admin.createContext("/admin/backends", new BackendAdminHandler(backends, health, maintenance, strategy, token.trim()));
         admin.createContext("/admin/ratelimit", new RateLimitAdminHandler(rateLimiter, token.trim()));
         admin.setExecutor(Executors.newFixedThreadPool(2));
         admin.start();

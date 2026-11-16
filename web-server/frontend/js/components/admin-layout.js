@@ -7,6 +7,7 @@ const pageTitles = {
   episodes: 'Quản lý tập phim',
   users: 'Quản lý người dùng',
   reviews: 'Quản lý đánh giá',
+  infra: 'Hạ tầng',
   security: 'Bảo mật'
 };
 

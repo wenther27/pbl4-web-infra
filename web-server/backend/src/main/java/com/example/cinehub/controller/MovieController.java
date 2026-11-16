@@ -20,11 +20,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/movies")
-@CrossOrigin(origins = "http://localhost:5173") // Cấp quyền cho Vite gọi API
+@CrossOrigin(origins = "http://localhost:5173")
 public class MovieController {
 
     @Autowired
-    private MovieService movieService; // Chỉ tiêm Service, tuyệt đối không tiêm Repository ở đây nữa!
+    private MovieService movieService;
 
     @GetMapping
     @SecurityRequirements
@@ -33,8 +33,8 @@ public class MovieController {
                                                             @RequestParam(required = false) MovieStatus status,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "10") int size,
-                                                            @RequestParam(defaultValue = "id") String sortBy,       //Mặc định xắp sếp theo ID
-                                                            @RequestParam(defaultValue = "asc") String direction ) {// Mặc định tăng dần
+                                                            @RequestParam(defaultValue = "id") String sortBy,
+                                                            @RequestParam(defaultValue = "asc") String direction ) {
         Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending()
                                                                     : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
@@ -55,7 +55,6 @@ public class MovieController {
     public ResponseEntity<List<MovieDTO>> getMoviesByMovieType(@RequestParam MovieType movieType) {
         return ResponseEntity.ok(movieService.getMoviesByMovieType(movieType));
     }
-    // 🌟 API Lọc phim theo thể loại (Dùng PathVariable để lấy slug từ URL)
     @GetMapping("/genre/{slug}")
     public ResponseEntity<List<MovieDTO>> getMoviesByGenre(@PathVariable String slug) {
         List<MovieDTO> movies = movieService.getMoviesByGenre(slug);

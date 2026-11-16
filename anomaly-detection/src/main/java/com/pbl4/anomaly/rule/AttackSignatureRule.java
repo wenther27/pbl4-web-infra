@@ -12,22 +12,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-// R8: ATTACK_SIGNATURE - phat hien theo NOI DUNG request (giong WAF), khong phai theo so luong.
-//
-// R1-R7 chi dem: bao nhieu request, bao nhieu loi, nhanh hay cham.
-// R8 nhin vao duong dan, query va User-Agent cua TUNG request, so voi cac mau tan cong da biet
-// (SQL injection, XSS, path traversal, cong cu quet tu dong). Chi 1 request khop la da dang bao.
-//
-// Mau dat trong rules.yaml -> them mau moi khong can build lai.
 public class AttackSignatureRule extends ThresholdRule {
 
-    private static final int SAMPLE_MAX = 120;   // do dai toi da cua vi du in trong canh bao
+    private static final int SAMPLE_MAX = 120;
 
     private final double minMatches;
-    private final Map<String, List<Pattern>> contentSignatures;   // nhom -> cac mau (path + query)
-    private final List<Pattern> userAgentSignatures;              // mau User-Agent
+    private final Map<String, List<Pattern>> contentSignatures;
+    private final List<Pattern> userAgentSignatures;
 
-    // Khong dung whitelist_ips: whitelist danh cho may do tai (R1, R2), may do tai khong gui mau tan cong.
     public AttackSignatureRule(Map<String, Object> params) {
         super("ATTACK_SIGNATURE", params);
         this.minMatches = number("min_matches", 1);
@@ -37,7 +29,6 @@ public class AttackSignatureRule extends ThresholdRule {
 
     @Override
     public List<Alert> evaluate(Snapshot s) {
-        // Gom theo IP: so request khop, cac nhom tan cong, 1 vi du
         Map<String, Hit> byIp = new LinkedHashMap<>();
         for (RequestRecord r : s.recentRequests()) {
             String ip = r.clientIp();
@@ -65,7 +56,6 @@ public class AttackSignatureRule extends ThresholdRule {
         return alerts;
     }
 
-    // Cac nhom tan cong ma request nay khop (rong neu sach)
     Set<String> match(RequestRecord r) {
         Set<String> groups = new LinkedHashSet<>();
         String target = decode(nz(r.path()) + (nz(r.query()).isEmpty() ? "" : "?" + r.query()));
@@ -87,8 +77,6 @@ public class AttackSignatureRule extends ThresholdRule {
         return groups;
     }
 
-    // Ke tan cong hay ma hoa de lach mau: ' -> %27, %2527 (ma hoa 2 lan).
-    // Giai ma toi da 2 lan; chuoi ma hoa sai (vd "%zz") thi giu nguyen phan da giai duoc.
     static String decode(String s) {
         String current = s;
         for (int i = 0; i < 2; i++) {
@@ -105,8 +93,6 @@ public class AttackSignatureRule extends ThresholdRule {
         return current;
     }
 
-    // Vi du ngan gon de admin doc. Chi khop User-Agent thi in User-Agent, con lai in path + query.
-    // Bo ky tu dieu khien (xuong dong...) de khong lam vo log.
     private static String sample(RequestRecord r, Set<String> groups) {
         boolean onlyUserAgent = groups.size() == 1 && groups.contains("SCANNER_TOOL");
         String text = onlyUserAgent
@@ -120,7 +106,6 @@ public class AttackSignatureRule extends ThresholdRule {
         return s == null ? "" : s;
     }
 
-    // signatures: { SQL_INJECTION: [...], XSS: [...] } -> Map nhom -> danh sach Pattern
     private static Map<String, List<Pattern>> compileGroups(Object raw) {
         Map<String, List<Pattern>> map = new LinkedHashMap<>();
         if (raw instanceof Map<?, ?> m) {
@@ -134,7 +119,6 @@ public class AttackSignatureRule extends ThresholdRule {
         return map;
     }
 
-    // Moi mau khong phan biet hoa/thuong; mau sai cu phap -> loi ngay khi khoi dong (de phat hien som)
     private static List<Pattern> compileList(Object raw) {
         List<Pattern> list = new ArrayList<>();
         if (raw instanceof List<?> l) {

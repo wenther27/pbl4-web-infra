@@ -1,11 +1,3 @@
--- ============================================================
--- CineHub - Khởi tạo database
--- Dùng cho PBL4. File này tự chạy khi mount vào
--- /docker-entrypoint-initdb.d/ của container MySQL.
--- ============================================================
-
--- Bat buoc: entrypoint cua MySQL chay file nay voi charset client mac dinh (latin1),
--- thieu dong nay tieng Viet se bi luu sai ma (loi font).
 SET NAMES utf8mb4;
 
 CREATE DATABASE IF NOT EXISTS cinehub_db
@@ -14,9 +6,6 @@ CREATE DATABASE IF NOT EXISTS cinehub_db
 
 USE cinehub_db;
 
--- ============================================================
--- 1. users
--- ============================================================
 CREATE TABLE users (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     username    VARCHAR(50)  NOT NULL UNIQUE,
@@ -28,9 +17,6 @@ CREATE TABLE users (
     updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 2. movies
--- ============================================================
 CREATE TABLE movies (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     title         VARCHAR(255) NOT NULL,
@@ -51,18 +37,12 @@ CREATE TABLE movies (
     INDEX idx_movies_rating     (rating)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 3. genres
--- ============================================================
 CREATE TABLE genres (
     id    INT AUTO_INCREMENT PRIMARY KEY,
     name  VARCHAR(50) NOT NULL UNIQUE,
     slug  VARCHAR(50) NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 4. movie_genres (n-n giữa movies và genres)
--- ============================================================
 CREATE TABLE movie_genres (
     movie_id  BIGINT,
     genre_id  INT,
@@ -71,9 +51,6 @@ CREATE TABLE movie_genres (
     FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 5. episodes
--- ============================================================
 CREATE TABLE episodes (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     movie_id        BIGINT,
@@ -86,9 +63,6 @@ CREATE TABLE episodes (
     UNIQUE KEY uq_episode_per_movie (movie_id, episode_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 6. reviews
--- ============================================================
 CREATE TABLE reviews (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT,
@@ -101,9 +75,6 @@ CREATE TABLE reviews (
     INDEX idx_reviews_movie_created (movie_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 7. favorites
--- ============================================================
 CREATE TABLE favorites (
     user_id   BIGINT,
     movie_id  BIGINT,
@@ -113,9 +84,6 @@ CREATE TABLE favorites (
     FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- 8. watch_history
--- ============================================================
 CREATE TABLE watch_history (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id        BIGINT,
@@ -129,12 +97,6 @@ CREATE TABLE watch_history (
     INDEX idx_history_user_updated (user_id, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- DỮ LIỆU MẪU
--- ============================================================
-
--- Users (mật khẩu mẫu: 123456, đã mã hoá bằng BCrypt)
 INSERT INTO users (username, email, password, role) VALUES
 ('admin',   'admin@cinehub.com',   '$2a$10$9B5PQqflEoApXa0cnvXyS.st2xy38rH0DlXMYJLfh.bPyDMsxxJOS', 'ADMIN'),
 ('quanzn',  'quan@cinehub.com',    '$2a$10$9B5PQqflEoApXa0cnvXyS.st2xy38rH0DlXMYJLfh.bPyDMsxxJOS', 'USER'),
@@ -143,7 +105,6 @@ INSERT INTO users (username, email, password, role) VALUES
 ('hoang',   'hoang@cinehub.com',   '$2a$10$9B5PQqflEoApXa0cnvXyS.st2xy38rH0DlXMYJLfh.bPyDMsxxJOS', 'USER'),
 ('mynguyen','my@cinehub.com',      '$2a$10$9B5PQqflEoApXa0cnvXyS.st2xy38rH0DlXMYJLfh.bPyDMsxxJOS', 'USER');
 
--- Genres
 INSERT INTO genres (name, slug) VALUES
 ('Hành động',   'hanh-dong'),
 ('Viễn tưởng',  'vien-tuong'),
@@ -158,7 +119,6 @@ INSERT INTO genres (name, slug) VALUES
 ('Cổ trang',    'co-trang'),
 ('Tài liệu',    'tai-lieu');
 
--- Movies
 INSERT INTO movies (title, description, poster_url, release_date, duration, rating, is_trending, is_top_rated, movie_type, status) VALUES
 ('Inception',              'Kẻ đánh cắp giấc mơ',                        'https://image.tmdb.org/t/p/w500/inception.jpg',   '2010-07-16', 148, 8.8, TRUE,  TRUE,  'movie',  'released'),
 ('Interstellar',           'Hành trình xuyên không gian tìm nhà mới',    'https://image.tmdb.org/t/p/w500/interstellar.jpg','2014-11-07', 169, 8.6, TRUE,  TRUE,  'movie',  'released'),
@@ -185,7 +145,6 @@ INSERT INTO movies (title, description, poster_url, release_date, duration, rati
 ('Squid Game',             'Trò chơi sinh tử',                           'https://image.tmdb.org/t/p/w500/squid.jpg',       '2021-09-17',  55, 8.0, TRUE,  FALSE, 'series', 'ongoing'),
 ('Chernobyl',              'Thảm hoạ hạt nhân 1986',                     'https://image.tmdb.org/t/p/w500/chernobyl.jpg',   '2019-05-06',  65, 9.4, FALSE, TRUE,  'series', 'released');
 
--- Gán thể loại cho phim
 INSERT INTO movie_genres (movie_id, genre_id) VALUES
 (1,1),(1,2),(1,7),
 (2,2),(2,8),(2,7),
@@ -212,7 +171,6 @@ INSERT INTO movie_genres (movie_id, genre_id) VALUES
 (23,1),(23,7),
 (24,7),(24,12);
 
--- Episodes cho các phim dạng series và anime
 INSERT INTO episodes (movie_id, title, episode_number, video_url, duration) VALUES
 (7,  'Ryomen Sukuna',        1, 'https://cdn.cinehub.com/jjk-01.mp4', 24),
 (7,  'Vì tôi ở đây',         2, 'https://cdn.cinehub.com/jjk-02.mp4', 24),
@@ -234,7 +192,6 @@ INSERT INTO episodes (movie_id, title, episode_number, video_url, duration) VALU
 (23, 'Đèn đỏ đèn xanh',      1, 'https://cdn.cinehub.com/squid-01.mp4',60),
 (24, '1:23:45',              1, 'https://cdn.cinehub.com/cher-01.mp4', 65);
 
--- Reviews
 INSERT INTO reviews (user_id, movie_id, content, rating) VALUES
 (2, 1,  'Xem ba lần vẫn chưa hiểu hết cái kết.',            9),
 (3, 1,  'Nhạc phim quá đỉnh.',                              10),
@@ -249,7 +206,6 @@ INSERT INTO reviews (user_id, movie_id, content, rating) VALUES
 (6, 19, 'Hơi dài nhưng diễn xuất bù lại.',                  8),
 (3, 23, 'Ý tưởng tốt, vài tập giữa hơi lê thê.',            7);
 
--- Favorites
 INSERT INTO favorites (user_id, movie_id) VALUES
 (2,1),(2,7),(2,11),(2,15),
 (3,1),(3,8),(3,3),
@@ -257,7 +213,6 @@ INSERT INTO favorites (user_id, movie_id) VALUES
 (5,7),(5,9),(5,21),
 (6,11),(6,13);
 
--- Watch history
 INSERT INTO watch_history (user_id, movie_id, episode_id, last_position) VALUES
 (2, 7,  2,    820),
 (2, 1,  NULL, 3600),

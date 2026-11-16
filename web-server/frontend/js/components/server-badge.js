@@ -1,8 +1,3 @@
-// Khung nho goc phai duoi man hinh, dung khi demo/test load balancing:
-// - Dong tren: server nao (web-1/2/3) vua tra loi request gan nhat,
-//   doc tu header X-Instance-Id backend gan vao moi response.
-// - Dong duoi: nut chuyen frontend sang goi backend khac. Phien dang nhap
-//   (JWT trong Local Storage) giu nguyen -> thay duoc backend la stateless.
 import { APP_CONFIG } from '../config.js';
 
 let badge;
@@ -69,7 +64,6 @@ export function showServerDown(apiBaseUrl) {
   pulse();
 }
 
-// Hien khung ngay khi mo trang, ke ca truoc khi co request nao
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', ensureBadge);
 } else {

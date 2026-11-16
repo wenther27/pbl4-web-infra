@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-// Body cua POST /api/admin/security/blocked-ips
-// Kiem tra so bo o day; LB kiem tra lai dinh dang IP va danh sach IP duoc bao ve.
 public record BlockIpRequest(
         @NotBlank(message = "Vui long nhap IP")
         @Size(max = 45, message = "IP qua dai")

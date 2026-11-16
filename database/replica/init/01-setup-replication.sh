@@ -1,8 +1,4 @@
 #!/bin/bash
-# Chay 1 lan khi replica khoi tao volume lan dau (docker-entrypoint-initdb.d):
-#   1. Copy du lieu hien co tu primary (kem GTID da chay)
-#   2. Noi replica vao primary theo GTID auto-position va bat dau replicate
-#   3. Bat super_read_only de khong ai ghi nham vao replica
 set -euo pipefail
 
 export MYSQL_PWD="$MYSQL_ROOT_PASSWORD"
@@ -17,7 +13,6 @@ for _ in $(seq 1 60); do
 done
 mysql "${PRIMARY[@]}" -e "SELECT 1" > /dev/null
 
-# Xoa GTID do entrypoint tao ra tren replica, de nhan GTID_PURGED tu ban dump.
 mysql -uroot -e "RESET BINARY LOGS AND GTIDS;"
 
 echo "[replica-init] Copy du lieu '${MYSQL_DATABASE}' tu primary..."

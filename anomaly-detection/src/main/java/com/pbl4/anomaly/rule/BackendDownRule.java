@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-// R6: LB ghi su kien backend_down trong cua so
 public class BackendDownRule extends ThresholdRule {
 
     public BackendDownRule(Map<String, Object> params) {

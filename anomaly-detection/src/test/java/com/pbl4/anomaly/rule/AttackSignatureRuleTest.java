@@ -12,13 +12,10 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// Kiem thu R8 bang request dung san, KHONG can Elasticsearch.
-// Dung dung cac mau trong src/main/resources/rules.yaml -> sua mau sai la test bao ngay.
 class AttackSignatureRuleTest {
 
     private final AttackSignatureRule r8 = new AttackSignatureRule(paramsFromRulesYaml());
 
-    // ---------- Request binh thuong: KHONG duoc bao (tranh bao dong gia) ----------
     @Test
     void requestBinhThuong_khongBao() {
         assertTrue(r8.match(req("/api/movies", "page=0&size=12&sort=title", "Mozilla/5.0")).isEmpty());
@@ -27,17 +24,14 @@ class AttackSignatureRuleTest {
         assertTrue(r8.match(req("/api/auth/login", "", "Apache-HttpClient/4.5")).isEmpty());
     }
 
-    // ---------- Tung nhom mau ----------
     @Test
     void sqlInjection_daMaHoaUrl_vanBat() {
-        // ' OR 1=1  ->  %27%20OR%201%3D1
         assertEquals(Set.of("SQL_INJECTION"),
                 r8.match(req("/api/movies", "keyword=%27%20OR%201%3D1", "Mozilla/5.0")));
     }
 
     @Test
     void sqlInjection_maHoa2Lan_vanBat() {
-        // %2527 -> %27 -> '
         assertEquals(Set.of("SQL_INJECTION"),
                 r8.match(req("/api/movies", "keyword=%2527%2520or%25201%253D1", "Mozilla/5.0")));
     }
@@ -60,7 +54,6 @@ class AttackSignatureRuleTest {
                 r8.match(req("/api/movies", "", "sqlmap/1.8#stable (https://sqlmap.org)")));
     }
 
-    // ---------- Gom theo IP thanh canh bao ----------
     @Test
     void gomTheoIp_moiIp1CanhBao() {
         Snapshot s = snapshot(List.of(
@@ -74,7 +67,7 @@ class AttackSignatureRuleTest {
         Alert a = alerts.get(0);
         assertEquals("203.0.113.50", a.target());
         assertEquals("HIGH", a.severity());
-        assertEquals(2.0, a.value(), 0.001);   // 2 request khop
+        assertEquals(2.0, a.value(), 0.001);
         assertTrue(a.message().contains("SQL_INJECTION") && a.message().contains("XSS"));
     }
 
@@ -82,8 +75,6 @@ class AttackSignatureRuleTest {
     void khongCoRequest_khongBao() {
         assertEquals(0, r8.evaluate(snapshot(List.of())).size());
     }
-
-    // ---------- Ham phu ----------
 
     private static RequestRecord req(String path, String query, String userAgent) {
         return req("203.0.113.50", path, query, userAgent);

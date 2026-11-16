@@ -18,8 +18,6 @@ public interface FavoriteRepository extends JpaRepository<Favorite, FavoriteId> 
 
     boolean existsByIdUserIdAndIdMovieId(Long userId, Long movieId);
 
-    //Xoóa favorite theo userId và movieId
-    //Phải dùng @Modifying + @Query vì composite key không hổ trợ derived delete
     @Modifying
     @Transactional
     @Query("Delete From Favorite f Where f.id.userId = :userId And f.id.movieId = :movieId")

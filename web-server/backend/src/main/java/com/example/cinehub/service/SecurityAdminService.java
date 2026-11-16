@@ -1,6 +1,7 @@
 package com.example.cinehub.service;
 
 import com.example.cinehub.dto.request.BlockIpRequest;
+import com.example.cinehub.dto.request.RateLimitRequest;
 import com.example.cinehub.dto.response.SuspiciousIpDTO;
 import com.example.cinehub.exception.UpstreamServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,13 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-// Cau noi giua trang Admin va 2 he thong ben ngoai:
-//  - Elasticsearch: doc canh bao (alerts-*) cua bo phat hien bat thuong
-//  - Load Balancer: API quan tri cong 8090 de chan / go chan IP
 @Service
 public class SecurityAdminService {
 
-    // Chi cac luat co doi tuong la IP (R4, R5, R7 la "global", R6 la backend)
     private static final List<String> IP_RULES =
             List.of("HIGH_RATE_IP", "SCAN_PATHS", "BRUTE_FORCE_LOGIN", "ATTACK_SIGNATURE");
 
@@ -40,7 +37,6 @@ public class SecurityAdminService {
                                 @Value("${app.security.lb-admin-url}") String lbAdminUrl,
                                 @Value("${app.security.lb-admin-token}") String lbAdminToken,
                                 ObjectMapper json) {
-        // Timeout ngan: ES/LB cham thi bao loi nhanh, khong treo thread cua Tomcat
         SimpleClientHttpRequestFactory timeouts = new SimpleClientHttpRequestFactory();
         timeouts.setConnectTimeout(2000);
         timeouts.setReadTimeout(5000);
@@ -52,9 +48,6 @@ public class SecurityAdminService {
         this.json = json;
     }
 
-    // ------------------------------------------------------------------
-    // 1. IP bi canh bao trong 'minutes' phut qua, gop theo IP, kem trang thai dang bi chan
-    // ------------------------------------------------------------------
     public List<SuspiciousIpDTO> suspiciousIps(int minutes) {
         String query = """
                 {
@@ -70,8 +63,6 @@ public class SecurityAdminService {
         JsonNode hits = callEs(query).path("hits").path("hits");
         Map<String, String> blockedUntil = blockedUntilByIp();
 
-        // Gop cac canh bao theo IP. Ket qua da sap xep moi nhat truoc,
-        // nen canh bao dau tien gap cua moi IP chinh la canh bao gan nhat.
         Map<String, Group> groups = new LinkedHashMap<>();
         for (JsonNode hit : hits) {
             JsonNode a = hit.path("_source");
@@ -91,16 +82,10 @@ public class SecurityAdminService {
         return result;
     }
 
-    // ------------------------------------------------------------------
-    // 2. Danh sach IP dang bi chan tai LB (chuyen nguyen JSON cua LB ve)
-    // ------------------------------------------------------------------
     public JsonNode blockedIps() {
         return callLb(() -> lb.get().uri("/admin/blocked").retrieve().body(String.class));
     }
 
-    // ------------------------------------------------------------------
-    // 3. Chan IP. 'admin' la ten tai khoan dang dang nhap -> LB ghi vao log (ai chan)
-    // ------------------------------------------------------------------
     public JsonNode block(BlockIpRequest req, String admin) {
         Map<String, Object> body = new HashMap<>();
         body.put("ip", req.ip().trim());
@@ -113,18 +98,45 @@ public class SecurityAdminService {
                 .retrieve().body(String.class));
     }
 
-    // ------------------------------------------------------------------
-    // 4. Go chan IP
-    // ------------------------------------------------------------------
     public JsonNode unblock(String ip, String admin) {
         return callLb(() -> lb.delete().uri("/admin/blocked/{ip}", ip)
                 .header("X-Admin-User", admin)
                 .retrieve().body(String.class));
     }
 
-    // ================== ham phu ==================
+    public JsonNode infraOverview() {
+        JsonNode backends = callLb(() -> lb.get().uri("/admin/backends").retrieve().body(String.class));
+        JsonNode rateLimit = null;
+        try {
+            rateLimit = callLb(() -> lb.get().uri("/admin/ratelimit").retrieve().body(String.class));
+        } catch (UpstreamServiceException ignored) {
+        }
+        var result = json.createObjectNode();
+        result.set("lb", backends);
+        result.set("rateLimit", rateLimit);
+        return result;
+    }
 
-    // ip -> thoi diem het han chan; LB loi thi coi nhu khong IP nao bi chan (van hien danh sach canh bao)
+    public JsonNode drainBackend(String name, boolean drain, String admin) {
+        if (!name.matches("[A-Za-z0-9._-]{1,63}")) {
+            throw new UpstreamServiceException(400, "Ten backend khong hop le");
+        }
+        return callLb(() -> lb.post().uri("/admin/backends/{name}/{action}", name, drain ? "drain" : "undrain")
+                .header("X-Admin-User", admin)
+                .retrieve().body(String.class));
+    }
+
+    public JsonNode updateRateLimit(RateLimitRequest req, String admin) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("ratePerSecond", req.ratePerSecond());
+        body.put("burst", req.burst());
+        return callLb(() -> lb.post().uri("/admin/ratelimit")
+                .header("X-Admin-User", admin)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve().body(String.class));
+    }
+
     private Map<String, String> blockedUntilByIp() {
         Map<String, String> map = new HashMap<>();
         try {
@@ -132,7 +144,6 @@ public class SecurityAdminService {
                 map.put(e.path("ip").asText(), e.path("until").asText());
             }
         } catch (UpstreamServiceException ignored) {
-            // Trang van dung duoc khi LB tam thoi khong tra loi
         }
         return map;
     }
@@ -153,10 +164,6 @@ public class SecurityAdminService {
         }
     }
 
-    // Goi LB va doi loi cua LB thanh loi co nghia cho admin:
-    //   400 / 404 / 409 cua LB -> chuyen nguyen ma + thong bao
-    //   401 -> backend cau hinh sai token (khong phai loi cua admin) -> 502
-    //   khong ket noi duoc -> 503
     private JsonNode callLb(LbCall call) {
         try {
             String body = call.run();
@@ -195,7 +202,6 @@ public class SecurityAdminService {
         String run();
     }
 
-    // Du lieu gop tam thoi cua 1 IP
     private static class Group {
         int count;
         final Set<String> rules = new LinkedHashSet<>();

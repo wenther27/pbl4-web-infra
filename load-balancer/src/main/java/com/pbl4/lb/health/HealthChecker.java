@@ -1,14 +1,5 @@
 package com.pbl4.lb.health;
 
-// Dinh ky goi /actuator/health cua tung backend
-// Backend that bai lien tiep failThreshold lan -> DOWN, bi loai khoi vong quay
-// Backend dang DOWN thanh cong lien tiep passThreshold lan -> UP, duoc dua tro lai
-//
-// Luc LB vua khoi dong, backend (Spring Boot) can 30-60s moi san sang. Day KHONG phai su co,
-// nen backend CHUA TUNG UP ke tu khi LB khoi dong thi ghi "backend_waiting" (INFO) thay vi
-// "backend_down" (WARN) -> bo phat hien (R6) khong bao dong gia moi lan bat he thong.
-// Qua startupGraceSeconds ma van chua len lan nao -> luc do moi ghi backend_down (su co that).
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,22 +28,17 @@ public class HealthChecker {
     private final int passThreshold;
     private final long startupGraceSeconds;
     private final long startedAtNanos = System.nanoTime();
-    // Backend dang bao tri co ke hoach (drain) -> DOWN la du kien, khong phai su co
     private volatile Predicate<String> inMaintenance = b -> false;
 
     private final HttpClient client;
     private final ScheduledExecutorService scheduler;
 
-    // Cac map nay chi do luong health-checker doc va ghi -> khong can dong bo
     private final Map<String, Boolean> up = new HashMap<>();
     private final Map<String, Integer> failStreak = new HashMap<>();
     private final Map<String, Integer> passStreak = new HashMap<>();
-    private final Map<String, Boolean> everUp = new HashMap<>();        // da tung UP tu khi LB chay?
-    private final Map<String, Boolean> downReported = new HashMap<>();  // da ghi backend_down chua?
+    private final Map<String, Boolean> everUp = new HashMap<>();
+    private final Map<String, Boolean> downReported = new HashMap<>();
 
-    // 50 luong xu ly request chi doc bien nay.
-    // volatile: luong health check vua gan danh sach moi,
-    // moi luong khac doc ngay sau do chac chan thay ban moi
     private volatile List<String> healthy;
 
     public HealthChecker(List<String> backends, long intervalSeconds,
@@ -69,7 +55,7 @@ public class HealthChecker {
         this.passThreshold = passThreshold;
 
         for (String b : backends) {
-            up.put(b, true);        // luc dau tin tat ca deu song
+            up.put(b, true);
             failStreak.put(b, 0);
             passStreak.put(b, 0);
             everUp.put(b, false);
@@ -89,7 +75,6 @@ public class HealthChecker {
     }
 
     public void start() {
-        // Chay ngay lan dau (delay 0), sau do cu xong mot vong thi nghi intervalSeconds
         scheduler.scheduleWithFixedDelay(this::checkAll, 0, intervalSeconds, TimeUnit.SECONDS);
     }
 
@@ -107,10 +92,8 @@ public class HealthChecker {
                 update(b, ping(b));
                 reportIfNeverStarted(b);
             }
-            // Dung danh sach moi roi gan mot lan -> nguoi doc luon thay ban day du
             healthy = backends.stream().filter(up::get).toList();
         } catch (Exception e) {
-            // Truyen e vao cuoi -> logback in ca stack trace (truong "stack_trace" trong JSON)
             log.error("Loi khong mong doi trong vong health check", e);
         }
     }
@@ -125,7 +108,7 @@ public class HealthChecker {
             HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
             return response.statusCode() == 200;
         } catch (Exception e) {
-            return false; // Khong ket noi duoc, timeout,... deu tinh la that bai
+            return false;
         }
     }
 
@@ -149,7 +132,6 @@ public class HealthChecker {
             if (up.get(backend) && fails >= failThreshold) {
                 up.put(backend, false);
                 if (inMaintenance.test(backend)) {
-                    // Dang drain de cap nhat (rolling deploy) -> tat la du kien, khong bao dong
                     logState("backend_maintenance", backend,
                             backend + " dang bao tri (drain), tam DOWN theo ke hoach", fails);
                 } else if (everUp.get(backend) || !inStartupGrace()) {
@@ -157,7 +139,6 @@ public class HealthChecker {
                     logState("backend_down", backend,
                             backend + " DOWN (" + fails + " lan that bai lien tiep)", fails);
                 } else {
-                    // LB vua khoi dong, backend chua len lan nao -> dang khoi dong, khong phai su co
                     logState("backend_waiting", backend,
                             backend + " chua san sang, cho khoi dong (toi da " + startupGraceSeconds + "s)", fails);
                 }
@@ -165,7 +146,6 @@ public class HealthChecker {
         }
     }
 
-    // Het thoi gian cho ma backend van chua len lan nao -> su co that, ghi backend_down 1 lan
     private void reportIfNeverStarted(String backend) {
         if (!up.get(backend) && !everUp.get(backend) && !downReported.get(backend) && !inStartupGrace()) {
             downReported.put(backend, true);
@@ -178,7 +158,6 @@ public class HealthChecker {
         return System.nanoTime() - startedAtNanos < TimeUnit.SECONDS.toNanos(startupGraceSeconds);
     }
 
-    // DOWN la su co -> WARN; UP la phuc hoi -> INFO
     private void logState(String event, String backend, String msg, int streak) {
         if ("backend_down".equals(event)) {
             log.warn(msg, kv("event", event), kv("backend", backend), kv("streak", streak));

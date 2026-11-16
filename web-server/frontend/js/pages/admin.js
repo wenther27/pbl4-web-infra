@@ -1,6 +1,7 @@
 import { loadDashboard } from '../admin/dashboard.js';
 import { initEpisodes } from '../admin/episodes.js';
 import { initGenres } from '../admin/genres.js';
+import { initInfra } from '../admin/infra.js';
 import { initMovies } from '../admin/movies.js';
 import { initReviews } from '../admin/reviews.js';
 import { initSecurity } from '../admin/security.js';
@@ -22,6 +23,7 @@ if (!session) {
     episodes: () => initEpisodes(),
     users: () => initUsers(session),
     reviews: () => initReviews(),
+    infra: () => initInfra(),
     security: () => initSecurity()
   };
 

@@ -48,7 +48,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return convertToDTO(userRepository.save(user));
     }
 
-
     @Transactional
     @Override
     public UserDTO updateUser(Long id, User userDetails) {

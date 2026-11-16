@@ -1,11 +1,6 @@
 import { adminApi } from '../api/admin.js';
 import { confirmAction, errorMessage, escapeHtml, openAdminDialog, showToast, tableMessage } from './shared.js';
 
-// Trang Quan tri > Bao mat:
-//  - Bang 1: IP bi bo phat hien bat thuong canh bao (R1, R2, R3), gop theo IP
-//  - Bang 2: IP dang bi Load Balancer chan, dem nguoc thoi gian con lai
-// Du lieu lay qua backend (/api/admin/security/...), backend moi la noi giu token cua LB.
-
 const RULE_LABELS = {
   HIGH_RATE_IP: 'R1 · Quá nhiều request',
   SCAN_PATHS: 'R2 · Dò quét đường dẫn',
@@ -25,7 +20,6 @@ let loading = false;
 let ticks = 0;
 
 const $ = (selector) => document.querySelector(selector);
-// Loi mang (fetch that bai) -> cau de hieu; con lai dung thong bao cua backend
 const loadError = (error) => (error instanceof TypeError
   ? 'Không kết nối được backend (Load Balancer :8080 đang tắt?).'
   : errorMessage(error));
@@ -48,7 +42,6 @@ function remaining(until) {
   return minutes ? `còn ${minutes} phút ${seconds} giây` : `còn ${total} giây`;
 }
 
-// Bo phat hien tu dong chan thi LB ghi by = "auto-detector" (xem AutoBlocker.java)
 const AUTO_BLOCKER = 'auto-detector';
 
 function blockedByLabel(by) {
@@ -68,7 +61,6 @@ function severityBadge(severity) {
     : '<span class="admin-badge admin-badge--warning">Trung bình</span>';
 }
 
-// Cot thao tac cua bang canh bao: IP duoc bao ve / dang bi chan / nut chan
 function suspiciousActions(item, blockedEntry) {
   if (neverBlock.includes(item.ip)) {
     return '<span class="admin-badge" title="Gateway Docker = trình duyệt của admin sau NAT. Chặn IP này sẽ khóa luôn admin.">IP được bảo vệ</span>';
@@ -138,7 +130,6 @@ async function load({ quiet = false } = {}) {
     $('#blocked-table-body').innerHTML = tableMessage(6, 'Đang tải danh sách chặn…', 'loading');
   }
   try {
-    // Goi song song; 1 ben loi (vd ES tat) thi ben kia van hien
     const [alerts, blockList] = await Promise.allSettled([
       adminApi.getSuspiciousIps($('#security-window').value),
       adminApi.getBlockedIps()
@@ -200,7 +191,6 @@ function openManualBlockDialog() {
   });
 }
 
-// Dong ho 1 giay: cap nhat dem nguoc; moi 10 giay tu tai lai neu bat "Tu dong lam moi"
 function tick() {
   if (!isVisible()) return;
   let expired = false;

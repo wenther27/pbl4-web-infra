@@ -38,6 +38,5 @@ public class MovieRequest {
     @NotNull(message = "Trạng thái phim không được để trống")
     private MovieStatus status;
 
-    // Phân tích: Front-End truyền danh sách ID thể loại lên (Ví dụ: [1, 2] cho Hành Động, Viễn Tưởng)
     private Set<Integer> genreIds;
 }

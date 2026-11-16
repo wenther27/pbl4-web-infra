@@ -14,7 +14,7 @@ public class Favorite {
     @EmbeddedId FavoriteId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("userId") //Khớp với tên fiel trong FavoriteId
+    @MapsId("userId")
     @JoinColumn(
             name = "user_id",
             nullable = false
@@ -36,6 +36,5 @@ public class Favorite {
     protected void onCreate() {
         addedAt = LocalDateTime.now();
     }
-
 
 }

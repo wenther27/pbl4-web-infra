@@ -5,7 +5,6 @@ import com.pbl4.anomaly.alert.Alert;
 import java.util.List;
 import java.util.Map;
 
-// R5: p95 thoi gian phan hoi vuot nguong
 public class HighLatencyRule extends ThresholdRule {
 
     private final double thresholdMs;

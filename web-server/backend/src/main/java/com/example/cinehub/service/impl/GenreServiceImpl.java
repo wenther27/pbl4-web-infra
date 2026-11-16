@@ -32,7 +32,6 @@ public class GenreServiceImpl implements GenreService {
         return convertToDTO(saveGenre);
     }
 
-    // Hàm Convert ừ Genre Entity sang GenreDTO
     private GenreDTO convertToDTO(Genre genre) {
         return modelMapper.map(genre, GenreDTO.class);
     }

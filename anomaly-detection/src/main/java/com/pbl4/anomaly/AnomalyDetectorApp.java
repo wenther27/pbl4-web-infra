@@ -22,10 +22,6 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 public class AnomalyDetectorApp {
     private static final Logger log = LoggerFactory.getLogger(AnomalyDetectorApp.class);
 
-    // Mot truy van lay du so lieu cho moi luat:
-    //  - loc chung: log cua LB trong cua so thoi gian
-    //  - "req":  chi dong event=request -> R1 (by_ip), R2 (scan), R4 (errors_5xx), R5 (latency)
-    //  - "down": chi dong event=backend_down -> R6
     private static final String QUERY_TEMPLATE = """
             {
               "size": 0,
@@ -66,11 +62,6 @@ public class AnomalyDetectorApp {
               }
             }
             """;
-    // R7: so request MOI PHUT trong N phut truoc (khong tinh phut hien tai).
-    //  - "/m": lam tron xuong dau phut -> moi cot la tron 1 phut, khong bi cat do
-    //  - min_doc_count 0 + extended_bounds: phut khong co request van co cot = 0
-    //    (phut im lang cung la "binh thuong", bo di se lam trung binh cao gia)
-    //  - ket thuc o now-1m/m: khong chong len cua so 60s dang xet
     private static final String BASELINE_TEMPLATE = """
             {
               "size": 0,
@@ -92,11 +83,6 @@ public class AnomalyDetectorApp {
             }
             """;
 
-    // R8: lay TUNG request (khong dem) trong vai giay gan nhat de xem noi dung.
-    //  - chi lay cac field can thiet (_source) cho nhe
-    //  - cua so = chu ky + 5s: chong len nhau mot chut de khong lot request nao giua 2 vong;
-    //    request bi xet 2 lan khong sao vi AlertNotifier da chong bao trung (cooldown)
-    //  - size gioi han: luu luong qua lon thi chi xet cac request moi nhat (in canh bao trong log)
     private static final int RECENT_MAX = 5000;
     private static final String RECENT_TEMPLATE = """
             {
@@ -117,16 +103,13 @@ public class AnomalyDetectorApp {
         DetectorConfig config = RulesConfigLoader.load();
         int window = config.windowSeconds();
 
-        // N phut lich su + 1 phut hien tai bi bo -> lay tu now-(N+1)m
         String baselineQuery = BASELINE_TEMPLATE.formatted(config.baselineMinutes() + 1);
 
         ElasticsearchClient es = new ElasticsearchClient(esUrl);
         RuleEngine engine = new RuleEngine(config.rules());
-        // Chi hoi them ES khi R8 dang bat
         boolean needRecent = engine.ruleIds().contains("ATTACK_SIGNATURE");
         String recentQuery = RECENT_TEMPLATE.formatted(RECENT_MAX, config.intervalSeconds() + 5);
         AlertNotifier notifier = new AlertNotifier(es, config.cooldownSeconds(), window);
-        // Tu dong chan IP qua API quan tri cua LB (cau hinh: muc auto_block trong rules.yaml)
         AutoBlocker autoBlocker = AutoBlocker.create(config.autoBlock(),
                 env("LB_ADMIN_URL", "http://localhost:8090"), System.getenv("LB_ADMIN_TOKEN"));
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -139,7 +122,7 @@ public class AnomalyDetectorApp {
 
         scheduler.scheduleWithFixedDelay(() -> {
             try {
-                notifier.prepare();   // lan dau: tao index template alerts-*
+                notifier.prepare();
 
                 JsonNode res = es.search("weblogs-*", QUERY_TEMPLATE.formatted(window));
                 JsonNode baselineRes = es.search("weblogs-*", baselineQuery);
@@ -153,10 +136,9 @@ public class AnomalyDetectorApp {
                 log.info(snapshot.summary(), kv("event", "snapshot"), kv("total", snapshot.total()));
 
                 List<Alert> alerts = engine.evaluate(snapshot);
-                List<Alert> published = notifier.notify(alerts);   // loc trung + in log + ghi alerts-*
-                autoBlocker.handle(published);                      // canh bao nao du dieu kien -> chan IP
+                List<Alert> published = notifier.notify(alerts);
+                autoBlocker.handle(published);
             } catch (Exception e) {
-                // In ca ten loai loi: "ConnectException: null" de hieu hon "null"
                 log.error("Loi trong vong phat hien: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             }
         }, 0, config.intervalSeconds(), TimeUnit.SECONDS);

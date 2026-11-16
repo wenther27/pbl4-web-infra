@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Demo gioi han toc do (buoi 5): 2 nhom chay song song 30 giay
-     - Nguoi dung binh thuong: IP 203.0.113.10, 3 request/giay  -> mong doi 100% 200
-     - Ke spam:                IP 203.0.113.99, 50 request/giay -> mong doi phan lon 429
-     (LB mac dinh 10 request/giay/IP, burst 20) -->
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Rate limit test plan">

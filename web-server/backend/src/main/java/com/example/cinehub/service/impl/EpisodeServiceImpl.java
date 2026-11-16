@@ -38,7 +38,7 @@ public class EpisodeServiceImpl implements EpisodeService {
     public EpisodeDTO addEpisode(Long id, Episode episode) {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Không tìm thấy fim với ID = " + id));
-        episode.setMovie(movie); // Khoa ngoại kết nối tập phim với bo phim
+        episode.setMovie(movie);
         return convertToDTO(episodeRepository.save(episode));
     }
 

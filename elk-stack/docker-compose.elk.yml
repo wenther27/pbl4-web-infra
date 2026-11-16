@@ -1,22 +1,10 @@
 name: cinehub-elk
 
-# ============================================================
-# ELK toi gian: web-1/2/3 -> Filebeat -> Elasticsearch -> Kibana
-#
-# Chay SAU khi da "docker compose up -d" o thu muc goc:
-#   docker compose -f elk-stack/docker-compose.elk.yml up -d
-# Kibana: http://localhost:5601   Elasticsearch: http://localhost:9200
-#
-# Hai stack doc lap: Filebeat doc log qua Docker (file log + docker.sock),
-# khong can chung network voi web-1/2/3. Tat ELK thi web van chay binh thuong.
-# ============================================================
-
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
     restart: unless-stopped
     environment:
-      # Gioi han heap, khong thi ES chiem dan het RAM (cam bay so 8 trong roadmap)
       ES_JAVA_OPTS: -Xms1g -Xmx1g
     volumes:
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
@@ -44,18 +32,13 @@ services:
   filebeat:
     image: docker.elastic.co/beats/filebeat:8.15.0
     restart: unless-stopped
-    # root: moi doc duoc file log cua container va docker.sock
     user: root
-    # strict.perms=false: file mount tu Windows luon co quyen 777, Filebeat mac dinh tu choi
     command: ["filebeat", "-e", "--strict.perms=false"]
     volumes:
       - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - ./filebeat/weblogs-template.json:/usr/share/filebeat/weblogs-template.json:ro
-      # Docker ghi stdout cua moi container ra day (log driver json-file)
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      # De biet container nao la web-1/2/3 (doc label cua docker compose)
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Nho da doc den dau, restart khong gui lai log cu
       - filebeat-data:/usr/share/filebeat/data
     depends_on:
       elasticsearch:

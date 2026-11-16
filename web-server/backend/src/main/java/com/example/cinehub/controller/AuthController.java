@@ -45,8 +45,8 @@ public class AuthController {
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword())); //Mã hóa pass
-        user.setRole(RoleUser.USER); //Mặc định là User
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setRole(RoleUser.USER);
         return ResponseEntity.ok(userService.createUser(user));
     }
 }

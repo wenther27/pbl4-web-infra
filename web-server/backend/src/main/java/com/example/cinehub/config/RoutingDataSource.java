@@ -5,10 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/**
- * Transaction readOnly = true -> REPLICA, con lai -> PRIMARY.
- * Dat logging.level.com.example.cinehub.config=DEBUG de xem tung ket noi di dau.
- */
 public class RoutingDataSource extends AbstractRoutingDataSource {
 
     private static final Logger log = LoggerFactory.getLogger(RoutingDataSource.class);
