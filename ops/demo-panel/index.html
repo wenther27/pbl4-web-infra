@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PBL4 · Bảng điều khiển demo</title>
+  <style>
+    :root {
+      --bg: #f4f2f1; --card: #fff; --text: #1f1a1a; --soft: #6f6666; --line: #e7e2e1;
+      --brand: #b3202c; --ok: #15803d; --blocked: #ea580c; --limited: #7c3aed; --error: #dc2626;
+      --warn: #c58a12; --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, "Segoe UI", Roboto, sans-serif; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+      padding: 14px 24px; background: #1f1718; color: #fff; }
+    header h1 { margin: 0; font-size: 18px; }
+    header h1 span { color: #ff8a92; }
+    header nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    header nav a { color: #fff; text-decoration: none; padding: 6px 10px; border: 1px solid #4a3b3c; border-radius: 8px; font-size: 13px; }
+    header nav a:hover { background: #33282a; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .pill.ok { background: #e7f6ec; color: var(--ok); } .pill.bad { background: #fde8e8; color: var(--error); }
+    .pill.warn { background: #fdf3dc; color: var(--warn); }
+    main { display: grid; grid-template-columns: minmax(320px, 430px) minmax(0, 1fr); gap: 18px; padding: 18px 24px 30px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+    .stack { display: flex; flex-direction: column; gap: 14px; }
+    h2 { margin: 0 0 4px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    h2 .num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; }
+    .hint { margin: 0 0 10px; color: var(--soft); font-size: 12.5px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 9px; border: 1px solid #d8d1d0;
+      background: #fff; color: var(--text); cursor: pointer; }
+    button:hover:not(:disabled) { border-color: var(--brand); color: var(--brand); }
+    button:disabled { opacity: .45; cursor: wait; }
+    button.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+    button.danger { border-color: #f1c4c7; color: var(--error); }
+    button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    button.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.08); }
+    .links { margin-top: 8px; font-size: 12.5px; }
+    .links a { color: var(--brand); margin-right: 10px; }
+    .backends { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .be { border: 1px solid var(--line); border-top: 4px solid var(--ok); border-radius: 12px; padding: 10px 12px; background: #fff; }
+    .be.warn { border-top-color: var(--warn); } .be.down { border-top-color: var(--error); background: #fffafa; }
+    .be h3 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .be dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 12.5px; }
+    .be dt { color: var(--soft); } .be dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+    .chart-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; }
+    .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; background: var(--c); vertical-align: -1px; }
+    canvas { width: 100%; height: 220px; display: block; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+    th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--soft); font-weight: 600; }
+    .c-ok { color: var(--ok); } .c-blocked { color: var(--blocked); } .c-limited { color: var(--limited); } .c-error { color: var(--error); }
+    .info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info ul { margin: 6px 0 0; padding: 0; list-style: none; font-size: 12.5px; }
+    .info li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+    .mono { font-family: ui-monospace, Consolas, monospace; }
+    #log { height: 260px; overflow: auto; margin: 8px 0 0; padding: 10px 12px; background: #1b1516; color: #e9e2e2; border-radius: 10px;
+      font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+    #log .cmd { color: #8ab4ff; } #log .ok { color: #7ee2a0; } #log .warn { color: #ffd479; } #log .error { color: #ff8a8a; } #log .out { color: #bfb4b4; }
+    #log time { color: #7d7070; margin-right: 8px; }
+    .error-box { margin: 0 24px; padding: 10px 14px; border-radius: 10px; background: #fde8e8; color: var(--error); font-weight: 600; }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; } .backends, .info { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PBL4 · <span>Bảng điều khiển demo</span></h1>
+    <span id="lb-pill" class="pill warn">Đang kết nối LB…</span>
+    <nav>
+      <a href="http://localhost:5173/?api=http://localhost:8080/api" target="_blank" rel="noopener">Web xem phim</a>
+      <a href="http://localhost:5173/pages/admin/index.html#infra" target="_blank" rel="noopener">Admin · Hạ tầng</a>
+      <a href="http://localhost:5173/pages/admin/index.html#security" target="_blank" rel="noopener">Admin · Bảo mật</a>
+      <a href="http://localhost:5601/app/dashboards#/view/cinehub-traffic" target="_blank" rel="noopener">Kibana</a>
+    </nav>
+  </header>
+  <p class="error-box" id="error" hidden></p>
+
+  <main>
+    <!-- ============ CỘT TRÁI: KỊCH BẢN ============ -->
+    <section class="stack">
+      <div class="card">
+        <h2><span class="num">1</span>DWLC – chia tải thông minh</h2>
+        <p class="hint">Gửi 30 request xem chia cho backend nào. Làm chậm web-3 rồi kiểm tra lại: DWLC gửi ít vào web-3.</p>
+        <div class="row">
+          <button data-action="dwlc-check">Kiểm tra chia tải (30 request)</button>
+          <button data-action="web3-slow" data-busy="web3">Làm chậm web-3</button>
+          <button data-action="web3-normal" data-busy="web3">web-3 bình thường</button>
+        </div>
+        <div class="links" id="reports">Báo cáo JMeter: đang tìm…</div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">2</span>Health check &amp; failover</h2>
+        <p class="hint">Bật người dùng bình thường, rồi tắt web-2: biểu đồ vẫn xanh (không lỗi), log cảnh báo R6.</p>
+        <div class="row">
+          <button data-gen="normal">Người dùng bình thường · 5 req/s</button>
+          <button class="danger" data-action="web2-stop" data-busy="web2">Tắt web-2</button>
+          <button data-action="web2-start" data-busy="web2">Bật web-2</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">3</span>Rolling deploy</h2>
+        <p class="hint">Giữ người dùng bình thường đang chạy, bấm deploy: drain → chờ → restart → undrain, biểu đồ vẫn xanh.</p>
+        <div class="row">
+          <button data-action="rolling-web2" data-busy="rolling">Rolling deploy web-2</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">4</span>R1 – admin chặn IP</h2>
+        <p class="hint">Bật kẻ tấn công. Sau ~30 giây trang Bảo mật hiện R1 → bấm "Chặn 5′": cột cam (403) xuất hiện.</p>
+        <div class="row">
+          <button data-gen="attacker">Kẻ tấn công R1 · 5 req/s</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">5</span>R8 – tự động chặn</h2>
+        <p class="hint">Bật kẻ tấn công (bước 4) rồi gửi 1 request XSS. Sau 10–20 giây hệ thống tự chặn, không cần bấm gì.</p>
+        <div class="row">
+          <button data-action="r8-xss">Gửi 1 request XSS từ 203.0.113.50</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">6</span>Giới hạn tốc độ (429)</h2>
+        <p class="hint">Bắn 80 request dồn dập từ 1 IP (khoảng 20 qua, còn lại 429), hoặc bật kẻ spam chạy song song với người dùng bình thường: chỉ kẻ spam bị cột tím (429).</p>
+        <div class="row">
+          <button data-action="ratelimit-burst">Bắn 80 request dồn dập (IP mới)</button>
+          <button data-gen="spam">Kẻ spam · 50 req/s</button>
+          <button data-action="ratelimit-low">Hạ ngưỡng 2 req/s · burst 5</button>
+          <button data-action="ratelimit-default">Ngưỡng mặc định 10 · 20</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Dọn dẹp giữa các phần</h2>
+        <p class="hint">Tắt mọi luồng traffic, gỡ chặn mọi IP, kết thúc bảo trì, trả rate limit về 10 · 20.</p>
+        <button class="primary" data-action="reset">Dọn dẹp / Reset</button>
+      </div>
+    </section>
+
+    <!-- ============ CỘT PHẢI: TRỰC TIẾP ============ -->
+    <section class="stack">
+      <div class="card">
+        <h2>Backend (Load Balancer theo dõi)</h2>
+        <p class="hint" id="strategy">Thuật toán: —</p>
+        <div class="backends" id="backends"></div>
+      </div>
+
+      <div class="card">
+        <div class="chart-head">
+          <h2>Request mỗi giây · 60 giây gần nhất</h2>
+          <div class="legend">
+            <span style="--c: var(--ok)">2xx thành công</span>
+            <span style="--c: var(--blocked)">403 bị chặn</span>
+            <span style="--c: var(--limited)">429 giới hạn</span>
+            <span style="--c: var(--error)">Lỗi 5xx / mất kết nối</span>
+          </div>
+        </div>
+        <canvas id="chart"></canvas>
+        <table>
+          <thead><tr><th>Luồng (giây vừa qua)</th><th>req/s</th><th>2xx</th><th>403</th><th>429</th><th>Lỗi</th><th>TB ms</th></tr></thead>
+          <tbody id="groups"></tbody>
+        </table>
+      </div>
+
+      <div class="card info">
+        <div>
+          <h2>IP đang bị chặn</h2>
+          <ul id="blocked"></ul>
+        </div>
+        <div>
+          <h2>Giới hạn tốc độ</h2>
+          <ul id="ratelimit"></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Log</h2>
+        <div id="log"></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const GROUP_LABELS = { normal: 'Người dùng bình thường', attacker: 'Kẻ tấn công R1', spam: 'Kẻ spam', test: 'Nút kiểm tra' };
+let lastLogId = 0;
+let state = null;
+
+async function act(name) {
+  try { await fetch(`/api/action/${name}`, { method: 'POST' }); } catch { /* server tat */ }
+  setTimeout(poll, 300);
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.action) act(btn.dataset.action);
+  if (btn.dataset.gen) {
+    const on = state?.generators?.[btn.dataset.gen]?.running;
+    act(`gen-${btn.dataset.gen}-${on ? 'stop' : 'start'}`);
+  }
+});
+
+function renderBackends(lb) {
+  const data = lb?.backends;
+  const strategy = data?.strategy;
+  $('#strategy').textContent = `Thuật toán: ${strategy === 'dwlc' ? 'DWLC (Dynamic Weighted Least Connection)' : strategy || '—'}`;
+  $('#backends').innerHTML = (data?.backends || []).map((b) => {
+    const cls = b.draining ? 'warn' : b.up ? '' : 'down';
+    const pill = b.draining ? '<span class="pill warn">Bảo trì</span>' : b.up ? '<span class="pill ok">UP</span>' : '<span class="pill bad">DOWN</span>';
+    const fmt = (v, d = 0, u = '') => (v === null || v === undefined ? '—' : `${Number(v).toFixed(d)}${u}`);
+    return `<div class="be ${cls}"><h3>${esc(b.name)} ${pill}</h3><dl>
+      ${b.weight !== undefined ? `<dt>Trọng số DWLC</dt><dd>${fmt(b.weight, 2)}</dd>` : ''}
+      ${b.latencyMs !== undefined ? `<dt>Độ trễ TB</dt><dd>${fmt(b.latencyMs, 0, ' ms')}</dd>` : ''}
+      ${b.errorRate !== undefined ? `<dt>Tỉ lệ lỗi</dt><dd>${fmt(b.errorRate, 1, '%')}</dd>` : ''}
+      <dt>Đang xử lý</dt><dd>${fmt(b.inFlight)}</dd>
+      ${b.served !== undefined ? `<dt>Tổng đã nhận</dt><dd>${fmt(b.served)}</dd>` : ''}
+    </dl></div>`;
+  }).join('') || '<p class="hint">Chưa lấy được trạng thái backend.</p>';
+}
+
+function renderInfo(lb) {
+  const blocked = lb?.blocked?.blocked || [];
+  $('#blocked').innerHTML = blocked.length
+    ? blocked.map((b) => `<li><span class="mono">${esc(b.ip)}</span><span>${b.by === 'auto-detector' ? 'Tự động' : esc(b.by || 'admin')}</span></li>`).join('')
+    : '<li><span class="hint">Không có IP nào bị chặn</span></li>';
+  const rl = lb?.rateLimit;
+  $('#ratelimit').innerHTML = rl
+    ? `<li><span>Trạng thái</span><strong>${rl.enabled ? `${rl.ratePerSecond} req/s/IP · burst ${rl.burst}` : 'Đang tắt'}</strong></li>` +
+      (rl.topRejected || []).slice(0, 4).map((t) => `<li><span class="mono">${esc(t.ip)}</span><span class="c-limited">${t.rejected} lần 429</span></li>`).join('')
+    : '<li><span class="hint">Chưa có thông tin</span></li>';
+}
+
+function totals(bucket) {
+  const t = { ok: 0, blocked: 0, limited: 0, error: 0 };
+  Object.values(bucket?.groups || {}).forEach((g) => { t.ok += g.ok; t.blocked += g.blocked; t.limited += g.limited; t.error += g.error; });
+  return t;
+}
+
+function drawChart(series, nowSec) {
+  const canvas = $('#chart');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  const css = getComputedStyle(document.documentElement);
+  const color = (n) => css.getPropertyValue(n).trim();
+  const byT = new Map(series.map((b) => [b.t, b]));
+  const cols = [];
+  for (let i = 59; i >= 0; i--) cols.push(totals(byT.get(nowSec - 1 - i)));
+  const max = Math.max(10, ...cols.map((c) => c.ok + c.blocked + c.limited + c.error));
+  const left = 34, bottom = 18, plotH = h - bottom - 6, plotW = w - left - 4, bw = plotW / 60;
+  ctx.font = '11px system-ui'; ctx.fillStyle = '#8a8080'; ctx.strokeStyle = '#eee9e8';
+  [0, 0.5, 1].forEach((f) => {
+    const y = 6 + plotH * (1 - f);
+    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(w, y); ctx.stroke();
+    ctx.fillText(String(Math.round(max * f)), 2, y + 4);
+  });
+  ctx.fillText('-60s', left, h - 4); ctx.fillText('bây giờ', w - 42, h - 4);
+  cols.forEach((c, i) => {
+    let y = 6 + plotH;
+    [['ok', '--ok'], ['blocked', '--blocked'], ['limited', '--limited'], ['error', '--error']].forEach(([k, v]) => {
+      if (!c[k]) return;
+      const bh = (c[k] / max) * plotH;
+      y -= bh;
+      ctx.fillStyle = color(v);
+      ctx.fillRect(left + i * bw + 1, y, Math.max(1, bw - 2), bh);
+    });
+  });
+}
+
+function renderGroups(series, nowSec) {
+  const last = series.find((b) => b.t === nowSec - 1);
+  const rows = Object.entries(last?.groups || {}).map(([k, g]) => `<tr><td>${esc(GROUP_LABELS[k] || k)}</td><td>${g.n}</td>
+    <td class="c-ok">${g.ok}</td><td class="c-blocked">${g.blocked}</td><td class="c-limited">${g.limited}</td><td class="c-error">${g.error}</td>
+    <td>${g.n ? Math.round(g.ms / g.n) : '—'}</td></tr>`);
+  $('#groups').innerHTML = rows.join('') || '<tr><td colspan="7" class="hint">Chưa có traffic. Bật một luồng ở cột trái.</td></tr>';
+}
+
+function renderButtons() {
+  document.querySelectorAll('[data-gen]').forEach((b) => b.classList.toggle('on', Boolean(state.generators?.[b.dataset.gen]?.running)));
+  document.querySelectorAll('[data-busy]').forEach((b) => { b.disabled = state.busy.includes(b.dataset.busy); });
+}
+
+function appendLogs(items) {
+  const box = $('#log');
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  items.forEach((l) => {
+    const div = document.createElement('div');
+    div.className = l.level;
+    div.innerHTML = `<time>${new Date(l.time).toLocaleTimeString('vi-VN')}</time>${esc(l.text)}`;
+    box.appendChild(div);
+    lastLogId = l.id;
+  });
+  while (box.children.length > 400) box.firstChild.remove();
+  if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+async function poll() {
+  try {
+    const res = await fetch(`/api/state?since=${lastLogId}`, { cache: 'no-store' });
+    state = await res.json();
+    const nowSec = Math.floor(state.now / 1000);
+    const err = state.lb?.error;
+    $('#error').hidden = !err;
+    $('#error').textContent = err ? `${err}. Kiểm tra Docker và Load Balancer đang chạy.` : '';
+    const pill = $('#lb-pill');
+    pill.className = `pill ${err ? 'bad' : 'ok'}`;
+    pill.textContent = err ? 'Mất kết nối LB' : 'Đã kết nối LB';
+    renderBackends(state.lb);
+    renderInfo(state.lb);
+    drawChart(state.series, nowSec);
+    renderGroups(state.series, nowSec);
+    renderButtons();
+    appendLogs(state.logs);
+  } catch {
+    const pill = $('#lb-pill');
+    pill.className = 'pill bad';
+    pill.textContent = 'Server demo đã tắt';
+  }
+}
+
+fetch('/api/reports').then((r) => r.json()).then((names) => {
+  $('#reports').innerHTML = names.length
+    ? 'Báo cáo JMeter: ' + names.map((n) => `<a href="/reports/${encodeURIComponent(n)}/index.html" target="_blank" rel="noopener">${esc(n.replace('report-', ''))}</a>`).join('')
+    : 'Chưa có báo cáo JMeter trong load-testing/jmeter.';
+}).catch(() => {});
+
+poll();
+setInterval(poll, 1000);
+window.addEventListener('resize', () => state && drawChart(state.series, Math.floor(state.now / 1000)));
+</script>
+</body>
+</html>
