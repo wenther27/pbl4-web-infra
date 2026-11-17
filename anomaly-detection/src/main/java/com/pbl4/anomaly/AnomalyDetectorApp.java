@@ -108,7 +108,7 @@ public class AnomalyDetectorApp {
         ElasticsearchClient es = new ElasticsearchClient(esUrl);
         RuleEngine engine = new RuleEngine(config.rules());
         boolean needRecent = engine.ruleIds().contains("ATTACK_SIGNATURE");
-        String recentQuery = RECENT_TEMPLATE.formatted(RECENT_MAX, config.intervalSeconds() + 5);
+        String recentQuery = RECENT_TEMPLATE.formatted(RECENT_MAX, Math.max(window, config.intervalSeconds() + 5));
         AlertNotifier notifier = new AlertNotifier(es, config.cooldownSeconds(), window);
         AutoBlocker autoBlocker = AutoBlocker.create(config.autoBlock(),
                 env("LB_ADMIN_URL", "http://localhost:8090"), System.getenv("LB_ADMIN_TOKEN"));
