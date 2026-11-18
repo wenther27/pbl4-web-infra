@@ -8,53 +8,53 @@
     "Faker",
     "CineHub"
   ],
-  "trainValues": 63978,
-  "threshold": 0.837,
+  "trainValues": 63957,
+  "threshold": 0.804,
   "byThreshold": {
     "0.5": {
-      "csicRecall": 0.984,
-      "csicFpr": 0.5417,
-      "paramsRecall": 1.0,
-      "paramsFpr": 0.0779,
-      "benignFpr": 0.0347
+      "csicRecall": 0.9883,
+      "csicFpr": 0.545,
+      "paramsRecall": 0.9995,
+      "paramsFpr": 0.0725,
+      "benignFpr": 0.0273
     },
     "0.7": {
       "csicRecall": 0.8628,
-      "csicFpr": 0.035,
-      "paramsRecall": 0.9982,
-      "paramsFpr": 0.0048,
-      "benignFpr": 0.005
+      "csicFpr": 0.0283,
+      "paramsRecall": 0.9967,
+      "paramsFpr": 0.0038,
+      "benignFpr": 0.0053
     },
     "0.8": {
-      "csicRecall": 0.6989,
-      "csicFpr": 0.0,
-      "paramsRecall": 0.9967,
-      "paramsFpr": 0.0006,
-      "benignFpr": 0.0003
+      "csicRecall": 0.6809,
+      "csicFpr": 0.0033,
+      "paramsRecall": 0.9931,
+      "paramsFpr": 0.0008,
+      "benignFpr": 0.0007
     },
-    "0.837": {
-      "csicRecall": 0.6,
-      "csicFpr": 0.0,
-      "paramsRecall": 0.9941,
-      "paramsFpr": 0.0006,
-      "benignFpr": 0.0003
+    "0.804": {
+      "csicRecall": 0.6649,
+      "csicFpr": 0.0017,
+      "paramsRecall": 0.9931,
+      "paramsFpr": 0.0008,
+      "benignFpr": 0.0007
     },
     "0.9": {
       "csicRecall": 0.4255,
       "csicFpr": 0.0,
-      "paramsRecall": 0.989,
-      "paramsFpr": 0.0004,
+      "paramsRecall": 0.9875,
+      "paramsFpr": 0.0002,
       "benignFpr": 0.0
     },
     "0.95": {
-      "csicRecall": 0.3691,
+      "csicRecall": 0.3649,
       "csicFpr": 0.0,
-      "paramsRecall": 0.9837,
+      "paramsRecall": 0.9806,
       "paramsFpr": 0.0002,
       "benignFpr": 0.0
     }
   },
-  "trainSeconds": 37.2,
-  "msPerValue": 0.087,
-  "trainedAt": "2026-11-18 14:44:05"
+  "trainSeconds": 39.2,
+  "msPerValue": 0.081,
+  "trainedAt": "2026-11-18 14:59:31"
 }

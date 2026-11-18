@@ -43,6 +43,13 @@ class AttackSignatureRuleTest {
     }
 
     @Test
+    void sqlInjection_trongBodyPost_vanBat() {
+        RequestRecord post = new RequestRecord("2026-11-18T10:00:00Z", "203.0.113.61", "/api/auth/login", "",
+                "Mozilla/5.0", 401, "username=admin%27+OR+%271%27%3D%271");
+        assertEquals(Set.of("SQL_INJECTION"), r8.match(post));
+    }
+
+    @Test
     void pathTraversal_bat() {
         assertEquals(Set.of("PATH_TRAVERSAL"),
                 r8.match(req("/api/uploads", "file=..%2F..%2Fetc%2Fpasswd", "Mozilla/5.0")));

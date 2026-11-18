@@ -58,7 +58,7 @@ public class AttackSignatureRule extends ThresholdRule {
 
     Set<String> match(RequestRecord r) {
         Set<String> groups = new LinkedHashSet<>();
-        String target = decode(nz(r.path()) + (nz(r.query()).isEmpty() ? "" : "?" + r.query()));
+        String target = decode(r.display());
         contentSignatures.forEach((group, patterns) -> {
             for (Pattern p : patterns) {
                 if (p.matcher(target).find()) {
@@ -97,7 +97,7 @@ public class AttackSignatureRule extends ThresholdRule {
         boolean onlyUserAgent = groups.size() == 1 && groups.contains("SCANNER_TOOL");
         String text = onlyUserAgent
                 ? "User-Agent: " + nz(r.userAgent())
-                : decode(nz(r.path()) + (nz(r.query()).isEmpty() ? "" : "?" + r.query()));
+                : decode(r.display());
         text = text.replaceAll("\\p{Cntrl}", " ");
         return text.length() > SAMPLE_MAX ? text.substring(0, SAMPLE_MAX) + "..." : text;
     }

@@ -98,6 +98,7 @@ public class ProxyHandler implements HttpHandler {
         boolean rateLimited = false;
         boolean streamingRequest = isStreamingRequest(method, path);
 
+        String bodySample = null;
         String pendingBackend = null;
         long pendingStart = 0;
         boolean pendingOk = false;
@@ -131,6 +132,7 @@ public class ProxyHandler implements HttpHandler {
             }
 
             byte[] bufferedBody = streamingRequest ? null : exchange.getRequestBody().readAllBytes();
+            bodySample = BodySampler.sample(method, exchange.getRequestHeaders().getFirst("Content-Type"), bufferedBody);
             Set<String> tried = new HashSet<>();
             HttpResponse<InputStream> response = null;
             String lastError = "";
@@ -210,6 +212,7 @@ public class ProxyHandler implements HttpHandler {
                     kv("rateLimited", rateLimited),
                     kv("strategy", strategy.name()),
                     kv("query", query),
+                    kv("body", bodySample),
                     kv("userAgent", userAgent));
             exchange.close();
         }

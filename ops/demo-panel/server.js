@@ -53,18 +53,23 @@ function log(text, level = 'info') {
 // ---------------------------------------------------------------- goi HTTP toi LB
 const agent = new http.Agent({ keepAlive: true, maxSockets: 256 });
 
-function lbRequest(pathname, { ip, timeout = 10000 } = {}) {
+function lbRequest(pathname, { ip, timeout = 10000, method = 'GET', json } = {}) {
   return new Promise((resolve) => {
     const started = Date.now();
     const headers = { 'User-Agent': 'pbl4-demo-panel' };
     if (ip) headers['X-Forwarded-For'] = ip;          // gia lap IP client (LB_TRUST_XFF=true khi demo)
-    const req = http.request({ host: LB_HOST, port: LB_PORT, path: pathname, method: 'GET', headers, agent, timeout }, (res) => {
+    const payload = json === undefined ? null : Buffer.from(JSON.stringify(json));
+    if (payload) {
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = payload.length;
+    }
+    const req = http.request({ host: LB_HOST, port: LB_PORT, path: pathname, method, headers, agent, timeout }, (res) => {
       res.resume();
       res.on('end', () => resolve({ status: res.statusCode, ms: Date.now() - started, instance: res.headers['x-instance-id'] || null }));
     });
     req.on('timeout', () => req.destroy(new Error('timeout')));
     req.on('error', () => resolve({ status: 0, ms: Date.now() - started, instance: null }));
-    req.end();
+    req.end(payload || undefined);
   });
 }
 
@@ -254,6 +259,15 @@ const ACTIONS = {
       log(`R9 · ${ip} gửi title=${q} → HTTP ${r.status} · điểm ML ${score}`, 'ok');
     }
     log('R9 · Chờ 10–20 giây: trang Admin → Bảo mật sẽ có cảnh báo "R9 · IDS học máy" cho 203.0.113.60. R8 không báo vì regex không có các mẫu này.');
+  },
+  'r9-post': async () => {
+    const ip = '203.0.113.61';
+    const username = "x','0');waitfor delay '0:0:15';--";
+    const r = await lbRequest('/api/auth/login', { ip, method: 'POST', json: { username, password: 'mat-khau-bat-ky' } });
+    record('test', r);
+    const score = await mlScore('/api/auth/login', 'username=' + encodeURIComponent(username));
+    log(`R9 · ${ip} POST /api/auth/login username=${username} → HTTP ${r.status} · điểm ML ${score}`, 'ok');
+    log('R9 · Payload nằm trong BODY (không có trên URL). Chờ 10–20 giây: cảnh báo "R9 · IDS học máy" cho 203.0.113.61, mật khẩu không được ghi vào log.');
   },
   'r9-normal': async () => {
     for (const q of ['avengers', 'lật mặt', "Ocean's Eleven", 'Spider-Man: No Way Home']) {

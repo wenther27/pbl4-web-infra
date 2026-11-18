@@ -22,7 +22,7 @@ class MlIdsRuleTest {
     }
 
     private static final MlIdsRule.Scorer FAKE = batch -> batch.stream()
-            .map(r -> r.query().contains("<svg") ? 0.97 : 0.05)
+            .map(r -> AttackSignatureRule.decode(r.payload()).contains("<svg") ? 0.97 : 0.05)
             .toList();
 
     @Test
@@ -73,5 +73,17 @@ class MlIdsRuleTest {
         });
         List<Alert> alerts = rule.evaluate(snapshot(List.of(req("1.1.1.1", "/api/movies", "title=<svg>"))));
         assertTrue(alerts.isEmpty());
+    }
+
+    @Test
+    void chamCaBodyCuaPost() {
+        MlIdsRule rule = new MlIdsRule(Map.of("threshold", 0.9), FAKE);
+        RequestRecord post = new RequestRecord("2026-11-18T10:00:00Z", "203.0.113.61", "/api/auth/login", "",
+                "Mozilla/5.0", 401, "username=%3Csvg%2Fonfocus%3Dalert(1)%3E");
+        List<Alert> alerts = rule.evaluate(snapshot(List.of(post)));
+
+        assertEquals(1, alerts.size());
+        assertEquals("203.0.113.61", alerts.get(0).target());
+        assertTrue(alerts.get(0).message().contains("[body] username=<svg/onfocus=alert(1)>"));
     }
 }

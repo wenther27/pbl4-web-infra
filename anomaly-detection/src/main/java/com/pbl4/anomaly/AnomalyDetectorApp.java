@@ -88,7 +88,7 @@ public class AnomalyDetectorApp {
             {
               "size": %d,
               "track_total_hits": true,
-              "_source": ["@timestamp", "clientIp", "path", "query", "userAgent", "status"],
+              "_source": ["@timestamp", "clientIp", "path", "query", "body", "userAgent", "status"],
               "sort": [ { "@timestamp": "desc" } ],
               "query": { "bool": { "filter": [
                 { "term":  { "instance": "lb" } },

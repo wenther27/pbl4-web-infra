@@ -31,6 +31,13 @@ def generate(n=6000, seed=42):
         lambda f: f.sentence(nb_words=rng.randint(2, 8)),
         lambda f: f.word(),
         lambda f: rng.choice(["asc", "desc", "true", "false", "movie", "series", "anime", "vi", "en"]),
+        lambda f: f.url() + f.uri_path(),
+        lambda f: f.image_url(),
+        lambda f: "/" + f.uri_path() + "/" + f.file_name(),
+        lambda f: f"/uploads/{rng.choice(['images', 'videos'])}/{f.uuid4()[:rng.randint(4, 36)]}"
+                  f"{rng.choice(['', '_', '-'])}{f.word()}.{rng.choice(['jpg', 'png', 'webp', 'mp4'])}",
+        lambda f: f.user_name() + rng.choice(["", "_", "."]) + str(rng.randint(1, 9999)),
+        lambda f: f.paragraph(nb_sentences=rng.randint(1, 3)),
     ]
     out = []
     for _ in range(n):

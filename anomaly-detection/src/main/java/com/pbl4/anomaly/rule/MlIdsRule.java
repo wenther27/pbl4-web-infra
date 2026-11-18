@@ -122,16 +122,15 @@ public class MlIdsRule extends ThresholdRule {
     }
 
     private static boolean skip(RequestRecord r) {
-        return nz(r.query()).isBlank();
+        return r.payload().isBlank();
     }
 
     private static String key(RequestRecord r) {
-        return nz(r.path()) + "?" + nz(r.query());
+        return nz(r.path()) + "?" + r.payload();
     }
 
     private static String sample(RequestRecord r) {
-        String text = AttackSignatureRule.decode(nz(r.path()) + (nz(r.query()).isEmpty() ? "" : "?" + r.query()))
-                .replaceAll("\\p{Cntrl}", " ");
+        String text = AttackSignatureRule.decode(r.display()).replaceAll("\\p{Cntrl}", " ");
         return text.length() > SAMPLE_MAX ? text.substring(0, SAMPLE_MAX) + "..." : text;
     }
 
@@ -175,7 +174,7 @@ public class MlIdsRule extends ThresholdRule {
             ObjectNode body = JSON.createObjectNode();
             ArrayNode arr = body.putArray("requests");
             for (RequestRecord r : batch) {
-                arr.addObject().put("path", nz(r.path())).put("query", nz(r.query()));
+                arr.addObject().put("path", nz(r.path())).put("query", r.payload());
             }
             HttpRequest req = HttpRequest.newBuilder(predictUri)
                     .timeout(timeout)

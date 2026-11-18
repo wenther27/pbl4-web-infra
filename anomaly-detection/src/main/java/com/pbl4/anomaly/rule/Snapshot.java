@@ -81,7 +81,8 @@ public record Snapshot(
                     d.path("path").asText(""),
                     d.path("query").asText(""),
                     d.path("userAgent").asText(""),
-                    d.path("status").asInt(0)));
+                    d.path("status").asInt(0),
+                    d.path("body").asText("")));
         }
         return list;
     }
