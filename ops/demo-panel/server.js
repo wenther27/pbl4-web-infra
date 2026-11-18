@@ -114,6 +114,28 @@ function record(group, result) {
   else g.error += 1;                                   // 5xx, 0 (khong ket noi duoc)...
 }
 
+const ML_IDS_URL = process.env.ML_IDS_URL || 'http://127.0.0.1:8000';
+const R9_PAYLOADS = [
+  "x','0');waitfor delay '0:0:15';--",
+  '<svg/onfocus=alert(1) autofocus>',
+  "1; exec xp_cmdshell 'dir'"
+];
+
+async function mlScore(pathname, query) {
+  try {
+    const res = await fetch(ML_IDS_URL + '/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests: [{ path: pathname, query }] }),
+      signal: AbortSignal.timeout(3000)
+    });
+    const data = await res.json();
+    return data.scores ? data.scores[0].toFixed(3) : '?';
+  } catch {
+    return 'không gọi được ml-ids';
+  }
+}
+
 // ---------------------------------------------------------------- may tao luu luong
 const GENERATORS = {
   normal:   { label: 'Người dùng bình thường', rps: 5,  ip: null,           path: '/api/movies' },
@@ -220,6 +242,24 @@ const ACTIONS = {
     record('test', r);
     log(`R8 · Gửi 1 request XSS từ 203.0.113.50 → HTTP ${r.status}. Chờ 10–20 giây để bộ phát hiện quét và tự chặn.`,
       r.status === 200 ? 'ok' : 'warn');
+  },
+
+  'r9-ml': async () => {
+    const ip = '203.0.113.60';
+    for (const q of R9_PAYLOADS) {
+      const pathname = '/api/movies?title=' + encodeURIComponent(q);
+      const r = await lbRequest(pathname, { ip });
+      record('test', r);
+      const score = await mlScore('/api/movies', 'title=' + encodeURIComponent(q));
+      log(`R9 · ${ip} gửi title=${q} → HTTP ${r.status} · điểm ML ${score}`, 'ok');
+    }
+    log('R9 · Chờ 10–20 giây: trang Admin → Bảo mật sẽ có cảnh báo "R9 · IDS học máy" cho 203.0.113.60. R8 không báo vì regex không có các mẫu này.');
+  },
+  'r9-normal': async () => {
+    for (const q of ['avengers', 'lật mặt', "Ocean's Eleven", 'Spider-Man: No Way Home']) {
+      const score = await mlScore('/api/movies', 'title=' + encodeURIComponent(q));
+      log(`R9 · Request bình thường title=${q} · điểm ML ${score}`, 'ok');
+    }
   },
 
   // Rate limit nhanh: 80 request trong khoang 1 giay tu 1 IP moi (moi lan bam 1 IP khac -> thung token day).

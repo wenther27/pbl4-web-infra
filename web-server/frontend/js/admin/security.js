@@ -5,7 +5,8 @@ const RULE_LABELS = {
   HIGH_RATE_IP: 'R1 · Quá nhiều request',
   SCAN_PATHS: 'R2 · Dò quét đường dẫn',
   BRUTE_FORCE_LOGIN: 'R3 · Đoán mật khẩu',
-  ATTACK_SIGNATURE: 'R8 · Mẫu tấn công'
+  ATTACK_SIGNATURE: 'R8 · Mẫu tấn công',
+  ML_IDS: 'R9 · IDS học máy'
 };
 const BLOCK_MINUTES = [5, 30, 60];
 const AUTO_REFRESH_SECONDS = 10;

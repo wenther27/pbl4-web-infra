@@ -192,6 +192,7 @@ services:
       RULES_FILE: /app/rules.yaml
       LB_ADMIN_URL: http://load-balancer:8090
       LB_ADMIN_TOKEN: ${LB_ADMIN_TOKEN:-dev-admin-token-doi-di}
+      ML_IDS_URL: http://ml-ids:8000
       JAVA_TOOL_OPTIONS: -Xmx96m -XX:+UseSerialGC
     volumes:
       - ./anomaly-detection/src/main/resources/rules.yaml:/app/rules.yaml:ro

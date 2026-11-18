@@ -27,7 +27,7 @@ import java.util.Set;
 public class SecurityAdminService {
 
     private static final List<String> IP_RULES =
-            List.of("HIGH_RATE_IP", "SCAN_PATHS", "BRUTE_FORCE_LOGIN", "ATTACK_SIGNATURE");
+            List.of("HIGH_RATE_IP", "SCAN_PATHS", "BRUTE_FORCE_LOGIN", "ATTACK_SIGNATURE", "ML_IDS");
 
     private final RestClient es;
     private final RestClient lb;

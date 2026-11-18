@@ -71,3 +71,10 @@ rules:
         - '/etc/(passwd|shadow)'
     user_agent_signatures:
       - '(sqlmap|nikto|nmap|masscan|acunetix|wpscan|dirbuster|gobuster|nuclei)'
+
+  ML_IDS:
+    enabled: true
+    severity: HIGH
+    threshold: 0.9
+    min_matches: 1
+    timeout_ms: 3000

@@ -8,6 +8,7 @@ import com.pbl4.anomaly.rule.ZScoreRule;
 import com.pbl4.anomaly.rule.ErrorRate5xxRule;
 import com.pbl4.anomaly.rule.HighLatencyRule;
 import com.pbl4.anomaly.rule.HighRateIpRule;
+import com.pbl4.anomaly.rule.MlIdsRule;
 import com.pbl4.anomaly.rule.Rule;
 import com.pbl4.anomaly.rule.ScanPathsRule;
 import org.slf4j.Logger;
@@ -95,6 +96,7 @@ public class RulesConfigLoader {
             case "BACKEND_DOWN"   -> new BackendDownRule(params);
             case "TRAFFIC_SPIKE"  -> new ZScoreRule(params);
             case "ATTACK_SIGNATURE" -> new AttackSignatureRule(params);
+            case "ML_IDS"         -> new MlIdsRule(params);
             default -> {
                 log.warn("Bo qua luat khong biet: " + id);
                 yield null;
