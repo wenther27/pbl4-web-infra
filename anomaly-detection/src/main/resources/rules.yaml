@@ -8,7 +8,7 @@ whitelist_ips: []
 auto_block:
   enabled: true
   dry_run: false
-  rules: [ATTACK_SIGNATURE, BRUTE_FORCE_LOGIN]
+  rules: [ATTACK_SIGNATURE, BRUTE_FORCE_LOGIN, ML_IDS]
   minutes: 15
   max_per_minute: 10
 
