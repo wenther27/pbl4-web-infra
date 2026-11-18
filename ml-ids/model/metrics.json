@@ -1,0 +1,26 @@
+{
+  "dataset": "csic_database.csv",
+  "extraNormal": true,
+  "augment": true,
+  "train": 14015,
+  "test": 1885,
+  "threshold": 0.5,
+  "accuracy": 0.9093,
+  "precision": 0.9829,
+  "recall": 0.8778,
+  "f1": 0.9274,
+  "rocAuc": 0.9722,
+  "confusionMatrix": [
+    [
+      622,
+      19
+    ],
+    [
+      152,
+      1092
+    ]
+  ],
+  "trainSeconds": 8.1,
+  "msPerRequest": 0.263,
+  "trainedAt": "2026-11-18 03:57:47"
+}

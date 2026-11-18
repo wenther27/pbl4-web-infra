@@ -1,0 +1,8 @@
+/api/movies?title=avengers&page=0&size=12
+/api/movies?title=lật mặt&page=0&size=20
+/api/movies?title=<script>alert(1)</script>
+/api/movies?title=<svg/onfocus=alert(1) autofocus>
+/api/movies?title=x','0');waitfor delay '0:0:15';--
+/api/movies?title=any%0D%0ASet-cookie:+Tamper=1041264011
+/api/movies?title=1' || '1'='1
+/api/movies?title=1; exec xp_cmdshell 'dir'
