@@ -1,0 +1,42 @@
+﻿Du lieu train (moi mau = 1 gia tri tham so):
+  CSIC binh thuong                        21606
+  CSIC tan cong (da tach payload)         18790
+  HttpParams binh thuong                  10224
+  HttpParams tan cong                      7840
+  CineHub binh thuong                       761
+  Gia tri binh thuong tong hop (Faker)     6000
+  => 63978 mau (37757 binh thuong, 26221 tan cong)
+
+Model: LR + RF (trung binh)
+Nguong: 0.837 (tu dong: bao nham <= 0.1% tren 3000 gia tri hieu chinh)
+
+Danh gia tren du lieu KHONG dung de train:
+  A = CSIC tap test (1540 request, cham theo request = diem cao nhat cua cac tham so)
+  B = HttpParams tap test (8915 gia tri, sqlmap/XSS/fuzzdb)
+  C = 3000 gia tri binh thuong tong hop moi (chi do bao nham)
+
+Nguong    A recall  A bao nham  B recall  B bao nham  C bao nham
+0.5          0.984       0.542     1.000       0.078       0.035
+0.7          0.863       0.035     0.998       0.005       0.005
+0.8          0.699       0.000     0.997       0.001       0.000
+0.837        0.600       0.000     0.994       0.001       0.000
+0.9          0.426       0.000     0.989       0.000       0.000
+0.95         0.369       0.000     0.984       0.000       0.000
+
+ROC-AUC: CSIC 0.9615, HttpParams 1.0000
+Thoi gian train: 37.8s, cham diem: 0.083 ms/gia tri
+Da luu model/ids-model.joblib va model/metrics.json
+
+Thu vai request (nguong 0.837):
+  0.000  normal  /api/movies?page=1&size=12
+  0.165  normal  /api/movies?title=avengers&page=0&size=12
+  0.200  normal  /api/movies?title=l%E1%BA%ADt+m%E1%BA%B7t&page=0&size=20
+  0.173  normal  /api/movies?title=Spider-Man: No Way Home
+  0.706  normal  /api/movies?title=select
+  0.000  normal  /api/admin/security/suspicious-ips?minutes=60
+  0.998  ATTACK  /api/movies?title=<script>alert(1)</script>
+  0.961  ATTACK  /api/movies?title=1' OR '1'='1
+  0.956  ATTACK  /api/movies?title=<svg/onfocus=alert(1) autofocus>
+  1.000  ATTACK  /api/movies?title=x','0');waitfor delay '0:0:15';--
+  0.825  normal  /api/movies?title=1; exec xp_cmdshell 'dir'
+  0.973  ATTACK  /api/movies?title=../../../../etc/passwd

@@ -118,7 +118,7 @@ const ML_IDS_URL = process.env.ML_IDS_URL || 'http://127.0.0.1:8000';
 const R9_PAYLOADS = [
   "x','0');waitfor delay '0:0:15';--",
   '<svg/onfocus=alert(1) autofocus>',
-  "1; exec xp_cmdshell 'dir'"
+  'any\r\nSet-cookie: Tamper=1041264011'
 ];
 
 async function mlScore(pathname, query) {

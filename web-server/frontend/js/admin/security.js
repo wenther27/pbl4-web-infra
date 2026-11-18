@@ -153,7 +153,7 @@ function renderMlIds() {
   body.innerHTML = `
     <div class="admin-infra-summary">
       <div class="admin-infra-stat"><span>Mô hình</span>
-        <strong>v${escapeHtml(String(model.version ?? '?'))} · ${escapeHtml(model.features || '—')}</strong></div>
+        <strong>v${escapeHtml(String(model.version ?? '?'))} · ${escapeHtml(model.model || model.features || '—')}</strong></div>
       <div class="admin-infra-stat"><span>Dữ liệu train</span>
         <strong>${escapeHtml((model.datasets || []).join(', ') || '—')} · ${count(model.trainValues)} mẫu</strong></div>
       <div class="admin-infra-stat"><span>Đã chấm từ lúc khởi động</span>

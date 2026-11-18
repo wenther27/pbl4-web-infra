@@ -1,4 +1,5 @@
 import argparse
+import json
 import re
 from pathlib import Path
 
@@ -50,13 +51,15 @@ def main():
     ap.add_argument("--extra-normal")
     ap.add_argument("--model", default="model/ids-model.joblib")
     ap.add_argument("--rules", default="../anomaly-detection/src/main/resources/rules.yaml")
-    ap.add_argument("--threshold", type=float, default=0.9)
+    ap.add_argument("--threshold", type=float, help="mac dinh: nguong trong model/metrics.json")
     args = ap.parse_args()
 
     _, test_req = prepare(args.data, args.params, args.extra_normal, benign=0, verbose=False)
     model = joblib.load(args.model)
     patterns = load_r8(args.rules)
-    t = args.threshold
+    metrics_file = Path(args.model).with_name("metrics.json")
+    saved = json.loads(metrics_file.read_text(encoding="utf-8")).get("threshold") if metrics_file.exists() else None
+    t = args.threshold or saved or 0.9
 
     y = test_req.label.tolist()
     ml_s = score_requests(model, test_req.vals.tolist())

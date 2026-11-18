@@ -1,5 +1,6 @@
 {
-  "version": 2,
+  "version": 3,
+  "model": "LR + RF (trung binh)",
   "features": "gia tri tham so, char n-gram 1-5",
   "datasets": [
     "CSIC 2010",
@@ -8,45 +9,52 @@
     "CineHub"
   ],
   "trainValues": 63978,
-  "threshold": 0.9,
+  "threshold": 0.837,
   "byThreshold": {
     "0.5": {
-      "csicRecall": 0.9862,
-      "csicFpr": 0.695,
+      "csicRecall": 0.984,
+      "csicFpr": 0.5417,
       "paramsRecall": 1.0,
-      "paramsFpr": 0.1491,
-      "benignFpr": 0.052
+      "paramsFpr": 0.0779,
+      "benignFpr": 0.0347
     },
     "0.7": {
-      "csicRecall": 0.9266,
-      "csicFpr": 0.23,
-      "paramsRecall": 0.9997,
-      "paramsFpr": 0.035,
-      "benignFpr": 0.019
+      "csicRecall": 0.8628,
+      "csicFpr": 0.035,
+      "paramsRecall": 0.9982,
+      "paramsFpr": 0.0048,
+      "benignFpr": 0.005
     },
     "0.8": {
-      "csicRecall": 0.8309,
-      "csicFpr": 0.1,
-      "paramsRecall": 0.9987,
-      "paramsFpr": 0.0128,
-      "benignFpr": 0.0067
-    },
-    "0.9": {
-      "csicRecall": 0.5979,
-      "csicFpr": 0.02,
-      "paramsRecall": 0.9957,
-      "paramsFpr": 0.0022,
+      "csicRecall": 0.6989,
+      "csicFpr": 0.0,
+      "paramsRecall": 0.9967,
+      "paramsFpr": 0.0006,
       "benignFpr": 0.0003
     },
+    "0.837": {
+      "csicRecall": 0.6,
+      "csicFpr": 0.0,
+      "paramsRecall": 0.9941,
+      "paramsFpr": 0.0006,
+      "benignFpr": 0.0003
+    },
+    "0.9": {
+      "csicRecall": 0.4255,
+      "csicFpr": 0.0,
+      "paramsRecall": 0.989,
+      "paramsFpr": 0.0004,
+      "benignFpr": 0.0
+    },
     "0.95": {
-      "csicRecall": 0.483,
-      "csicFpr": 0.005,
-      "paramsRecall": 0.9901,
-      "paramsFpr": 0.0012,
+      "csicRecall": 0.3691,
+      "csicFpr": 0.0,
+      "paramsRecall": 0.9837,
+      "paramsFpr": 0.0002,
       "benignFpr": 0.0
     }
   },
-  "trainSeconds": 10.9,
-  "msPerValue": 0.033,
-  "trainedAt": "2026-11-18 04:19:22"
+  "trainSeconds": 37.2,
+  "msPerValue": 0.087,
+  "trainedAt": "2026-11-18 14:44:05"
 }

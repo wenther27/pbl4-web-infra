@@ -1,0 +1,24 @@
+﻿
+A. CSIC 2010 - 1540 request (nguong ML 0.837)
+  Phuong phap        Precision   Recall      F1  Bao nham     TP    FP     FN
+  R8 regex              1.0000   0.1202  0.2146    0.0000    113     0    827
+  R9 ML-IDS             1.0000   0.6000  0.7500    0.0000    564     0    376
+  R8 + R9               1.0000   0.6000  0.7500    0.0000    564     0    376
+  Vi du R8 bo sot, ML bat duoc:
+    1.000  "/tienda1/miembros/editar.jsp?modo=registro&login=nady&password=9va3831','0','0');waitfor delay '0:0:15';--&nom"
+    1.000  '/tienda1/publico/registro.jsp?modo=registro&login=bhasin&password=desOndra&nombre=Saiguen&apellidos=Pedercini '
+    1.000  '/tienda1/miembros/editar.jsp?modo=registro&login=robbie&password=7nexor40ilidad&nombre=Milet&apellidos=Alles A'
+    1.000  '/tienda1/miembros/editar.jsp?modo=registro&login=julee&password=any?\r\nSet-cookie: Tamper=1041264011025374727&n'
+    1.000  '/tienda1/miembros/editar.jsp?modo=registro&login=lodesert&password=heRramienTa&nombre=Edelmira&apellidos=Capo '
+
+B. HttpParamsDataset - 8915 gia tri
+  Phuong phap        Precision   Recall      F1  Bao nham     TP    FP     FN
+  R8 regex              1.0000   0.3750  0.5455    0.0000   1470     0   2450
+  R9 ML-IDS             0.9992   0.9941  0.9967    0.0006   3897     3     23
+  R8 + R9               0.9992   0.9944  0.9968    0.0006   3898     3     22
+    sqli             R8 bat  36.2%   ML bat 100.0%
+    xss              R8 bat  62.1%   ML bat  94.9%
+    path-traversal   R8 bat  50.5%   ML bat  94.8%
+    cmdi             R8 bat   3.3%   ML bat  70.0%
+
+C. 3000 gia tri binh thuong tong hop: R8 bao nham 0.00%, ML bao nham 0.03%

@@ -1,0 +1,19 @@
+﻿Gui 240 request (120 tan cong tu 40 IP, 120 binh thuong tu 40 IP) toi http://host.docker.internal:8080 ...
+  da gui 50/240
+  da gui 100/240
+  da gui 150/240
+  da gui 200/240
+Ma HTTP nhan duoc: {200: 235, 403: 5}
+Cho 45 giay de log vao ES va detector cham diem ...
+
+Ket qua theo IP (1 IP = 1 ke tan cong / 1 nguoi dung):
+  Nhom              So IP    R8 bat    R9 bat   R8 hoac R9
+  sqli                 10    4 ( 40%)  10 (100%)    10 (100%)
+  xss                  10    9 ( 90%)  10 (100%)    10 (100%)
+  path-traversal       10    9 ( 90%)  10 (100%)    10 (100%)
+  cmdi                 10    1 ( 10%)  10 (100%)    10 (100%)
+  TONG tan cong        40   23 ( 57%)  40 (100%)    40 (100%)
+  Binh thuong          40    0 (  0%)   0 (  0%)     0 (  0%)
+  (dong 'Binh thuong' la bao nham: cang thap cang tot)
+
+Xong. Nho bam Reset tren demo panel (hoac go chan IP) vi R8 tu dong chan cac IP tan cong 15 phut.

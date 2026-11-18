@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -6,7 +7,7 @@ import joblib
 from dataset import score_requests
 from features import values
 
-THRESHOLD = 0.9
+THRESHOLD = json.loads(Path("model/metrics.json").read_text(encoding="utf-8")).get("threshold", 0.9)
 
 model = joblib.load("model/ids-model.joblib")
 file = Path(sys.argv[1] if len(sys.argv) > 1 else "payloads.txt")
