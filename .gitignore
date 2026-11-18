@@ -43,3 +43,7 @@ load-testing/**/results/
 load-testing/**/report-*/
 
 web-server/BE/
+
+ml-ids/data/
+ml-ids/.venv/
+__pycache__/

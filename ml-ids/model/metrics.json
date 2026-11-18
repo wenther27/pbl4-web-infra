@@ -1,26 +1,52 @@
 {
-  "dataset": "csic_database.csv",
-  "extraNormal": true,
-  "augment": true,
-  "train": 14015,
-  "test": 1885,
-  "threshold": 0.5,
-  "accuracy": 0.9093,
-  "precision": 0.9829,
-  "recall": 0.8778,
-  "f1": 0.9274,
-  "rocAuc": 0.9722,
-  "confusionMatrix": [
-    [
-      622,
-      19
-    ],
-    [
-      152,
-      1092
-    ]
+  "version": 2,
+  "features": "gia tri tham so, char n-gram 1-5",
+  "datasets": [
+    "CSIC 2010",
+    "HttpParamsDataset",
+    "Faker",
+    "CineHub"
   ],
-  "trainSeconds": 8.1,
-  "msPerRequest": 0.263,
-  "trainedAt": "2026-11-18 03:57:47"
+  "trainValues": 63978,
+  "threshold": 0.9,
+  "byThreshold": {
+    "0.5": {
+      "csicRecall": 0.9862,
+      "csicFpr": 0.695,
+      "paramsRecall": 1.0,
+      "paramsFpr": 0.1491,
+      "benignFpr": 0.052
+    },
+    "0.7": {
+      "csicRecall": 0.9266,
+      "csicFpr": 0.23,
+      "paramsRecall": 0.9997,
+      "paramsFpr": 0.035,
+      "benignFpr": 0.019
+    },
+    "0.8": {
+      "csicRecall": 0.8309,
+      "csicFpr": 0.1,
+      "paramsRecall": 0.9987,
+      "paramsFpr": 0.0128,
+      "benignFpr": 0.0067
+    },
+    "0.9": {
+      "csicRecall": 0.5979,
+      "csicFpr": 0.02,
+      "paramsRecall": 0.9957,
+      "paramsFpr": 0.0022,
+      "benignFpr": 0.0003
+    },
+    "0.95": {
+      "csicRecall": 0.483,
+      "csicFpr": 0.005,
+      "paramsRecall": 0.9901,
+      "paramsFpr": 0.0012,
+      "benignFpr": 0.0
+    }
+  },
+  "trainSeconds": 10.9,
+  "msPerValue": 0.033,
+  "trainedAt": "2026-11-18 04:19:22"
 }

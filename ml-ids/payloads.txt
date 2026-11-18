@@ -1,8 +1,15 @@
+# Request binh thuong
 /api/movies?title=avengers&page=0&size=12
 /api/movies?title=lật mặt&page=0&size=20
+/api/movies?title=Spider-Man: No Way Home
+/api/movies?title=Ocean's Eleven
+/api/admin/security/suspicious-ips?minutes=60
+# Tan cong R8 bat duoc
 /api/movies?title=<script>alert(1)</script>
+/api/movies?title=1' OR '1'='1
+# Tan cong R8 bo sot
 /api/movies?title=<svg/onfocus=alert(1) autofocus>
 /api/movies?title=x','0');waitfor delay '0:0:15';--
-/api/movies?title=any%0D%0ASet-cookie:+Tamper=1041264011
-/api/movies?title=1' || '1'='1
 /api/movies?title=1; exec xp_cmdshell 'dir'
+/api/movies?title=1" or pg_sleep(5)--
+/api/movies?title=;cat /etc/passwd
