@@ -16,6 +16,8 @@ let blocked = [];
 let neverBlock = [];
 let suspiciousError = '';
 let blockedError = '';
+let mlIds = null;
+let mlIdsError = '';
 let initialized = false;
 let loading = false;
 let ticks = 0;
@@ -123,6 +125,55 @@ function renderBlocked() {
   </tr>`).join('');
 }
 
+const pct = (value) => (typeof value === 'number' ? `${(value * 100).toFixed(1)}%` : '—');
+const count = (value) => (typeof value === 'number' ? value.toLocaleString('vi-VN') : '—');
+
+function renderMlIds() {
+  const status = $('#mlids-status');
+  const body = $('#mlids-body');
+  if (mlIdsError || !mlIds?.up) {
+    status.innerHTML = '<span class="admin-badge admin-badge--danger">Không hoạt động</span>';
+    body.innerHTML = `<p class="admin-mlids-note">${escapeHtml(mlIdsError || 'Dịch vụ ml-ids không phản hồi.')}
+      R9 tạm bỏ qua, các luật R1–R8 vẫn hoạt động bình thường. Kiểm tra: <code>docker compose ps ml-ids</code></p>`;
+    return;
+  }
+  const model = mlIds.model || {};
+  const stats = mlIds.stats || {};
+  const found = mlIds.detections;
+  status.innerHTML = '<span class="admin-badge admin-badge--success">Đang hoạt động</span>';
+  const rows = Object.entries(model.byThreshold || {}).map(([threshold, r]) => {
+    const active = Number(threshold) === Number(model.threshold);
+    return `<tr class="${active ? 'is-active' : ''}">
+      <td>${escapeHtml(threshold)}${active ? ' ✔ đang dùng' : ''}</td>
+      <td>${pct(r.csicRecall)}</td><td>${pct(r.csicFpr)}</td>
+      <td>${pct(r.paramsRecall)}</td><td>${pct(r.paramsFpr)}</td>
+      <td>${pct(r.benignFpr)}</td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = `
+    <div class="admin-infra-summary">
+      <div class="admin-infra-stat"><span>Mô hình</span>
+        <strong>v${escapeHtml(String(model.version ?? '?'))} · ${escapeHtml(model.features || '—')}</strong></div>
+      <div class="admin-infra-stat"><span>Dữ liệu train</span>
+        <strong>${escapeHtml((model.datasets || []).join(', ') || '—')} · ${count(model.trainValues)} mẫu</strong></div>
+      <div class="admin-infra-stat"><span>Đã chấm từ lúc khởi động</span>
+        <strong>${count(stats.scored)} request · ${count(stats.requests)} lô</strong></div>
+      <div class="admin-infra-stat"><span>24 giờ qua (số IP bị phát hiện)</span>
+        <strong>${found ? `R9: ${found.r9Ips} · R8: ${found.r8Ips} · chỉ R9 bắt được: ${found.onlyR9Ips}` : '—'}</strong></div>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table admin-mlids-table">
+        <thead><tr>
+          <th>Ngưỡng</th><th>CSIC bắt được</th><th>CSIC báo nhầm</th>
+          <th>Payload bắt được</th><th>Payload báo nhầm</th><th>Input thường báo nhầm</th>
+        </tr></thead>
+        <tbody>${rows || tableMessage(6, 'Model chưa có số liệu đánh giá.')}</tbody>
+      </table>
+    </div>
+    <p class="admin-mlids-note">Đo trên dữ liệu không dùng để train: CSIC 2010 (theo request), payload sqlmap/XSS/FuzzDB của HttpParamsDataset, input bình thường tổng hợp. Train lúc ${escapeHtml(model.trainedAt || '?')} (giờ UTC),
+      chấm ${escapeHtml(String(model.msPerValue ?? '?'))} ms mỗi giá trị.</p>`;
+}
+
 async function load({ quiet = false } = {}) {
   if (loading) return;
   loading = true;
@@ -131,10 +182,17 @@ async function load({ quiet = false } = {}) {
     $('#blocked-table-body').innerHTML = tableMessage(6, 'Đang tải danh sách chặn…', 'loading');
   }
   try {
-    const [alerts, blockList] = await Promise.allSettled([
+    const [alerts, blockList, mlStatus] = await Promise.allSettled([
       adminApi.getSuspiciousIps($('#security-window').value),
-      adminApi.getBlockedIps()
+      adminApi.getBlockedIps(),
+      adminApi.getMlIdsStatus()
     ]);
+    if (mlStatus.status === 'fulfilled') {
+      mlIds = mlStatus.value;
+      mlIdsError = '';
+    } else {
+      mlIdsError = loadError(mlStatus.reason);
+    }
     if (blockList.status === 'fulfilled') {
       blocked = blockList.value?.blocked || [];
       neverBlock = blockList.value?.neverBlock || [];
@@ -150,6 +208,7 @@ async function load({ quiet = false } = {}) {
     }
     renderBlocked();
     renderSuspicious();
+    renderMlIds();
     $('#security-updated').textContent = `Cập nhật lúc ${new Intl.DateTimeFormat('vi-VN', { timeStyle: 'medium' }).format(new Date())}`;
   } finally {
     loading = false;

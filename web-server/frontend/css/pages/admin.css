@@ -1334,3 +1334,23 @@
   display: grid;
   gap: 7px;
 }
+
+.admin-mlids-table tr.is-active td {
+  background: var(--color-primary-soft);
+  font-weight: 700;
+}
+
+#mlids-status .admin-badge {
+  white-space: nowrap;
+}
+
+#mlids-body .admin-infra-summary {
+  margin: 16px 22px;
+}
+
+.admin-mlids-note {
+  margin: 0;
+  padding: 12px 22px 16px;
+  color: var(--color-text-soft);
+  font-size: 0.7rem;
+}

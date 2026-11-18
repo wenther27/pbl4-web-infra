@@ -384,13 +384,27 @@
               <span class="admin-result-count" id="security-updated"></span>
             </div>
 
+            <div class="admin-panel admin-security-panel" id="mlids-panel">
+              <div class="admin-panel__heading">
+                <div>
+                  <h2>R9 · IDS học máy</h2>
+                  <p>
+                    Mô hình chấm điểm giá trị tham số của mọi request qua Load
+                    Balancer. Điểm ≥ ngưỡng thì cảnh báo và tự động chặn IP.
+                  </p>
+                </div>
+                <span id="mlids-status"></span>
+              </div>
+              <div id="mlids-body"></div>
+            </div>
+
             <div class="admin-panel admin-security-panel">
               <div class="admin-panel__heading">
                 <div>
                   <h2>IP bị cảnh báo</h2>
                   <p>
-                    Gộp theo IP từ các luật R1, R2, R3. Bấm "Chặn" để Load
-                    Balancer trả 403 cho IP đó.
+                    Gộp theo IP từ các luật R1, R2, R3, R8, R9. Bấm "Chặn" để
+                    Load Balancer trả 403 cho IP đó.
                   </p>
                 </div>
                 <span class="admin-result-count" id="suspicious-count"></span>

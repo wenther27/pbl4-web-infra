@@ -63,6 +63,7 @@ export const adminApi = {
 
   getSuspiciousIps: (minutes = 60) => adminRequest(`/admin/security/suspicious-ips?minutes=${encodeURIComponent(minutes)}`),
   getBlockedIps: () => adminRequest('/admin/security/blocked-ips'),
+  getMlIdsStatus: () => adminRequest('/admin/security/ml-ids'),
   blockIp: (body) => adminRequest('/admin/security/blocked-ips', jsonBody('POST', body)),
   unblockIp: (ip) => adminRequest(`/admin/security/blocked-ips/${encodeURIComponent(ip)}`, { method: 'DELETE' }),
   getInfraOverview: () => adminRequest('/admin/infra/overview'),

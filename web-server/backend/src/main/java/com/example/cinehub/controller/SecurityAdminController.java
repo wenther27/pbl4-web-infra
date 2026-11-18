@@ -34,6 +34,11 @@ public class SecurityAdminController {
         return service.suspiciousIps(Math.max(1, Math.min(minutes, 1440)));
     }
 
+    @GetMapping("/ml-ids")
+    public JsonNode mlIdsStatus() {
+        return service.mlIdsStatus();
+    }
+
     @GetMapping("/blocked-ips")
     public JsonNode blockedIps() {
         return service.blockedIps();

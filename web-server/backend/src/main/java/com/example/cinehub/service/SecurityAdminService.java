@@ -13,10 +13,12 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,11 +33,13 @@ public class SecurityAdminService {
 
     private final RestClient es;
     private final RestClient lb;
+    private final RestClient mlIds;
     private final ObjectMapper json;
 
     public SecurityAdminService(@Value("${app.security.es-url}") String esUrl,
                                 @Value("${app.security.lb-admin-url}") String lbAdminUrl,
                                 @Value("${app.security.lb-admin-token}") String lbAdminToken,
+                                @Value("${app.security.ml-ids-url}") String mlIdsUrl,
                                 ObjectMapper json) {
         SimpleClientHttpRequestFactory timeouts = new SimpleClientHttpRequestFactory();
         timeouts.setConnectTimeout(2000);
@@ -45,6 +49,7 @@ public class SecurityAdminService {
         this.lb = RestClient.builder().baseUrl(lbAdminUrl).requestFactory(timeouts)
                 .defaultHeader("X-Admin-Token", lbAdminToken)
                 .build();
+        this.mlIds = RestClient.builder().baseUrl(mlIdsUrl).requestFactory(timeouts).build();
         this.json = json;
     }
 
@@ -115,6 +120,52 @@ public class SecurityAdminService {
         result.set("lb", backends);
         result.set("rateLimit", rateLimit);
         return result;
+    }
+
+    public JsonNode mlIdsStatus() {
+        var result = json.createObjectNode();
+        try {
+            String body = mlIds.get().uri("/health").retrieve().body(String.class);
+            JsonNode health = json.readTree(body == null ? "{}" : body);
+            result.put("up", true);
+            result.set("model", health.path("model"));
+            result.set("stats", health.path("stats"));
+        } catch (RestClientException | JsonProcessingException e) {
+            result.put("up", false);
+            result.put("error", "Khong ket noi duoc dich vu ml-ids");
+        }
+        try {
+            result.set("detections", detections24h());
+        } catch (UpstreamServiceException e) {
+            result.putNull("detections");
+        }
+        return result;
+    }
+
+    private JsonNode detections24h() {
+        String query = """
+                {
+                  "size": 1000,
+                  "_source": ["rule", "target"],
+                  "query": { "bool": { "filter": [
+                    { "terms": { "rule": ["ATTACK_SIGNATURE", "ML_IDS"] } },
+                    { "range": { "@timestamp": { "gte": "now-24h" } } }
+                  ]}}
+                }
+                """;
+        Set<String> r8 = new HashSet<>();
+        Set<String> r9 = new HashSet<>();
+        for (JsonNode hit : callEs(query).path("hits").path("hits")) {
+            JsonNode a = hit.path("_source");
+            ("ML_IDS".equals(a.path("rule").asText()) ? r9 : r8).add(a.path("target").asText());
+        }
+        Set<String> onlyR9 = new HashSet<>(r9);
+        onlyR9.removeAll(r8);
+        var d = json.createObjectNode();
+        d.put("r8Ips", r8.size());
+        d.put("r9Ips", r9.size());
+        d.put("onlyR9Ips", onlyR9.size());
+        return d;
     }
 
     public JsonNode drainBackend(String name, boolean drain, String admin) {
