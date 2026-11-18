@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -130,6 +131,7 @@ public class SecurityAdminService {
             result.put("up", true);
             result.set("model", health.path("model"));
             result.set("stats", health.path("stats"));
+            result.put("pendingFeedback", pendingFeedback(health.path("model").path("trainedAt").asText("")));
         } catch (RestClientException | JsonProcessingException e) {
             result.put("up", false);
             result.put("error", "Khong ket noi duoc dich vu ml-ids");
@@ -168,6 +170,122 @@ public class SecurityAdminService {
         return d;
     }
 
+    public JsonNode reportFalsePositive(String ip, String admin) {
+        String cleanIp = ip.trim();
+        double threshold = mlThreshold();
+
+        String query = """
+                {
+                  "size": 300,
+                  "sort": [ { "@timestamp": "desc" } ],
+                  "_source": ["path", "query", "body"],
+                  "query": { "bool": { "filter": [
+                    { "term": { "instance": "lb" } },
+                    { "term": { "event": "request" } },
+                    { "term": { "clientIp": "%s" } },
+                    { "range": { "@timestamp": { "gte": "now-60m" } } }
+                  ]}}
+                }
+                """.formatted(cleanIp);
+        Map<String, Map<String, String>> unique = new LinkedHashMap<>();
+        for (JsonNode hit : callEs("/weblogs-*/_search", query).path("hits").path("hits")) {
+            JsonNode src = hit.path("_source");
+            String path = src.path("path").asText("");
+            String q = src.path("query").asText("");
+            String b = src.path("body").asText("");
+            if (!q.isBlank() || !b.isBlank()) {
+                unique.putIfAbsent(path + "?" + q + "#" + b, Map.of("path", path, "query", q, "body", b));
+            }
+        }
+
+        List<Map<String, String>> items = new ArrayList<>(unique.values());
+        List<Map<String, String>> flagged = new ArrayList<>();
+        if (!items.isEmpty()) {
+            var request = json.createObjectNode();
+            var arr = request.putArray("requests");
+            for (Map<String, String> it : items) {
+                String q = it.get("query");
+                String b = it.get("body");
+                arr.addObject().put("path", it.get("path"))
+                        .put("query", q.isEmpty() ? b : b.isEmpty() ? q : q + "&" + b);
+            }
+            JsonNode scores;
+            try {
+                String body = mlIds.post().uri("/predict")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(toJson(request))
+                        .retrieve().body(String.class);
+                scores = json.readTree(body == null ? "{}" : body).path("scores");
+            } catch (RestClientException | JsonProcessingException e) {
+                throw new UpstreamServiceException(503, "Dich vu ml-ids khong phan hoi");
+            }
+            for (int i = 0; i < items.size() && i < scores.size(); i++) {
+                if (scores.get(i).asDouble() >= threshold) {
+                    flagged.add(items.get(i));
+                }
+            }
+        }
+
+        if (!flagged.isEmpty()) {
+            String now = Instant.now().toString();
+            StringBuilder bulk = new StringBuilder();
+            for (Map<String, String> it : flagged) {
+                Map<String, Object> doc = new LinkedHashMap<>(it);
+                doc.put("@timestamp", now);
+                doc.put("ip", cleanIp);
+                doc.put("by", admin);
+                bulk.append("{\"index\":{}}\n").append(toJson(doc)).append('\n');
+            }
+            try {
+                es.post().uri("/ids-feedback/_bulk?refresh=true")
+                        .contentType(MediaType.parseMediaType("application/x-ndjson"))
+                        .body(bulk.toString())
+                        .retrieve().body(String.class);
+            } catch (RestClientException e) {
+                throw new UpstreamServiceException(503, "Khong ghi duoc phan hoi vao Elasticsearch");
+            }
+        }
+
+        boolean unblocked = false;
+        try {
+            unblock(cleanIp, admin);
+            unblocked = true;
+        } catch (UpstreamServiceException ignored) {
+        }
+
+        var result = json.createObjectNode();
+        result.put("ip", cleanIp);
+        result.put("checked", items.size());
+        result.put("saved", flagged.size());
+        result.put("unblocked", unblocked);
+        result.put("threshold", threshold);
+        return result;
+    }
+
+    private double mlThreshold() {
+        try {
+            String body = mlIds.get().uri("/health").retrieve().body(String.class);
+            return json.readTree(body == null ? "{}" : body).path("model").path("threshold").asDouble(0.9);
+        } catch (RestClientException | JsonProcessingException e) {
+            throw new UpstreamServiceException(503, "Dich vu ml-ids khong phan hoi");
+        }
+    }
+
+    private long pendingFeedback(String trainedAt) {
+        String query = trainedAt.isBlank() ? "{}" : """
+                { "query": { "range": { "@timestamp": { "gt": "%s", "format": "yyyy-MM-dd HH:mm:ss" } } } }
+                """.formatted(trainedAt);
+        try {
+            String body = es.post().uri("/ids-feedback*/_count")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(query)
+                    .retrieve().body(String.class);
+            return json.readTree(body == null ? "{}" : body).path("count").asLong(0);
+        } catch (RestClientException | JsonProcessingException e) {
+            return 0;
+        }
+    }
+
     public JsonNode drainBackend(String name, boolean drain, String admin) {
         if (!name.matches("[A-Za-z0-9._-]{1,63}")) {
             throw new UpstreamServiceException(400, "Ten backend khong hop le");
@@ -200,8 +318,12 @@ public class SecurityAdminService {
     }
 
     private JsonNode callEs(String query) {
+        return callEs("/alerts-*/_search", query);
+    }
+
+    private JsonNode callEs(String uri, String query) {
         try {
-            String body = es.post().uri("/alerts-*/_search")
+            String body = es.post().uri(uri)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(query)
                     .retrieve().body(String.class);

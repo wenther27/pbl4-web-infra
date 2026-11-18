@@ -66,6 +66,7 @@ def load_extra_normal(path):
             if line.startswith("{"):
                 o = json.loads(line)
                 out.extend(values(o.get("path", ""), o.get("query", "") or ""))
+                out.extend(values("", o.get("body", "") or ""))
             else:
                 out.extend(values(line))
     return out
@@ -78,7 +79,7 @@ def _strip_prefix(v, normal):
     return v
 
 
-def prepare(csic, params, extra_normal=None, benign=6000, verbose=True):
+def prepare(csic, params, extra_normal=None, benign=6000, verbose=True, feedback=None, feedback_weight=10):
     req = load_csic(csic)
     train_req, test_req = train_test_split(req, test_size=0.2, random_state=42, stratify=req.label)
 
@@ -107,6 +108,9 @@ def prepare(csic, params, extra_normal=None, benign=6000, verbose=True):
         add("CineHub binh thuong", load_extra_normal(extra_normal), 0)
     if benign:
         add("Gia tri binh thuong tong hop (Faker)", generate(benign), 0)
+    if feedback:
+        fb = load_extra_normal(feedback)
+        add(f"Bao nham do admin danh dau (x{feedback_weight})", fb * feedback_weight, 0)
 
     train = pd.DataFrame({"x": x, "y": y})
     conflict = train.groupby("x").y.nunique()

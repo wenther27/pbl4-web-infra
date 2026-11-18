@@ -64,7 +64,18 @@ function severityBadge(severity) {
     : '<span class="admin-badge admin-badge--warning">Trung bình</span>';
 }
 
+function falsePositiveButton(item) {
+  return (item.rules || []).includes('ML_IDS')
+    ? `<button class="admin-icon-button" type="button" data-fp-ip="${escapeHtml(item.ip)}"
+        title="Đánh dấu cảnh báo R9 của IP này là báo nhầm: lưu request để train lại model và gỡ chặn">Báo nhầm</button>`
+    : '';
+}
+
 function suspiciousActions(item, blockedEntry) {
+  return falsePositiveButton(item) + baseActions(item, blockedEntry);
+}
+
+function baseActions(item, blockedEntry) {
   if (neverBlock.includes(item.ip)) {
     return '<span class="admin-badge" title="Gateway Docker = trình duyệt của admin sau NAT. Chặn IP này sẽ khóa luôn admin.">IP được bảo vệ</span>';
   }
@@ -156,8 +167,8 @@ function renderMlIds() {
         <strong>v${escapeHtml(String(model.version ?? '?'))} · ${escapeHtml(model.model || model.features || '—')}</strong></div>
       <div class="admin-infra-stat"><span>Dữ liệu train</span>
         <strong>${escapeHtml((model.datasets || []).join(', ') || '—')} · ${count(model.trainValues)} mẫu</strong></div>
-      <div class="admin-infra-stat"><span>Đã chấm từ lúc khởi động</span>
-        <strong>${count(stats.scored)} request · ${count(stats.requests)} lô</strong></div>
+      <div class="admin-infra-stat"><span>Đã chấm từ lúc khởi động · báo nhầm chờ train lại</span>
+        <strong>${count(stats.scored)} request · ${count(mlIds.pendingFeedback ?? 0)} báo nhầm</strong></div>
       <div class="admin-infra-stat"><span>24 giờ qua (số IP bị phát hiện)</span>
         <strong>${found ? `R9: ${found.r9Ips} · R8: ${found.r8Ips} · chỉ R9 bắt được: ${found.onlyR9Ips}` : '—'}</strong></div>
     </div>
@@ -272,6 +283,21 @@ export async function initSecurity() {
     $('#security-block-manual').addEventListener('click', openManualBlockDialog);
 
     $('[data-admin-view="security"]').addEventListener('click', async (event) => {
+      const fpButton = event.target.closest('[data-fp-ip]');
+      if (fpButton) {
+        const ip = fpButton.dataset.fpIp;
+        if (!confirmAction(`Đánh dấu cảnh báo R9 của ${ip} là BÁO NHẦM?\nCác request bị model chấm cao trong 60 phút qua sẽ được lưu làm dữ liệu bình thường để train lại, và IP được gỡ chặn.`)) return;
+        fpButton.disabled = true;
+        try {
+          const r = await adminApi.reportFalsePositive(ip);
+          showToast(`Đã lưu ${r.saved}/${r.checked} request của ${ip} làm dữ liệu báo nhầm${r.unblocked ? ', đã gỡ chặn' : ''}. Chạy ml-ids\\retrain.ps1 để model học.`);
+          await load({ quiet: true });
+        } catch (error) {
+          showToast(errorMessage(error), 'error');
+          fpButton.disabled = false;
+        }
+        return;
+      }
       const blockButton = event.target.closest('[data-block-ip]');
       const unblockButton = event.target.closest('[data-unblock-ip]');
       const button = blockButton || unblockButton;

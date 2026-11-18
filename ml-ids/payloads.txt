@@ -13,3 +13,9 @@
 /api/movies?title=1; exec xp_cmdshell 'dir'
 /api/movies?title=1" or pg_sleep(5)--
 /api/movies?title=;cat /etc/passwd
+
+# Ung vien bao nham (request binh thuong nhung de bi cham cao)
+/api/movies?title=Rock'n'Roll
+/api/movies?title=N'Golo Kanté
+/api/movies?title=x=1;y=2
+/api/movies?title=1=1

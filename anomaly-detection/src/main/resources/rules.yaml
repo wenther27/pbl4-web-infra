@@ -75,6 +75,6 @@ rules:
   ML_IDS:
     enabled: true
     severity: HIGH
-    threshold: 0.804
+    threshold: 0.782
     min_matches: 1
     timeout_ms: 3000

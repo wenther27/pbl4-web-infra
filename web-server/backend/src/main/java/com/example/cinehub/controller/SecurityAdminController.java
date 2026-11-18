@@ -1,6 +1,7 @@
 package com.example.cinehub.controller;
 
 import com.example.cinehub.dto.request.BlockIpRequest;
+import com.example.cinehub.dto.request.FalsePositiveRequest;
 import com.example.cinehub.dto.response.SuspiciousIpDTO;
 import com.example.cinehub.service.SecurityAdminService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,6 +38,11 @@ public class SecurityAdminController {
     @GetMapping("/ml-ids")
     public JsonNode mlIdsStatus() {
         return service.mlIdsStatus();
+    }
+
+    @PostMapping("/ml-ids/false-positive")
+    public JsonNode reportFalsePositive(@Valid @RequestBody FalsePositiveRequest request, Principal admin) {
+        return service.reportFalsePositive(request.ip(), admin.getName());
     }
 
     @GetMapping("/blocked-ips")

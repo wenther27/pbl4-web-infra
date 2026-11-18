@@ -48,6 +48,8 @@ def main():
     ap.add_argument("--params", default="data/HttpParamsDataset", help="thu muc HttpParamsDataset")
     ap.add_argument("--extra-normal", help="request binh thuong cua CineHub (export_normal.py)")
     ap.add_argument("--benign", type=int, default=6000, help="so gia tri binh thuong tong hop bang Faker")
+    ap.add_argument("--feedback", help="request admin danh dau bao nham (export_feedback.py)")
+    ap.add_argument("--feedback-weight", type=int, default=10, help="moi mau bao nham duoc lap lai bao nhieu lan")
     ap.add_argument("--model", default="ens", choices=["lr", "nb", "rf", "ens"],
                     help="lr / nb / rf / ens (LR + RF), xem compare_models.py")
     ap.add_argument("--max-fpr", type=float, default=0.001,
@@ -56,7 +58,8 @@ def main():
     ap.add_argument("--out", default="model")
     args = ap.parse_args()
 
-    train, test_req = prepare(args.data, args.params, args.extra_normal, args.benign)
+    train, test_req = prepare(args.data, args.params, args.extra_normal, args.benign,
+                              feedback=args.feedback, feedback_weight=args.feedback_weight)
     model = build_model(args.model)
     print(f"\nModel: {MODELS[args.model]}")
     t0 = time.time()
@@ -101,7 +104,8 @@ def main():
         "version": 3,
         "model": MODELS[args.model],
         "features": "gia tri tham so, char n-gram 1-5",
-        "datasets": ["CSIC 2010", "HttpParamsDataset", "Faker"] + (["CineHub"] if args.extra_normal else []),
+        "datasets": ["CSIC 2010", "HttpParamsDataset", "Faker"] + (["CineHub"] if args.extra_normal else [])
+                    + (["Bao nham (admin)"] if args.feedback else []),
         "trainValues": int(len(train)),
         "threshold": threshold,
         "byThreshold": table,

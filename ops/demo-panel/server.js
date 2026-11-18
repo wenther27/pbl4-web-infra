@@ -126,6 +126,8 @@ const R9_PAYLOADS = [
   'any\r\nSet-cookie: Tamper=1041264011'
 ];
 
+const R9_FALSE_POSITIVE = ["Rock'n'Roll"];
+
 async function mlScore(pathname, query) {
   try {
     const res = await fetch(ML_IDS_URL + '/predict', {
@@ -268,6 +270,16 @@ const ACTIONS = {
     const score = await mlScore('/api/auth/login', 'username=' + encodeURIComponent(username));
     log(`R9 · ${ip} POST /api/auth/login username=${username} → HTTP ${r.status} · điểm ML ${score}`, 'ok');
     log('R9 · Payload nằm trong BODY (không có trên URL). Chờ 10–20 giây: cảnh báo "R9 · IDS học máy" cho 203.0.113.61, mật khẩu không được ghi vào log.');
+  },
+  'r9-fp': async () => {
+    const ip = '203.0.113.70';
+    for (const q of R9_FALSE_POSITIVE) {
+      const r = await lbRequest('/api/movies?title=' + encodeURIComponent(q) + '&page=0&size=12', { ip });
+      record('test', r);
+      const score = await mlScore('/api/movies', 'title=' + encodeURIComponent(q));
+      log(`R9 · ${ip} tìm phim "${q}" (request BÌNH THƯỜNG) → HTTP ${r.status} · điểm ML ${score}`, 'ok');
+    }
+    log('R9 · Nếu điểm ≥ ngưỡng: sau 10–20 giây trang Bảo mật báo R9 cho 203.0.113.70 → bấm "Báo nhầm" → chạy ml-ids\\retrain.ps1 → bấm lại nút này, điểm phải giảm.');
   },
   'r9-normal': async () => {
     for (const q of ['avengers', 'lật mặt', "Ocean's Eleven", 'Spider-Man: No Way Home']) {
