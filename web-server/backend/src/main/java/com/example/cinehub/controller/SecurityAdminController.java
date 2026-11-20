@@ -40,6 +40,11 @@ public class SecurityAdminController {
         return service.mlIdsStatus();
     }
 
+    @PostMapping("/ml-ids/evaluate")
+    public JsonNode evaluateMlIds(@RequestParam(required = false) Double threshold) {
+        return service.evaluateMlIds(threshold);
+    }
+
     @PostMapping("/ml-ids/false-positive")
     public JsonNode reportFalsePositive(@Valid @RequestBody FalsePositiveRequest request, Principal admin) {
         return service.reportFalsePositive(request.ip(), admin.getName());

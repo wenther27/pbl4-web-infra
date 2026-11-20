@@ -8,6 +8,7 @@ from sklearn.metrics import roc_auc_score
 
 from benign import generate
 from dataset import load_httpparams, prepare, score_requests
+from evaluation import build_testset, evaluate, save_testset, summary
 from features import values
 from models import MODELS, build_model
 
@@ -113,6 +114,12 @@ def main():
         "msPerValue": round(ms_per_value, 3),
         "trainedAt": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
+    testset = build_testset(test_req, args.params)
+    save_testset(testset, out)
+    metrics["evaluation"] = summary(evaluate(model, testset, threshold))
+    ev = metrics["evaluation"]["overall"]
+    print(f"Tap test {ev['total']} mau: accuracy {ev['accuracy']:.2%}, precision {ev['precision']:.2%}, "
+          f"recall {ev['recall']:.2%}, F1 {ev['f1']:.3f}")
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Da luu {out / 'ids-model.joblib'} va {out / 'metrics.json'}")
 

@@ -65,6 +65,7 @@ export const adminApi = {
   getBlockedIps: () => adminRequest('/admin/security/blocked-ips'),
   getMlIdsStatus: () => adminRequest('/admin/security/ml-ids'),
   reportFalsePositive: (ip) => adminRequest('/admin/security/ml-ids/false-positive', jsonBody('POST', { ip })),
+  evaluateMlIds: (threshold) => adminRequest(`/admin/security/ml-ids/evaluate${threshold ? `?threshold=${encodeURIComponent(threshold)}` : ''}`, { method: 'POST', timeout: 60000 }),
   blockIp: (body) => adminRequest('/admin/security/blocked-ips', jsonBody('POST', body)),
   unblockIp: (ip) => adminRequest(`/admin/security/blocked-ips/${encodeURIComponent(ip)}`, { method: 'DELETE' }),
   getInfraOverview: () => adminRequest('/admin/infra/overview'),

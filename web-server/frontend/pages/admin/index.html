@@ -347,77 +347,57 @@
             <div class="admin-section-heading">
               <div>
                 <h2>Bảo mật</h2>
-                <p>
-                  IP bị bộ phát hiện bất thường cảnh báo và IP đang bị Load
-                  Balancer chặn.
-                </p>
+                <p>Theo dõi IP tấn công, IP đang bị chặn và mô hình IDS học máy (R9).</p>
               </div>
-              <button
-                class="admin-button admin-button--primary"
-                id="security-block-manual"
-                type="button"
-              >
+              <button class="admin-button admin-button--primary" id="security-block-manual" type="button">
                 ⛔ Chặn IP thủ công
               </button>
             </div>
-            <div class="admin-notice" id="security-protected"></div>
-            <div class="admin-security-toolbar">
-              <label
-                >Cảnh báo trong
-                <select id="security-window">
-                  <option value="15">15 phút qua</option>
-                  <option value="60" selected>1 giờ qua</option>
-                  <option value="1440">24 giờ qua</option>
-                </select></label
-              >
-              <label
-                ><input id="security-auto" type="checkbox" checked /> Tự động
-                làm mới (10 giây)</label
-              >
-              <button
-                class="admin-button admin-button--secondary"
-                id="security-refresh"
-                type="button"
-              >
-                ↻ Làm mới
-              </button>
-              <span class="admin-result-count" id="security-updated"></span>
-            </div>
 
-            <div class="admin-panel admin-security-panel" id="mlids-panel">
-              <div class="admin-panel__heading">
-                <div>
-                  <h2>R9 · IDS học máy</h2>
-                  <p>
-                    Mô hình chấm điểm giá trị tham số của mọi request qua Load
-                    Balancer. Điểm ≥ ngưỡng thì cảnh báo và tự động chặn IP.
-                  </p>
-                </div>
-                <span id="mlids-status"></span>
+            <div class="sec-toolbar">
+              <div class="sec-toolbar__group">
+                <label class="sec-select">Cảnh báo trong
+                  <select id="security-window">
+                    <option value="15">15 phút qua</option>
+                    <option value="60" selected>1 giờ qua</option>
+                    <option value="1440">24 giờ qua</option>
+                  </select>
+                </label>
+                <label class="sec-switch">
+                  <input id="security-auto" type="checkbox" checked />
+                  <span class="sec-switch__track"></span>
+                  Tự làm mới 10 giây
+                </label>
+                <button class="admin-button admin-button--secondary sec-refresh" id="security-refresh" type="button">↻ Làm mới</button>
               </div>
-              <div id="mlids-body"></div>
+              <div class="sec-toolbar__group">
+                <span class="sec-live" id="security-updated">Đang tải…</span>
+                <span class="sec-protected" id="security-protected"></span>
+              </div>
             </div>
 
-            <div class="admin-panel admin-security-panel">
-              <div class="admin-panel__heading">
+            <div class="sec-kpis" id="security-kpis"></div>
+
+            <div class="admin-panel sec-panel">
+              <div class="sec-panel__head">
                 <div>
-                  <h2>IP bị cảnh báo</h2>
-                  <p>
-                    Gộp theo IP từ các luật R1, R2, R3, R8, R9. Bấm "Chặn" để
-                    Load Balancer trả 403 cho IP đó.
-                  </p>
+                  <h2>IP bị cảnh báo <span class="sec-count" id="suspicious-count">0</span></h2>
+                  <p>Gộp theo IP từ các luật R1, R2, R3, R8, R9. Chặn để Load Balancer trả 403 cho IP đó.</p>
                 </div>
-                <span class="admin-result-count" id="suspicious-count"></span>
+                <div class="sec-filters" id="suspicious-filters" role="tablist">
+                  <button type="button" data-filter="all" class="is-active">Tất cả</button>
+                  <button type="button" data-filter="high">Mức cao</button>
+                  <button type="button" data-filter="r9">Có R9</button>
+                  <button type="button" data-filter="open">Chưa chặn</button>
+                </div>
               </div>
               <div class="admin-table-wrap">
-                <table class="admin-table">
+                <table class="admin-table sec-table">
                   <thead>
                     <tr>
-                      <th>IP</th>
-                      <th>Vi phạm</th>
-                      <th>Mức độ</th>
-                      <th>Số cảnh báo</th>
-                      <th>Lần cuối</th>
+                      <th>IP · chi tiết</th>
+                      <th>Luật vi phạm</th>
+                      <th>Cảnh báo</th>
                       <th class="admin-table__actions">Thao tác</th>
                     </tr>
                   </thead>
@@ -426,23 +406,21 @@
               </div>
             </div>
 
-            <div class="admin-panel admin-security-panel">
-              <div class="admin-panel__heading">
+            <div class="admin-panel sec-panel">
+              <div class="sec-panel__head">
                 <div>
-                  <h2>IP đang bị chặn</h2>
+                  <h2>IP đang bị chặn <span class="sec-count" id="blocked-count">0</span></h2>
                   <p>Tự động gỡ khi hết thời gian, hoặc bấm "Gỡ chặn".</p>
                 </div>
-                <span class="admin-result-count" id="blocked-count"></span>
               </div>
               <div class="admin-table-wrap">
-                <table class="admin-table">
+                <table class="admin-table sec-table">
                   <thead>
                     <tr>
                       <th>IP</th>
                       <th>Lý do</th>
                       <th>Người chặn</th>
-                      <th>Bắt đầu</th>
-                      <th>Hết hạn</th>
+                      <th>Thời gian còn lại</th>
                       <th class="admin-table__actions">Thao tác</th>
                     </tr>
                   </thead>
@@ -450,6 +428,33 @@
                 </table>
               </div>
             </div>
+
+            <div class="admin-panel sec-panel sec-acc" id="accuracy-panel">
+              <div class="sec-panel__head">
+                <div>
+                  <h2>Độ chính xác R9</h2>
+                  <p>Model đang chạy chấm lại tập test <b>không dùng để train</b> (CSIC 2010, HttpParamsDataset, input bình thường) và so với nhãn đúng.</p>
+                </div>
+                <div class="sec-acc__controls">
+                  <label class="sec-select">Ngưỡng
+                    <select id="accuracy-threshold"></select>
+                  </label>
+                  <button class="admin-button admin-button--primary" id="accuracy-run" type="button">▶ Kiểm tra ngay</button>
+                </div>
+              </div>
+              <div id="accuracy-body"></div>
+            </div>
+
+            <details class="admin-panel sec-panel sec-model" id="mlids-panel">
+              <summary class="sec-panel__head sec-model__summary">
+                <div>
+                  <h2>R9 · Chi tiết mô hình IDS học máy</h2>
+                  <p id="mlids-summary">Mô hình chấm điểm giá trị tham số của mọi request qua Load Balancer.</p>
+                </div>
+                <span class="sec-model__right"><span id="mlids-status"></span><span class="sec-chevron">⌄</span></span>
+              </summary>
+              <div id="mlids-body"></div>
+            </details>
           </section>
         </div>
       </main>

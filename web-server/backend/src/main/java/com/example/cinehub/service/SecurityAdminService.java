@@ -3,6 +3,7 @@ package com.example.cinehub.service;
 import com.example.cinehub.dto.request.BlockIpRequest;
 import com.example.cinehub.dto.request.RateLimitRequest;
 import com.example.cinehub.dto.response.SuspiciousIpDTO;
+import com.example.cinehub.exception.BadRequestException;
 import com.example.cinehub.exception.UpstreamServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,6 +36,7 @@ public class SecurityAdminService {
     private final RestClient es;
     private final RestClient lb;
     private final RestClient mlIds;
+    private final RestClient mlIdsEval;
     private final ObjectMapper json;
 
     public SecurityAdminService(@Value("${app.security.es-url}") String esUrl,
@@ -51,6 +53,10 @@ public class SecurityAdminService {
                 .defaultHeader("X-Admin-Token", lbAdminToken)
                 .build();
         this.mlIds = RestClient.builder().baseUrl(mlIdsUrl).requestFactory(timeouts).build();
+        SimpleClientHttpRequestFactory slow = new SimpleClientHttpRequestFactory();
+        slow.setConnectTimeout(2000);
+        slow.setReadTimeout(60000);
+        this.mlIdsEval = RestClient.builder().baseUrl(mlIdsUrl).requestFactory(slow).build();
         this.json = json;
     }
 
@@ -142,6 +148,29 @@ public class SecurityAdminService {
             result.putNull("detections");
         }
         return result;
+    }
+
+    public JsonNode evaluateMlIds(Double threshold) {
+        if (threshold != null && !(threshold > 0 && threshold < 1)) {
+            throw new BadRequestException("Nguong phai nam trong khoang (0, 1)");
+        }
+        Map<String, Object> body = new HashMap<>();
+        if (threshold != null) {
+            body.put("threshold", threshold);
+        }
+        try {
+            String res = mlIdsEval.post().uri("/evaluate")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve().body(String.class);
+            return json.readTree(res == null ? "{}" : res);
+        } catch (ResourceAccessException e) {
+            throw new UpstreamServiceException(503, "Dich vu ml-ids khong phan hoi");
+        } catch (RestClientResponseException e) {
+            throw new UpstreamServiceException(e.getStatusCode().value(), lbErrorMessage(e.getResponseBodyAsString()));
+        } catch (JsonProcessingException e) {
+            throw new UpstreamServiceException(502, "ml-ids tra ve du lieu khong doc duoc");
+        }
     }
 
     private JsonNode detections24h() {

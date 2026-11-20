@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import joblib
 
 from dataset import score_requests
+from evaluation import evaluate
 from features import values
 
 MODEL_DIR = Path(os.environ.get("MODEL_DIR", "model"))
@@ -18,6 +20,18 @@ model = joblib.load(MODEL_DIR / "ids-model.joblib")
 metrics_file = MODEL_DIR / "metrics.json"
 metrics = json.loads(metrics_file.read_text(encoding="utf-8")) if metrics_file.exists() else {}
 stats = {"requests": 0, "scored": 0, "startedAt": time.strftime("%Y-%m-%d %H:%M:%S")}
+testset_file = MODEL_DIR / "testset.json"
+testset = None
+eval_lock = threading.Lock()
+
+
+def run_evaluation(threshold):
+    global testset
+    if testset is None:
+        if not testset_file.exists():
+            raise FileNotFoundError("Chua co model/testset.json - chay: python evaluate.py")
+        testset = json.loads(testset_file.read_text(encoding="utf-8"))
+    return evaluate(model, testset, threshold)
 
 
 def score(items):
@@ -46,6 +60,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"error": "not found"})
 
     def do_POST(self):
+        if self.path == "/evaluate":
+            self._evaluate()
+            return
         if self.path != "/predict":
             self._send(404, {"error": "not found"})
             return
@@ -65,6 +82,26 @@ class Handler(BaseHTTPRequestHandler):
         stats["requests"] += 1
         stats["scored"] += len(scores)
         self._send(200, {"scores": scores})
+
+    def _evaluate(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            body = json.loads(self.rfile.read(length)) if 0 < length <= 1024 else {}
+            threshold = float(body.get("threshold") or metrics.get("threshold", 0.9))
+            if not 0 < threshold < 1:
+                raise ValueError("threshold phai trong khoang (0, 1)")
+        except (ValueError, TypeError, AttributeError) as e:
+            self._send(400, {"error": str(e)})
+            return
+        if not eval_lock.acquire(blocking=False):
+            self._send(429, {"error": "Dang chay kiem tra khac, thu lai sau vai giay"})
+            return
+        try:
+            self._send(200, run_evaluation(threshold))
+        except FileNotFoundError as e:
+            self._send(404, {"error": str(e)})
+        finally:
+            eval_lock.release()
 
     def log_message(self, fmt, *args):
         pass
